@@ -1,0 +1,4 @@
+H:/SoftRenderer/build/CMakeFiles/Core.dir
+H:/SoftRenderer/build/CMakeFiles/SoftRenderer.dir
+H:/SoftRenderer/build/CMakeFiles/ALL_BUILD.dir
+H:/SoftRenderer/build/CMakeFiles/ZERO_CHECK.dir

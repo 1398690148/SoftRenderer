@@ -1,0 +1,14 @@
+#pragma once
+#include "IBuffer.h"
+
+class InputLayout
+{
+public:
+	InputLayout(const INPUT_ELEMENT_DESC *InputLayout, unsigned int s);
+	~InputLayout();
+	unsigned int getSize() const;
+	const INPUT_ELEMENT_DESC *getData(unsigned int offset);
+private:
+	const INPUT_ELEMENT_DESC *pInputLayout;
+	unsigned int size;
+};
