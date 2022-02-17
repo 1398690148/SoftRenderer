@@ -16,15 +16,15 @@ SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${PROJECT_SOURCE_DIR}/output/bin_d/)
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${PROJECT_SOURCE_DIR}/output/bin/)
 ADD_LIBRARY(Core SHARED ${CORE_SRCS} ${PROJECT_SOURCE_DIR}/src/Casli/Core/Device.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/CoreAPI.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/DeviceContext.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/IBuffer.h 
 ${PROJECT_SOURCE_DIR}/src/Casli/Core/IndexBuffer.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/IPixelShader.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/IVertexShader.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/Resource.h 
-${PROJECT_SOURCE_DIR}/src/Casli/Core/Sampler.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/Texture2D.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/VertexBuffer.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/ConstantBuffer.h 
-${PROJECT_SOURCE_DIR}/src/Casli/Core/RenderTargetView.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/InputLayout.h)
+${PROJECT_SOURCE_DIR}/src/Casli/Core/SamplerState.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/Texture2D.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/VertexBuffer.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/ConstantBuffer.h 
+${PROJECT_SOURCE_DIR}/src/Casli/Core/RenderTargetView.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/InputLayout.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/DepthStencilView.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/Core.h)
 
 LINK_DIRECTORIES(${PROJECT_SOURCE_DIR}/lib/${CMAKE_BUILD_TYPE})
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${PROJECT_SOURCE_DIR}/output/bin_d)
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${PROJECT_SOURCE_DIR}/output/bin)
 
-ADD_EXECUTABLE(${PROJECT_NAME} ./src/main.cpp ./src/App.h ./src/App.cpp ./src/Platform/Window.h ./src/Platform/Window.cpp ./src/Platform/CasliWin.h ./src/Casli/Scene/Graphics.h ./src/Casli/Scene/Graphics.cpp ./src/Casli/Renderer/LambertVertexShader.h
-./src/Casli/Renderer/LambertPixelShader.h)
+ADD_EXECUTABLE(${PROJECT_NAME} ./src/main.cpp ./src/App.h ./src/App.cpp ./src/Platform/Window.h ./src/Platform/Window.cpp ./src/Platform/CasliWin.h ./src/Casli/Renderer/Texture.h ./src/Casli/Renderer/Texture.cpp 
+./src/Casli/Scene/Graphics.h ./src/Casli/Scene/Graphics.cpp ./src/Casli/Renderer/LambertVertexShader.h ./src/Casli/Renderer/LambertPixelShader.h ./src/Casli/Renderer/Sampler.h ./src/Casli/Renderer/Sampler.cpp)
 #设置release模式下关闭cmd窗口
 Set_Target_Properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
 

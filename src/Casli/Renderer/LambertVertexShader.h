@@ -2,52 +2,54 @@
 #include <algorithm>
 #include "IVertexShader.h"
 
-struct Input : public InputData
+
+struct VertexInput
 {
-	float x;
-	float y;
-	unsigned char r;
-	unsigned char g;
-	unsigned char b;
-	unsigned char a;
+	Vec4f pos;
+	Vec4f color;
+	Vec2f uv;
 };
 
-struct Output : public OutputData
+struct Output
 {
-	float x;
-	float y;
-	unsigned char r;
-	unsigned char g;
-	unsigned char b;
-	unsigned char a;
+	Vec4f pos;
+	Vec4f color;
+	Vec2f uv;
 };
 
-struct LambertVertexShader : public IVertexShader
+struct cbuffer
 {
+	Matrix Viewport;
+};
+
+class LambertVertexShader : public IVertexShader
+{
+public:
 	LambertVertexShader()
 	{
+		Description position = { "Position", 4, 16, 0 };
+		Description color = { "Color", 4, 16, 16 };
+		Description uv = { "UV", 4, 8, 32 };
+		inDesc.push_back(position);
+		inDesc.push_back(color);
+		inDesc.push_back(uv);
 
+		Description sv_position = { "SV_Position", 4, 16, 0 };
+		Description sv_color = { "Color", 4, 16, 16 };
+		Description sv_uv = { "UV", 4, 8, 32 };
+		outDesc.push_back(sv_position);
+		outDesc.push_back(sv_color);
+		outDesc.push_back(sv_uv);
 	}
 
-	virtual OutputData *vertex(InputData *input)
+	unsigned char *vertex(unsigned char *input)
 	{
+		VertexInput *in = (VertexInput *)input;
+		cbuffer *cbuf = (cbuffer *)buffer;
 		Output *o = new Output();
-		Input *in = dynamic_cast<Input *>(input);
-		o->x = in->x;
-		o->y = in->y;
-		o->r = in->r;
-		o->g = in->g;
-		o->b = in->b;
-		o->a = in->a;
-		return o;
-	}
-	virtual bool fragment(Vec3f bar, TGAColor &color)
-	{
-		Vec2f uv = varying_uv * bar;
-		Vec3f n = proj<3>(uniform_MIT * embed<4>(model->normal(uv))).normalize();
-		Vec3f l = proj<3>(uniform_M * embed<4>(light_dir)).normalize();
-		float intensity = std::max(0.f, n * l);
-		color = model->diffuse(uv) * intensity;
-		return false;
+		o->pos = cbuf->Viewport * in->pos;
+		o->color = in->color;
+		o->uv = in->uv;
+		return (unsigned char *)o;
 	}
 };

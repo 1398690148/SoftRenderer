@@ -22,7 +22,7 @@ private:
 	int width;
 	int height;
 	HWND hWnd;
-	std::unique_ptr<Graphics> pGfx;
+	Graphics *pGfx;
 	HWND ghMainWnd = NULL;
 	HDC ghdcMainWnd = NULL;
 	HBITMAP gdibMap = NULL;

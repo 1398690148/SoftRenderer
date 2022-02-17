@@ -1,7 +1,8 @@
 #pragma once
+#include "CoreAPI.h"
 #include "IBuffer.h"
 
-class InputLayout
+class CORE_API InputLayout
 {
 public:
 	InputLayout(const INPUT_ELEMENT_DESC *InputLayout, unsigned int s);

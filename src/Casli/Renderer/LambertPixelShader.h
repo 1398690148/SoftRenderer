@@ -2,14 +2,11 @@
 #include <algorithm>
 #include "IPixelShader.h"
 
-struct Input : public InputData
+struct PixelInput
 {
-	float x;
-	float y;
-	unsigned char r;
-	unsigned char g;
-	unsigned char b;
-	unsigned char a;
+	Vec4f position;
+	Vec4f color;
+	Vec2f uv;
 };
 
 struct LambertPixelShader : public IPixelShader
@@ -18,12 +15,10 @@ struct LambertPixelShader : public IPixelShader
 	{
 
 	}
-	virtual bool fragment(InputData *in, Vec4f &color)
+	virtual bool fragment(unsigned char *in, Vec4f &color)
 	{
-		color[0] = 1.0f;
-		color[1] = 0.0f;
-		color[2] = 0.0f;
-		color[3] = 1.0f;
+		PixelInput *input = (PixelInput *)in;
+		color = textures[0]->Sampler(input->uv, samplers[0]);
 		return false;
 	}
 };

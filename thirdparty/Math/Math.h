@@ -32,6 +32,7 @@ template <typename T> struct vec<2, T> {
 template <typename T> struct vec<3, T> {
 	vec() : x(T()), y(T()), z(T()) {}
 	vec(T X, T Y, T Z) : x(X), y(Y), z(Z) {}
+	vec(const vec<4, T> &v) : x(v.x), y(v.y), z(v.z) {}
 	template <class U> vec<3, T>(const vec<3, U> &v);
 	T& operator[](const size_t i) { assert(i < 3); return i <= 0 ? x : (1 == i ? y : z); }
 	const T& operator[](const size_t i) const { assert(i < 3); return i <= 0 ? x : (1 == i ? y : z); }
@@ -46,6 +47,19 @@ template <typename T> struct vec<3, T> {
 	vec<3, T> & normalize(T l = 1) { *this = (*this)*(l / norm()); return *this; }
 
 	T x, y, z;
+};
+
+template <typename T> struct vec<4, T> {
+	vec() : x(T()), y(T()), z(T()), w(T()) {}
+	vec(T X, T Y, T Z, T W) : x(X), y(Y), z(Z), w(W) {}
+	vec(vec<3, T> p, T W) : x(p[0]), y(p[1]), z(p[2]), w(W) {}
+	template <class U> vec<4, T>(const vec<4, U> &v);
+	T& operator[](const size_t i) { assert(i < 4); return i <= 0 ? x : (1 == i ? y : 2 == i ? z : w); }
+	const T& operator[](const size_t i) const { assert(i < 4); return i <= 0 ? x : (1 == i ? y : 2 == i ? z : w); }
+	float norm() { return std::sqrt(x*x + y * y + z * z + w * w); }
+	vec<4, T> & normalize(T l = 1) { *this = (*this)*(l / norm()); return *this; }
+
+	T x, y, z, w;
 };
 
 /////////////////////////////////////////////////////////////////////////////////

@@ -10,7 +10,13 @@
     <ClCompile Include="H:\SoftRenderer\src\Platform\Window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="H:\SoftRenderer\src\Casli\Renderer\Texture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="H:\SoftRenderer\src\Casli\Scene\Graphics.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="H:\SoftRenderer\src\Casli\Renderer\Sampler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -24,6 +30,9 @@
     <ClInclude Include="H:\SoftRenderer\src\Platform\CasliWin.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="H:\SoftRenderer\src\Casli\Renderer\Texture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="H:\SoftRenderer\src\Casli\Scene\Graphics.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -31,6 +40,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="H:\SoftRenderer\src\Casli\Renderer\LambertPixelShader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="H:\SoftRenderer\src\Casli\Renderer\Sampler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

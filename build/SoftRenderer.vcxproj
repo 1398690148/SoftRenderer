@@ -316,10 +316,14 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClInclude Include="H:\SoftRenderer\src\Platform\Window.h" />
     <ClCompile Include="H:\SoftRenderer\src\Platform\Window.cpp" />
     <ClInclude Include="H:\SoftRenderer\src\Platform\CasliWin.h" />
+    <ClInclude Include="H:\SoftRenderer\src\Casli\Renderer\Texture.h" />
+    <ClCompile Include="H:\SoftRenderer\src\Casli\Renderer\Texture.cpp" />
     <ClInclude Include="H:\SoftRenderer\src\Casli\Scene\Graphics.h" />
     <ClCompile Include="H:\SoftRenderer\src\Casli\Scene\Graphics.cpp" />
     <ClInclude Include="H:\SoftRenderer\src\Casli\Renderer\LambertVertexShader.h" />
     <ClInclude Include="H:\SoftRenderer\src\Casli\Renderer\LambertPixelShader.h" />
+    <ClInclude Include="H:\SoftRenderer\src\Casli\Renderer\Sampler.h" />
+    <ClCompile Include="H:\SoftRenderer\src\Casli\Renderer\Sampler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="H:\SoftRenderer\build\ZERO_CHECK.vcxproj">

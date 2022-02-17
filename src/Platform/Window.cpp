@@ -58,11 +58,12 @@ Window::Window(int width, int height, const char * windowName) : width(width), h
 	SetForegroundWindow(ghMainWnd);
 
 	ShowWindow(ghMainWnd, SW_SHOW);
-	pGfx = std::make_unique<Graphics>(width, height, ghMainWnd, ghdcMainWnd, ptr);
+	pGfx = new Graphics(width, height, ghMainWnd, ghdcMainWnd, ptr);
 }
 
 Window::~Window()
 {
+	
 }
 
 Graphics & Window::Gfx()

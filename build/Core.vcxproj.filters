@@ -4,6 +4,9 @@
     <ClCompile Include="H:\SoftRenderer\src\Casli\Core\ConstantBuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="H:\SoftRenderer\src\Casli\Core\DepthStencilView.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="H:\SoftRenderer\src\Casli\Core\Device.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -31,7 +34,7 @@
     <ClCompile Include="H:\SoftRenderer\src\Casli\Core\Resource.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="H:\SoftRenderer\src\Casli\Core\Sampler.cpp">
+    <ClCompile Include="H:\SoftRenderer\src\Casli\Core\SamplerState.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="H:\SoftRenderer\src\Casli\Core\Texture2D.cpp">
@@ -66,7 +69,7 @@
     <ClInclude Include="H:\SoftRenderer\src\Casli\Core\Resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="H:\SoftRenderer\src\Casli\Core\Sampler.h">
+    <ClInclude Include="H:\SoftRenderer\src\Casli\Core\SamplerState.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="H:\SoftRenderer\src\Casli\Core\Texture2D.h">
@@ -82,6 +85,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="H:\SoftRenderer\src\Casli\Core\InputLayout.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="H:\SoftRenderer\src\Casli\Core\DepthStencilView.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="H:\SoftRenderer\src\Casli\Core\Core.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

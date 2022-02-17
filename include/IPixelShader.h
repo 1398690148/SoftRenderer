@@ -1,20 +1,16 @@
 #pragma once
 #include "CoreAPI.h"
 #include "Math/Math.h"
-
-typedef struct InputData
-{
-	virtual ~InputData() {}
-} InputData;
-
-typedef struct CBuffer
-{
-	virtual ~CBuffer() {}
-} CBuffer;
+#include "Texture2D.h"
+#include "SamplerState.h"
 
 class CORE_API IPixelShader
 {
 public:
-	virtual bool fragment(InputData *in, Vec4f &color) = 0;
-	CBuffer *buffer;
+	IPixelShader();
+	virtual bool fragment(unsigned char *in, Vec4f &color) = 0;
+	virtual ~IPixelShader();
+	unsigned char *buffer{};
+	Texture2D **textures{};
+	SamplerState **samplers{};
 };

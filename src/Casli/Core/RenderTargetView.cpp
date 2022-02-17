@@ -1,7 +1,7 @@
 #include "RenderTargetView.h"
 #include <memory>
 
-RenderTargetView::RenderTargetView(unsigned int w, unsigned int h, unsigned int structureByteStride, const void * buffer)
+RenderTargetView::RenderTargetView(unsigned int w, unsigned int h, unsigned int structureByteStride, const void *buffer)
 	: IBuffer(w * h * 4, structureByteStride), width(w), height(h)
 {
 	if (buffer)

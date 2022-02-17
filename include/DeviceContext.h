@@ -1,12 +1,16 @@
 #pragma once
 #include "CoreAPI.h"
-#include "RenderTargetView.h"
-#include "VertexBuffer.h"
 #include "Math/Math.h"
-#include "InputLayout.h"
+#include <map>
+#include "IBuffer.h"
 
 class IVertexShader;
 class IPixelShader;
+class DepthStencilView;
+class InputLayout;
+class RenderTargetView;
+class Texture2D;
+class SamplerState;
 
 class CORE_API DeviceContext
 {
@@ -19,18 +23,24 @@ public:
 	void IASetIndexBuffer(IBuffer *buf, unsigned int Offset);
 	void VSSetShader(IVertexShader *shader);
 	void PSSetShader(IPixelShader *shader);
+	void PSSetShaderResources(int slot, Texture2D **texture);
+	void PSSetSamplerState(int slot, SamplerState **sampler);
+	void VSSetConstantBuffers(IBuffer *constantBuffer);
 	void IASetInputLayout(InputLayout *InputLayout);
 	void IASetPrimitiveTopology(PRIMITIVE_TOPOLOGY topology);
 	void RSSetViewports(unsigned int NumViewports, const VIEWPORT *Viewports);
-	void OMSetRenderTargets(RenderTargetView **RenderTargetView);
+	void OMSetRenderTargets(RenderTargetView **RenderTargetView, DepthStencilView **DepthStencilView);
 	void DrawIndex();
 
 private:
 	//void triangle(Vec3f *pts, Vec4f *color);
-	void triangle(Vec2i t0, Vec2i t1, Vec2i t2, Vec4f color[3]);
-	void triangle(Vec3i t0, Vec3i t1, Vec3i t2, Vec4f color);
+	void triangle(unsigned char *o1, unsigned char *o2, unsigned char *o3);
 
-	bool ParseVertexBuffer(std::string semanticName, int &offset, int &num, int &size);
+	void ParseVertexBuffer();
+
+	void ParseShaderOutput(unsigned char *buffer, std::vector<Vec4f> &output);
+
+	void viewport(int x, int y, int w, int h);
 private:
 	IBuffer *pVertexBuffer{};
 	IBuffer *pIndexBuffer{};
@@ -39,5 +49,20 @@ private:
 	IVertexShader *pVertexShader{};
 	IPixelShader *pPixelShader{};
 	RenderTargetView *pRenderTargetView{};
+	DepthStencilView *pDepthStencilView{};
+	DepthStencilView *pDSV{};
 	const VIEWPORT *pViewports{};
+
+	Matrix Viewport;
+
+	//顶点缓存中可能包含的数据
+	typedef struct Attribute
+	{
+		std::vector<Vec4f> data;
+		int Size;
+		int Offset;
+	} Attribute;
+	std::map<std::string, Attribute> m_Data;
+
+	int SV_PositionIndex;
 };

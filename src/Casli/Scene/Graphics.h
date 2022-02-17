@@ -21,6 +21,7 @@ private:
 	std::unique_ptr<Device> pDevice;
 	std::unique_ptr<DeviceContext> pContext;
 	RenderTargetView *pTarget{};
+	DepthStencilView *pDSV{};
 	int width;
 	int height;
 	float *shadowbuffer;

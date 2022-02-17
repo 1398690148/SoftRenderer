@@ -2,8 +2,10 @@
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
 #include "Texture2D.h"
+#include "SamplerState.h"
 #include "RenderTargetView.h"
 #include "InputLayout.h"
+#include "DepthStencilView.h"
 
 Device::Device()
 {
@@ -40,8 +42,9 @@ void Device::CreateRenderTargetView(void *gFbo, int width, int height, RenderTar
 	*pRTView = new RenderTargetView(width, height, 4, gFbo);
 }
 
-void Device::CreateDepthStencilState()
+void Device::CreateDepthStencilView(Texture2D *pDepthBuffer, DEPTH_STENCIL_VIEW_DESC *desc, DepthStencilView **ppDepthStencilView)
 {
+	*ppDepthStencilView = new DepthStencilView(pDepthBuffer);
 }
 
 void Device::CreateInputLayout(const INPUT_ELEMENT_DESC * pInputElementDescs, unsigned int NumElements, InputLayout **ppInputLayout)
@@ -49,9 +52,15 @@ void Device::CreateInputLayout(const INPUT_ELEMENT_DESC * pInputElementDescs, un
 	*ppInputLayout = new InputLayout(pInputElementDescs, NumElements);
 }
 
-bool Device::CreateTexture2D(TEXTURE2D_DESC *desc, SUBRESOURCE_DATA *sd, Texture2D *pTexture)
+bool Device::CreateTexture2D(TEXTURE2D_DESC *desc, SUBRESOURCE_DATA *sd, Texture2D **pTexture)
 {
-	if (!desc || !sd) return false;
-	if (desc->BindFlags != BIND_SHADER_RESOURCE || desc->BindFlags != BIND_DEPTH_STENCIL) return false;
-	pTexture = new Texture2D(desc, sd);
+	if (!desc) return false;
+	if (desc->BindFlags != BIND_SHADER_RESOURCE && desc->BindFlags != BIND_DEPTH_STENCIL) return false;
+	*pTexture = new Texture2D(desc, sd);
+	return (*pTexture) != nullptr;
+}
+
+void Device::CreateSamplerState(SAMPLER_DESC *desc, SamplerState **pSamplerState)
+{
+	*pSamplerState = new SamplerState(desc);
 }
