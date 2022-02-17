@@ -121,17 +121,18 @@ void Graphics::Draw()
 	pDevice->CreateInputLayout(ied, (unsigned int)std::size(ied), &pInputLayout);
 	pContext->IASetInputLayout(pInputLayout);
 
-	Matrix matrixX = Matrix::identity();
-	matrixX[1][1] = cos(PI / 6);
-	matrixX[1][2] = sin(PI / 6);
-	matrixX[2][1] = -sin(PI / 6);
-	matrixX[2][2] = cos(PI / 6);
-	Matrix matrixY = Matrix::identity();
-	matrixY[0][0] = cos(PI / 6);
-	matrixY[0][2] = -sin(PI / 6);
-	matrixY[2][0] = sin(PI / 6);
-	matrixY[2][2] = cos(PI / 6);
-	Matrix matrix = matrixX *matrixY;
+	//Matrix matrixX = Matrix::identity();
+	//matrixX[1][1] = cos(PI / 6);
+	//matrixX[1][2] = sin(PI / 6);
+	//matrixX[2][1] = -sin(PI / 6);
+	//matrixX[2][2] = cos(PI / 6);
+	//Matrix matrixY = Matrix::identity();
+	//matrixY[0][0] = cos(PI / 6);
+	//matrixY[0][2] = -sin(PI / 6);
+	//matrixY[2][0] = sin(PI / 6);
+	//matrixY[2][2] = cos(PI / 6);
+	Matrix matrix = Matrix::identity();
+	matrix[0][0] = matrix[1][1] = 2;
 
 	matrix = projection * camera * matrix;
 	IBuffer *pConstantBuffer{};
@@ -145,7 +146,7 @@ void Graphics::Draw()
 	pContext->VSSetConstantBuffers(pConstantBuffer);
 
 	//Set Texture
-	Texture tex("../src/Casli/Image/diablo3_pose_diffuse.tga");
+	Texture tex("../src/Casli/Image/test.png");
 	TEXTURE2D_DESC textureDesc = {};
 	textureDesc.Width = tex.GetWidth();
 	textureDesc.Height = tex.GetHeight();
@@ -156,13 +157,13 @@ void Graphics::Draw()
 
 	SUBRESOURCE_DATA texSd = {};
 	texSd.pSysMem = tex.GetBufferPtr();
-	texSd.SysMemPitch = tex.GetWidth() * 4;
+	texSd.SysMemPitch = tex.GetWidth() * tex.GetChannel();
 	Texture2D *pTexture;
 	pDevice->CreateTexture2D(&textureDesc, &texSd, &pTexture);
 	pContext->PSSetShaderResources(0, &pTexture);
 
 	SAMPLER_DESC samplerDesc = {};
-	samplerDesc.Filter = FILTER_POINT;
+	samplerDesc.Filter = FILTER_LINEAR;
 	samplerDesc.AddressU = TEXTURE_ADDRESS_WRAP;
 	samplerDesc.AddressV = TEXTURE_ADDRESS_WRAP;
 	samplerDesc.AddressW = TEXTURE_ADDRESS_WRAP;

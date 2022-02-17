@@ -4,6 +4,7 @@
 
 class CORE_API SamplerState
 {
+	friend class Texture2D;
 public:
 	SamplerState(SAMPLER_DESC *desc);
 private:
