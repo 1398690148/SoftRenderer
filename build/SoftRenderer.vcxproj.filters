@@ -19,6 +19,9 @@
     <ClCompile Include="H:\SoftRenderer\src\Casli\Renderer\Sampler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="H:\SoftRenderer\src\Casli\Scene\Camera.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="H:\SoftRenderer\src\App.h">
@@ -43,6 +46,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="H:\SoftRenderer\src\Casli\Renderer\Sampler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="H:\SoftRenderer\src\Casli\Scene\Camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

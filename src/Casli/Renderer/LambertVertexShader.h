@@ -19,7 +19,7 @@ struct Output
 
 struct cbuffer
 {
-	Matrix Viewport;
+	Matrix ModelViewProjection;
 };
 
 class LambertVertexShader : public IVertexShader
@@ -47,7 +47,7 @@ public:
 		VertexInput *in = (VertexInput *)input;
 		cbuffer *cbuf = (cbuffer *)buffer;
 		Output *o = new Output();
-		o->pos = cbuf->Viewport * in->pos;
+		o->pos = cbuf->ModelViewProjection * in->pos;
 		o->color = in->color;
 		o->uv = in->uv;
 		return (unsigned char *)o;

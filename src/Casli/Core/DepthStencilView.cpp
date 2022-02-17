@@ -2,7 +2,7 @@
 #include <memory>
 
 DepthStencilView::DepthStencilView(Texture2D *buffer)
-	: IBuffer(buffer->GetWidth() * buffer->GetHeight() * 4, buffer->GetStructureByteStride()), width(buffer->GetWidth()), height(buffer->GetHeight())
+	: IBuffer(buffer->GetWidth() * buffer->GetHeight(), buffer->GetStructureByteStride()), width(buffer->GetWidth()), height(buffer->GetHeight())
 {
 	if (buffer)
 	{
@@ -11,9 +11,12 @@ DepthStencilView::DepthStencilView(Texture2D *buffer)
 	else
 	{
 		m_Buffer = new unsigned char[ByteWidth];
-		memset(m_Buffer, -1, ByteWidth);
 	}
-	memset(m_Buffer, 0, width * height * 4);
+	memset(m_Buffer, 0, ByteWidth);
+	//for (int i = 0; i < ByteWidth; i++)
+	//{
+	//	m_Buffer[i] = 255;
+	//}
 }
 
 void DepthStencilView::ClearBuffer(const unsigned char depth)
@@ -29,19 +32,12 @@ void DepthStencilView::ClearBuffer(const unsigned char depth)
 	}
 }
 
-float DepthStencilView::GetDepth(int i, int j)
+unsigned char DepthStencilView::GetDepth(int i, int j)
 {
-	return *(float *)(m_Buffer + i + (height - j) * width);
+	return *(m_Buffer + i + (height - 1 - j) * width);
 }
 
-void DepthStencilView::SetDepth(int i, int j, float depth)
+void DepthStencilView::SetDepth(int i, int j, unsigned char depth)
 {
-	*(float *)(m_Buffer + i + (height - j) * width) = depth;
-}
-
-void DepthStencilView::SetPixel(int i, int j, unsigned char r)
-{
-	unsigned int stride = sizeof(unsigned char) * 4;
-	unsigned char *buffer = m_Buffer + i * StructureByteStride + (height - j) * width * StructureByteStride;
-	//memcpy(buffer, color, stride);
+	m_Buffer[i + (height - 1 - j) * width] = depth;
 }

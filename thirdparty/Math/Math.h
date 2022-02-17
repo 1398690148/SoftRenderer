@@ -5,6 +5,8 @@
 #include <cassert>
 #include <iostream>
 
+#define PI 3.1415926
+
 template<size_t DimCols, size_t DimRows, typename T> class mat;
 
 template <size_t DIM, typename T> struct vec {

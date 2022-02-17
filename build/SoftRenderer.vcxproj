@@ -324,6 +324,8 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClInclude Include="H:\SoftRenderer\src\Casli\Renderer\LambertPixelShader.h" />
     <ClInclude Include="H:\SoftRenderer\src\Casli\Renderer\Sampler.h" />
     <ClCompile Include="H:\SoftRenderer\src\Casli\Renderer\Sampler.cpp" />
+    <ClInclude Include="H:\SoftRenderer\src\Casli\Scene\Camera.h" />
+    <ClCompile Include="H:\SoftRenderer\src\Casli\Scene\Camera.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="H:\SoftRenderer\build\ZERO_CHECK.vcxproj">

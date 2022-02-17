@@ -52,8 +52,10 @@ void DeviceContext::PSSetSamplerState(int slot, SamplerState **sampler)
 	pPixelShader->samplers[slot] = *sampler;
 }
 
-void DeviceContext::VSSetConstantBuffers(IBuffer * constantBuffer)
+void DeviceContext::VSSetConstantBuffers(IBuffer *constantBuffer)
 {
+	pVertexShader->buffer = new unsigned char[constantBuffer->GetByteWidth()];
+	memcpy(pVertexShader->buffer, constantBuffer->GetBuffer(0), constantBuffer->GetByteWidth());
 }
 
 void DeviceContext::IASetInputLayout(InputLayout *InputLayout)
@@ -69,7 +71,7 @@ void DeviceContext::IASetPrimitiveTopology(PRIMITIVE_TOPOLOGY topology)
 void DeviceContext::RSSetViewports(unsigned int NumViewports, const VIEWPORT * Viewports)
 {
 	pViewports = Viewports;
-	viewport(Viewports->TopLeftX, Viewports->TopLeftY, Viewports->Width, Viewports->Height);
+	viewport(Viewports->Width / 8, Viewports->Height / 8, Viewports->Width * 3 / 4, Viewports->Height * 3 / 4);
 }
 
 void DeviceContext::OMSetRenderTargets(RenderTargetView **RenderTargetView, DepthStencilView **DepthStencilView)
@@ -81,8 +83,8 @@ void DeviceContext::OMSetRenderTargets(RenderTargetView **RenderTargetView, Dept
 void DeviceContext::DrawIndex()
 {
 	ParseVertexBuffer();
-	pVertexShader->buffer = new unsigned char[sizeof(Viewport)];
-	memcpy(pVertexShader->buffer, &Viewport, sizeof(Viewport));
+	//pVertexShader->buffer = new unsigned char[sizeof(Viewport)];
+	//memcpy(pVertexShader->buffer, &Viewport, sizeof(Viewport));
 	////获取一个片元的索引
 	for (unsigned int offset = 0; offset < pIndexBuffer->GetByteWidth();)
 	{
@@ -122,14 +124,19 @@ void DeviceContext::DrawIndex()
 	}
 }
 
-Vec3f barycentric(Vec3i pts0, Vec3i pts1, Vec3i pts2, Vec2i P) 
+Vec3f DeviceContext::barycentric(Vec2i A, Vec2i B, Vec2i C, Vec2i P)
 {
-	Vec3f u = cross(Vec3f(pts2[0] - pts0[0], pts1[0] - pts0[0], pts0[0] - P[0]), Vec3f(pts2[1] - pts0[1], pts1[1] - pts0[1], pts0[1] - P[1]));
-	/* `pts` and `P` has integer value as coordinates
-	   so `abs(u[2])` < 1 means `u[2]` is 0, that means
-	   triangle is degenerate, in this case return something with negative coordinates */
-	if (std::abs(u[2]) < 1) return Vec3f(-1, 1, 1);
-	return Vec3f(1.f - (u.x + u.y) / u.z, u.y / u.z, u.x / u.z);
+	Vec3f s[2];
+	for (int i = 1; i >= 0; i--)
+	{
+		s[i][0] = C[i] - A[i];
+		s[i][1] = B[i] - A[i];
+		s[i][2] = A[i] - P[i];
+	}
+	Vec3f u = cross(s[0], s[1]);
+	if (std::abs(u[2]) > 1e-2)
+		return Vec3f(1.f - (u.x + u.y) / u.z, u.y / u.z, u.x / u.z);
+	return Vec3f(-1, 1, 1);
 }
 
 void DeviceContext::triangle(unsigned char *o1, unsigned char *o2, unsigned char *o3)
@@ -142,6 +149,14 @@ void DeviceContext::triangle(unsigned char *o1, unsigned char *o2, unsigned char
 	ParseShaderOutput(o2, shaderOutput1);
 	ParseShaderOutput(o3, shaderOutput2);
 	if (SV_PositionIndex == -1) return;
+
+	shaderOutput0[SV_PositionIndex] = shaderOutput0[SV_PositionIndex] / shaderOutput0[SV_PositionIndex].w;
+	shaderOutput1[SV_PositionIndex] = shaderOutput1[SV_PositionIndex] / shaderOutput1[SV_PositionIndex].w;
+	shaderOutput2[SV_PositionIndex] = shaderOutput2[SV_PositionIndex] / shaderOutput2[SV_PositionIndex].w;
+
+	shaderOutput0[SV_PositionIndex] = Viewport * shaderOutput0[SV_PositionIndex];
+	shaderOutput1[SV_PositionIndex] = Viewport * shaderOutput1[SV_PositionIndex];
+	shaderOutput2[SV_PositionIndex] = Viewport * shaderOutput2[SV_PositionIndex];
 	Vec3i t0 = Vec3i(shaderOutput0[SV_PositionIndex].x, shaderOutput0[SV_PositionIndex].y, shaderOutput0[SV_PositionIndex].z);
 	Vec3i t1 = Vec3i(shaderOutput1[SV_PositionIndex].x, shaderOutput1[SV_PositionIndex].y, shaderOutput1[SV_PositionIndex].z);
 	Vec3i t2 = Vec3i(shaderOutput2[SV_PositionIndex].x, shaderOutput2[SV_PositionIndex].y, shaderOutput2[SV_PositionIndex].z);
@@ -176,10 +191,13 @@ void DeviceContext::triangle(unsigned char *o1, unsigned char *o2, unsigned char
 		unsigned char *pixelInput = new unsigned char[100];
 		for (int j = A.x; j <= B.x; j++) {
 			Vec2i P(j, t0.y + i);
-			Vec3f bcScreen = barycentric(t0, t1, t2, P);
+			Vec3f bcScreen = barycentric(proj<2>(t0), proj<2>(t1), proj<2>(t2), proj<2>(P));
 			//插值深度
-			float depth = bcScreen[0] * t0.z + bcScreen[1] * t1.z + bcScreen[2] * t2.z;
-			if (bcScreen[0] < 0 || bcScreen[1] < 0 || bcScreen[2] < 0 || pDepthStencilView->GetDepth(j, t0.y + 1) > depth) continue;
+			unsigned char depth = std::max(0, std::min(255, (int)(bcScreen[0] * t0.z + bcScreen[1] * t1.z + bcScreen[2] * t2.z)));
+			if (bcScreen[0] < 0 || bcScreen[1] < 0 || bcScreen[2] < 0 || pDepthStencilView->GetDepth(j, t0.y + i) > depth)
+			{
+				continue;
+			}
 			//插值其他信息
 			for (int k = 0; k < pVertexShader->outDesc.size(); k++)
 			{
@@ -189,7 +207,7 @@ void DeviceContext::triangle(unsigned char *o1, unsigned char *o2, unsigned char
 			Vec4f colors;
 			Vec4f Q(P.x, P.y, depth, 1.0);
 			bool discard = pPixelShader->fragment(pixelInput, colors);
-			pRenderTargetView->SetPixel(j, t0.y + i, colors[0], colors[1], colors[2], colors[3]);
+			pRenderTargetView->SetPixel(Q.x, Q.y, colors[0], colors[1], colors[2], colors[3]);
 			pDepthStencilView->SetDepth(j, t0.y + i, depth);
 		}
 		delete pixelInput;
@@ -357,11 +375,11 @@ void DeviceContext::ParseShaderOutput(unsigned char * buffer, std::vector<Vec4f>
 void DeviceContext::viewport(int x, int y, int w, int h)
 {
 	Viewport = Matrix::identity();
-	//Viewport[0][3] = x + w / 2.f;
-	//Viewport[1][3] = x + h / 2.f;
-	//Viewport[2][3] = 255.f / 2.f;
+	Viewport[0][3] = x + w / 2.f;
+	Viewport[1][3] = x + h / 2.f;
+	Viewport[2][3] = 255.f / 2.f;
 
-	Viewport[0][0] = w - 1;
-	Viewport[1][1] = h - 1;
-	Viewport[2][2] = 255.f;
+	Viewport[0][0] = w / 2;
+	Viewport[1][1] = h / 2;
+	Viewport[2][2] = 255.f / 2.f;
 }

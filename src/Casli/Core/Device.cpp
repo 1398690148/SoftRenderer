@@ -1,6 +1,7 @@
 #include "Device.h"
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
+#include "ConstantBuffer.h"
 #include "Texture2D.h"
 #include "SamplerState.h"
 #include "RenderTargetView.h"
@@ -31,7 +32,7 @@ void Device::CreateBuffer(BUFFER_DESC *bd, SUBRESOURCE_DATA *sd, IBuffer **buffe
 	break;
 	case BufferType::BIND_CONSTANT_BUFFER:
 	{
-		*buffer = new IndexBuffer(bd->ByteWidth, bd->StructureByteStride, nullptr);
+		*buffer = new ConstantBuffer(bd->ByteWidth, bd->StructureByteStride, sd->pSysMem);
 	}
 	break;
 	}

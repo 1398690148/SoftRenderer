@@ -36,7 +36,7 @@ void RenderTargetView::ClearBuffer(const float ColorRGBA[4])
 void RenderTargetView::SetPixel(int i, int j, unsigned char r, unsigned char g, unsigned char b, unsigned char a)
 {
 	unsigned int stride = sizeof(unsigned char) * 4;
-	unsigned char *buffer = m_Buffer + i * StructureByteStride + (height - j) * width * StructureByteStride;
+	unsigned char *buffer = m_Buffer + i * StructureByteStride + (height - 1 - j) * width * StructureByteStride;
 	unsigned char color[4] = {b, g, r, a};
 	memcpy(buffer, color, stride);
 }

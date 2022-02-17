@@ -24,7 +24,8 @@ SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${PROJECT_SOURCE_DIR}/output/bin_d)
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${PROJECT_SOURCE_DIR}/output/bin)
 
 ADD_EXECUTABLE(${PROJECT_NAME} ./src/main.cpp ./src/App.h ./src/App.cpp ./src/Platform/Window.h ./src/Platform/Window.cpp ./src/Platform/CasliWin.h ./src/Casli/Renderer/Texture.h ./src/Casli/Renderer/Texture.cpp 
-./src/Casli/Scene/Graphics.h ./src/Casli/Scene/Graphics.cpp ./src/Casli/Renderer/LambertVertexShader.h ./src/Casli/Renderer/LambertPixelShader.h ./src/Casli/Renderer/Sampler.h ./src/Casli/Renderer/Sampler.cpp)
+./src/Casli/Scene/Graphics.h ./src/Casli/Scene/Graphics.cpp ./src/Casli/Renderer/LambertVertexShader.h ./src/Casli/Renderer/LambertPixelShader.h ./src/Casli/Renderer/Sampler.h ./src/Casli/Renderer/Sampler.cpp
+./src/Casli/Scene/Camera.h ./src/Casli/Scene/Camera.cpp)
 #设置release模式下关闭cmd窗口
 Set_Target_Properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
 

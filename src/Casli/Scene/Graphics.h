@@ -13,11 +13,14 @@ public:
 	void EndFrame();
 
 	void Draw();
+
+	void SetCamera(Matrix cam);
+	void SetProjection(Matrix proj);
 private:
 	Matrix camera;
 	Matrix projection;
 	Matrix M;
-
+	int angle = 0;
 	std::unique_ptr<Device> pDevice;
 	std::unique_ptr<DeviceContext> pContext;
 	RenderTargetView *pTarget{};

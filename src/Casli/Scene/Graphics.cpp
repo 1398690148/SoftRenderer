@@ -60,12 +60,14 @@ void Graphics::Draw()
 
 	Vertex vertices[] =
 	{
-		{ 0.5f,0.75f, 0.5f, 0.0f,255,0,0,255, 0.5f, 1},
-		{ 0.75f,0.25f, 0.5f, 0.0f,0,255,0,255, 1.f, 0.f },
-		{ 0.25f,0.25f, 0.5f, 0.0f,0,0,255,255, 0.f, 0.f },
-		//{ 0.35f,0.65f, 0.5f, 0.0f,0,255,0,255 },
-		//{ 0.65f,0.65f, 0.5f, 0.0f,0,0,255,255 },
-		//{ 0.5f,0.1f, 0.5f, 0.0f,255,0,0,255 },
+		{ -0.5, -0.5, -0.5, 1.0, 0, 0, 255, 255, 0, 0 },
+		{ 0.5, -0.5, -0.5, 1.0, 0, 0, 255, 255, 1, 0 },
+		{ -0.5, 0.5, -0.5, 1.0, 0, 0, 255, 255, 0, 1 },
+		{ 0.5, 0.5, -0.5, 1.0, 0, 0, 255, 255, 1, 1 },
+		{ -0.5, -0.5, 0.5, 1.0, 255, 0, 0, 255, 0, 0 },
+		{ 0.5, -0.5, 0.5, 1.0, 255, 0, 0, 255, 1, 0 },
+		{ -0.5, 0.5, 0.5, 1.0, 255, 0, 0, 255, 0, 1 },
+		{ 0.5, 0.5, 0.5, 1.0, 255, 0, 0, 255, 1, 1 },
 	};
 
 	IBuffer *pVertexBuffer{};
@@ -85,10 +87,12 @@ void Graphics::Draw()
 	// create index buffer
 	const unsigned int indices[] =
 	{
-		0,1,2,
-		//0,2,3,
-		//0,4,1,
-		//2,1,5,
+		0,2,1, 2,3,1,
+		1,3,5, 3,7,5,
+		2,6,3, 3,6,7,
+		4,5,7, 4,7,6,
+		0,4,2, 2,4,6,
+		0,1,4, 1,5,4
 	};
 	IBuffer *pIndexBuffer;
 	BUFFER_DESC ibd = {};
@@ -116,6 +120,29 @@ void Graphics::Draw()
 	InputLayout *pInputLayout;
 	pDevice->CreateInputLayout(ied, (unsigned int)std::size(ied), &pInputLayout);
 	pContext->IASetInputLayout(pInputLayout);
+
+	Matrix matrixX = Matrix::identity();
+	matrixX[1][1] = cos(PI / 6);
+	matrixX[1][2] = sin(PI / 6);
+	matrixX[2][1] = -sin(PI / 6);
+	matrixX[2][2] = cos(PI / 6);
+	Matrix matrixY = Matrix::identity();
+	matrixY[0][0] = cos(PI / 6);
+	matrixY[0][2] = -sin(PI / 6);
+	matrixY[2][0] = sin(PI / 6);
+	matrixY[2][2] = cos(PI / 6);
+	Matrix matrix = matrixX *matrixY;
+
+	matrix = projection * camera * matrix;
+	IBuffer *pConstantBuffer{};
+	BUFFER_DESC constantDesc = {};
+	constantDesc.BindFlags = BIND_CONSTANT_BUFFER;
+	constantDesc.ByteWidth = sizeof(Matrix);
+	constantDesc.StructureByteStride = sizeof(Matrix);
+	SUBRESOURCE_DATA constantSD;
+	constantSD.pSysMem = &matrix;
+	pDevice->CreateBuffer(&constantDesc, &constantSD, &pConstantBuffer);
+	pContext->VSSetConstantBuffers(pConstantBuffer);
 
 	//Set Texture
 	Texture tex("../src/Casli/Image/diablo3_pose_diffuse.tga");
@@ -174,5 +201,15 @@ void Graphics::Draw()
 	delete pVertexShader;
 	delete pPixelShader;
 	delete pDepthStencil;
+}
+
+void Graphics::SetCamera(Matrix cam)
+{
+	camera = cam;
+}
+
+void Graphics::SetProjection(Matrix proj)
+{
+	projection = proj;
 }
 

@@ -1,5 +1,6 @@
 #pragma once
 #include "./Platform/Window.h"
+#include "Casli/Scene/Camera.h"
 
 class App
 {
@@ -11,4 +12,5 @@ private:
 	void DoFrame();
 private:
 	Window wnd;
+	Camera camera;
 };

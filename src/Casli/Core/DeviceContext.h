@@ -33,7 +33,7 @@ public:
 	void DrawIndex();
 
 private:
-	//void triangle(Vec3f *pts, Vec4f *color);
+	Vec3f barycentric(Vec2i A, Vec2i B, Vec2i C, Vec2i P);
 	void triangle(unsigned char *o1, unsigned char *o2, unsigned char *o3);
 
 	void ParseVertexBuffer();
