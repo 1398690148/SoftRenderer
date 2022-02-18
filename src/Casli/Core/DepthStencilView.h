@@ -9,7 +9,6 @@ public:
 	void ClearBuffer(const unsigned char depth);
 	unsigned char GetDepth(int i, int j);
 	void SetDepth(int i, int j, unsigned char depth);
-	void SetPixel(int i, int j, unsigned char r);
 private:
 	unsigned int width;
 	unsigned int height;

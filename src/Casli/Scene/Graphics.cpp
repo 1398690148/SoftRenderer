@@ -6,7 +6,7 @@
 #include "Casli/Renderer/Texture.h"
 #include "SamplerState.h"
 
-Vec3f light_dir(1, 1, 1);
+glm::vec3 light_dir(1, 1, 1);
 
 Graphics::Graphics(unsigned int width, unsigned int height, HWND hWnd, HDC ghdcMainWnd, void *gFbo)
 	: width(width), height(height), hWnd(hWnd), ghdcMainWnd(ghdcMainWnd)
@@ -44,30 +44,37 @@ void Graphics::Draw()
 			float z;
 			float w;
 		} pos;
-		struct
-		{
-			unsigned char r;
-			unsigned char g;
-			unsigned char b;
-			unsigned char a;
-		} color;
+		//struct
+		//{
+		//	unsigned char r;
+		//	unsigned char g;
+		//	unsigned char b;
+		//	unsigned char a;
+		//} color;
 		struct
 		{
 			float u;
 			float v;
 		} uv;
 	};
+	constexpr float side = 1.0f / 2.0f;
 
 	Vertex vertices[] =
 	{
-		{ -0.5, -0.5, -0.5, 1.0, 0, 0, 255, 255, 0, 0 },
-		{ 0.5, -0.5, -0.5, 1.0, 0, 0, 255, 255, 1, 0 },
-		{ -0.5, 0.5, -0.5, 1.0, 0, 0, 255, 255, 0, 1 },
-		{ 0.5, 0.5, -0.5, 1.0, 0, 0, 255, 255, 1, 1 },
-		{ -0.5, -0.5, 0.5, 1.0, 255, 0, 0, 255, 0, 0 },
-		{ 0.5, -0.5, 0.5, 1.0, 255, 0, 0, 255, 1, 0 },
-		{ -0.5, 0.5, 0.5, 1.0, 255, 0, 0, 255, 0, 1 },
-		{ 0.5, 0.5, 0.5, 1.0, 255, 0, 0, 255, 1, 1 },
+		{ -side,-side,-side, 1.0, 2.0f / 3.0f, 0.0f / 4.0f },
+		{ side,-side,-side, 1.0,1.0f / 3.0f,0.0f / 4.0f },
+		{ -side,side,-side, 1.0,2.0f / 3.0f,1.0f / 4.0f },
+		{ side,side,-side, 1.0,1.0f / 3.0f,1.0f / 4.0f },
+		{ -side,-side,side, 1.0,2.0f / 3.0f,3.0f / 4.0f },
+		{ side,-side,side, 1.0,1.0f / 3.0f,3.0f / 4.0f },
+		{ -side,side,side, 1.0,2.0f / 3.0f,2.0f / 4.0f },
+		{ side,side,side, 1.0,1.0f / 3.0f,2.0f / 4.0f },
+		{ -side,-side,-side, 1.0,2.0f / 3.0f,4.0f / 4.0f },
+		{ side,-side,-side, 1.0,1.0f / 3.0f,4.0f / 4.0f },
+		{ -side,-side,-side, 1.0,3.0f / 3.0f,1.0f / 4.0f },
+		{ -side,-side,side, 1.0,3.0f / 3.0f,2.0f / 4.0f },
+		{ side,-side,-side, 1.0,0.0f / 3.0f,1.0f / 4.0f },
+		{ side,-side,side, 1.0,0.0f / 3.0f,2.0f / 4.0f }
 	};
 
 	IBuffer *pVertexBuffer{};
@@ -87,12 +94,12 @@ void Graphics::Draw()
 	// create index buffer
 	const unsigned int indices[] =
 	{
-		0,2,1, 2,3,1,
-		1,3,5, 3,7,5,
-		2,6,3, 3,6,7,
-		4,5,7, 4,7,6,
-		0,4,2, 2,4,6,
-		0,1,4, 1,5,4
+		0,2,1,   2,3,1,
+		4,8,5,   5,8,9,
+		2,6,3,   3,6,7,
+		4,5,7,   4,7,6,
+		2,10,11, 2,11,6,
+		12,3,7,  12,7,13
 	};
 	IBuffer *pIndexBuffer;
 	BUFFER_DESC ibd = {};
@@ -114,39 +121,38 @@ void Graphics::Draw()
 	const INPUT_ELEMENT_DESC ied[] =
 	{
 		{"Position", sizeof(float), 16, 0}, 
-		{"Color", sizeof(unsigned char), 4, 16},
-		{"UV", sizeof(float), 8, 20},
+		//{"Color", sizeof(unsigned char), 4, 16},
+		{"UV", sizeof(float), 8, 16},
 	};
 	InputLayout *pInputLayout;
 	pDevice->CreateInputLayout(ied, (unsigned int)std::size(ied), &pInputLayout);
 	pContext->IASetInputLayout(pInputLayout);
 
-	//Matrix matrixX = Matrix::identity();
-	//matrixX[1][1] = cos(PI / 6);
-	//matrixX[1][2] = sin(PI / 6);
-	//matrixX[2][1] = -sin(PI / 6);
-	//matrixX[2][2] = cos(PI / 6);
-	//Matrix matrixY = Matrix::identity();
-	//matrixY[0][0] = cos(PI / 6);
-	//matrixY[0][2] = -sin(PI / 6);
-	//matrixY[2][0] = sin(PI / 6);
-	//matrixY[2][2] = cos(PI / 6);
-	Matrix matrix = Matrix::identity();
-	matrix[0][0] = matrix[1][1] = 2;
+	glm::mat4x4 matrix = glm::mat4x4(1.0);
+	glm::mat4x4 matrixX = glm::mat4x4(1.0);
+	matrixX[1][1] = cos(3.1415f / 6);
+	matrixX[1][2] = sin(3.1415f / 6);
+	matrixX[2][1] = -sin(3.1415f / 6);
+	matrixX[2][2] = cos(3.1415f / 6);
+	glm::mat4x4 matrixY = glm::mat4x4(1.0);
+	matrixY[0][0] = cos(3.1415f / 6);
+	matrixY[0][2] = -sin(3.1415f / 6);
+	matrixY[2][0] = sin(3.1415f / 6);
+	matrixY[2][2] = cos(3.1415f / 6);
 
-	matrix = projection * camera * matrix;
+	matrix = projection * camera * matrixY * matrixX * matrix;
 	IBuffer *pConstantBuffer{};
 	BUFFER_DESC constantDesc = {};
 	constantDesc.BindFlags = BIND_CONSTANT_BUFFER;
-	constantDesc.ByteWidth = sizeof(Matrix);
-	constantDesc.StructureByteStride = sizeof(Matrix);
+	constantDesc.ByteWidth = sizeof(glm::mat4x4);
+	constantDesc.StructureByteStride = sizeof(glm::mat4x4);
 	SUBRESOURCE_DATA constantSD;
 	constantSD.pSysMem = &matrix;
 	pDevice->CreateBuffer(&constantDesc, &constantSD, &pConstantBuffer);
 	pContext->VSSetConstantBuffers(pConstantBuffer);
 
 	//Set Texture
-	Texture tex("../src/Casli/Image/test.png");
+	Texture tex("../src/Casli/Image/testbilinear.png");
 	TEXTURE2D_DESC textureDesc = {};
 	textureDesc.Width = tex.GetWidth();
 	textureDesc.Height = tex.GetHeight();
@@ -204,12 +210,12 @@ void Graphics::Draw()
 	delete pDepthStencil;
 }
 
-void Graphics::SetCamera(Matrix cam)
+void Graphics::SetCamera(glm::mat4x4 cam)
 {
 	camera = cam;
 }
 
-void Graphics::SetProjection(Matrix proj)
+void Graphics::SetProjection(glm::mat4x4 proj)
 {
 	projection = proj;
 }

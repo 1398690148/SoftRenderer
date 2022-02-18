@@ -1,8 +1,13 @@
 #pragma once
 #include "CoreAPI.h"
-#include "Math/Math.h"
-#include <map>
 #include "IBuffer.h"
+#include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
+#include <glm/mat4x4.hpp>
+#include <glm/geometric.hpp>
+#include <map>
+#include <vector>
 
 class IVertexShader;
 class IPixelShader;
@@ -33,12 +38,12 @@ public:
 	void DrawIndex();
 
 private:
-	//void triangle(Vec3f *pts, Vec4f *color);
+	glm::vec3 barycentric(glm::i32vec2 A, glm::i32vec2 B, glm::i32vec2 C, glm::i32vec2 P);
 	void triangle(unsigned char *o1, unsigned char *o2, unsigned char *o3);
 
 	void ParseVertexBuffer();
 
-	void ParseShaderOutput(unsigned char *buffer, std::vector<Vec4f> &output);
+	void ParseShaderOutput(unsigned char *buffer, std::vector<glm::vec4> &output);
 
 	void viewport(int x, int y, int w, int h);
 private:
@@ -53,12 +58,12 @@ private:
 	DepthStencilView *pDSV{};
 	const VIEWPORT *pViewports{};
 
-	Matrix Viewport;
+	glm::mat4x4 Viewport;
 
 	//顶点缓存中可能包含的数据
 	typedef struct Attribute
 	{
-		std::vector<Vec4f> data;
+		std::vector<glm::vec4> data;
 		int Size;
 		int Offset;
 	} Attribute;

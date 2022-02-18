@@ -4,9 +4,9 @@
 
 struct PixelInput
 {
-	Vec4f position;
-	Vec4f color;
-	Vec2f uv;
+	glm::vec4 position;
+	//glm::vec4 color;
+	glm::vec2 uv;
 };
 
 struct LambertPixelShader : public IPixelShader
@@ -15,7 +15,7 @@ struct LambertPixelShader : public IPixelShader
 	{
 
 	}
-	virtual bool fragment(unsigned char *in, Vec4f &color)
+	virtual bool fragment(unsigned char *in, glm::vec4 &color)
 	{
 		PixelInput *input = (PixelInput *)in;
 		color = textures[0]->Sampler(input->uv, samplers[0]);

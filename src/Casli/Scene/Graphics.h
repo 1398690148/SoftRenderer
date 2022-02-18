@@ -1,5 +1,4 @@
 #pragma once
-#include "Math/Math.h"
 #include "Device.h"
 #include "DeviceContext.h"
 #include "RenderTargetView.h"
@@ -14,12 +13,11 @@ public:
 
 	void Draw();
 
-	void SetCamera(Matrix cam);
-	void SetProjection(Matrix proj);
+	void SetCamera(glm::mat4x4 cam);
+	void SetProjection(glm::mat4x4 proj);
 private:
-	Matrix camera;
-	Matrix projection;
-	Matrix M;
+	glm::mat4x4 camera;
+	glm::mat4x4 projection;
 	int angle = 0;
 	std::unique_ptr<Device> pDevice;
 	std::unique_ptr<DeviceContext> pContext;

@@ -1,7 +1,8 @@
 #pragma once
 #include "CoreAPI.h"
 #include "IBuffer.h"
-#include "Math/Math.h"
+#include <glm/vec2.hpp>
+#include <glm/vec4.hpp>
 
 class SamplerState;
 
@@ -15,9 +16,9 @@ public:
 	void GenerateMips();
 	unsigned int GetWidth() const { return width; }
 	unsigned int GetHeight() const { return height; }
-	Vec4f Sampler(Vec2f uv, SamplerState *sampler);
+	glm::vec4 Sampler(glm::vec2 uv, SamplerState *sampler);
 private:
-	Vec4f Bilinear(const float &tx, const float  &ty, const Vec4f &c00, const Vec4f &c10, const Vec4f &c01, const Vec4f &c11);
+	glm::vec4 Bilinear(const float &tx, const float  &ty, const glm::vec4 &c00, const glm::vec4 &c10, const glm::vec4 &c01, const glm::vec4 &c11);
 private:
 	unsigned int width;
 	unsigned int height;

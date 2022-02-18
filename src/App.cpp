@@ -1,12 +1,15 @@
 #include "App.h"
 #include <math.h>
+#include <glm/gtc/matrix_transform.hpp>
+
+glm::vec3 eye(1, 0, 3);
 
 App::App()
 	:
-	wnd(800, 600, "The Donkey Fart Box"), camera(Vec3f(0, 0, 3), Vec3f(0, 0, 0), Vec3f(0, 1, 0), 45)
+	wnd(800, 600, "The Donkey Fart Box"), camera(eye, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0), 45)
 {
-	Matrix Projection = Matrix::identity();
-	Projection[3][2] = -1.0 / (Vec3f(0, 0, 3)).norm();
+	glm::mat4x4 Projection = glm::mat4x4(1.0);//glm::perspective(45.0f, 4.0f / 3.0f, 0.1f, 100.f);
+	Projection[3][2] = -1.0 / eye.length();
 	wnd.Gfx().SetProjection(Projection);
 }
 

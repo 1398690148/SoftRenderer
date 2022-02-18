@@ -4,16 +4,16 @@
 class Camera
 {
 public:
-	Camera(Vec3f e, Vec3f cen, Vec3f up, float aspect);
-	Matrix GetMatrix();
+	Camera(glm::vec3 e, glm::vec3 cen, glm::vec3 up, float aspect);
+	glm::mat4x4 GetMatrix();
 	//void SpawnControlWindow();
 	//void Reset();
 private:
 	//Matrix GetTranslateMatrix();
 	//Matrix GetRotationMatrix();
 private:
-	Vec3f eye;
-	Vec3f center;
-	Vec3f up;
+	glm::vec3 eye;
+	glm::vec3 center;
+	glm::vec3 up;
 	float aspect;
 };

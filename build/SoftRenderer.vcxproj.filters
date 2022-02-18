@@ -22,6 +22,12 @@
     <ClCompile Include="H:\SoftRenderer\src\Casli\Scene\Camera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="H:\SoftRenderer\src\Casli\Scene\Model.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="H:\SoftRenderer\src\Casli\Scene\Mesh.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="H:\SoftRenderer\src\App.h">
@@ -49,6 +55,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="H:\SoftRenderer\src\Casli\Scene\Camera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="H:\SoftRenderer\src\Casli\Scene\Model.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="H:\SoftRenderer\src\Casli\Scene\Mesh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

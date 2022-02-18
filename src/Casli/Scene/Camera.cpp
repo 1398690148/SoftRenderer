@@ -1,35 +1,26 @@
 #include "Camera.h"
+#include <glm/gtc/matrix_transform.hpp>
 
-Camera::Camera(Vec3f e, Vec3f cen, Vec3f up, float aspect)
+Camera::Camera(glm::vec3 e, glm::vec3 cen, glm::vec3 up, float aspect)
 	: eye(e), center(cen), up(up), aspect(aspect)
 {
 }
 
-Matrix Camera::GetMatrix()
+glm::mat4x4 Camera::GetMatrix()
 {
-	//Matrix pos = GetTranslateMatrix();// GetRotationMatrix();
-	//const auto pos = dx::XMVector3Transform(
-	//	dx::XMVectorSet(0.0f, 0.0f, -r, 0.0f),
-	//	dx::XMMatrixRotationRollPitchYaw(phi, -theta, 0.0f)
-	//);
-	//return dx::XMMatrixLookAtLH(
-	//	pos, dx::XMVectorZero(),
-	//	dx::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)
-	//) * dx::XMMatrixRotationRollPitchYaw(
-	//	pitch, -yaw, roll
-	//);
-	Vec3f z = (eye - center).normalize();
-	Vec3f x = cross(up, z).normalize();
-	Vec3f y = cross(z, x).normalize();
-	Matrix ModelView = Matrix::identity();
-	for (int i = 0; i < 3; i++)
-	{
-		ModelView[0][i] = x[i];
-		ModelView[1][i] = y[i];
-		ModelView[2][i] = z[i];
-		ModelView[i][3] = -center[i];
-	}
-	return ModelView;
+	return glm::lookAt(eye, center, up);
+	//glm::vec3 z = glm::normalize(eye - center);
+	//glm::vec3 x = glm::normalize(cross(up, z));
+	//glm::vec3 y = glm::normalize(cross(z, x));
+	//glm::mat4x4 ModelView = glm::mat4x4(1.0);
+	//for (int i = 0; i < 3; i++)
+	//{
+	//	ModelView[0][i] = x[i];
+	//	ModelView[1][i] = y[i];
+	//	ModelView[2][i] = z[i];
+	//	ModelView[i][3] = -center[i];
+	//}
+	//return ModelView;
 }
 
 //Matrix Camera::GetTranslateMatrix()

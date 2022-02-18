@@ -1,5 +1,4 @@
 #pragma once
-#include "Math/Math.h"
 
 class Texture
 {
@@ -12,8 +11,6 @@ public:
 	int GetHeight() const;
 	int GetChannel() const;
 
-	//Vec3f GetPixel(float u, float v);
-	//Vec3f GetBilinearPixel(float u, float v);
 private:
 	int width;
 	int height;

@@ -42,12 +42,12 @@ void Texture2D::GenerateMips()
 {
 }
 
-Vec4f Texture2D::Bilinear(const float &tx, const float  &ty,
-	const Vec4f &c00, const Vec4f &c10, const Vec4f &c01, const Vec4f &c11)
+glm::vec4 Texture2D::Bilinear(const float &tx, const float  &ty,
+	const glm::vec4 &c00, const glm::vec4 &c10, const glm::vec4 &c01, const glm::vec4 &c11)
 {
 #if 1 
-	Vec4f  a = c00 * (1 - tx) + c10 * tx;
-	Vec4f  b = c01 * (1 - tx) + c11 * tx;
+	glm::vec4  a = c00 * (1 - tx) + c10 * tx;
+	glm::vec4  b = c01 * (1 - tx) + c11 * tx;
 	return a * (1 - ty) + b * ty;
 #else 
 	return c00 * (1 - tx) * (1 - ty) +
@@ -57,8 +57,11 @@ Vec4f Texture2D::Bilinear(const float &tx, const float  &ty,
 #endif
 }
 
-Vec4f Texture2D::Sampler(Vec2f uv, SamplerState *sampler)
+glm::vec4 Texture2D::Sampler(glm::vec2 uv, SamplerState *sampler)
 {
+	float gx = uv.x * (width - 1);
+	float gy = uv.y * (height - 1);
+
 	int x = uv.x * (width - 1);
 	int y = uv.y * (height - 1);
 
@@ -69,20 +72,20 @@ Vec4f Texture2D::Sampler(Vec2f uv, SamplerState *sampler)
 		if (sampler->pSamplerState.Filter == FILTER_POINT)
 		{
 			int index = (x + y * width);
-			return Vec4f(m_Buffer[index], m_Buffer[index], m_Buffer[index], 1);
+			return glm::vec4(m_Buffer[index], m_Buffer[index], m_Buffer[index], 1);
 		}
 		else if (sampler->pSamplerState.Filter == FILTER_LINEAR)
 		{
 			int index = (x + y * width);
 			unsigned int maxIndex = 4 * (width - 1) * (height - 1) - 4;
-			const Vec4f c00 = Vec4f(m_Buffer[index], m_Buffer[index], m_Buffer[index], 1);
+			const glm::vec4 c00 = glm::vec4(m_Buffer[index], m_Buffer[index], m_Buffer[index], 1);
 			index = std::min(maxIndex, (x + y * width + 1));
-			const Vec4f c10 = Vec4f(m_Buffer[index], m_Buffer[index], m_Buffer[index], 1);
+			const glm::vec4 c10 = glm::vec4(m_Buffer[index], m_Buffer[index], m_Buffer[index], 1);
 			index = std::min(maxIndex, (x + (y + 1) * width));
-			const Vec4f c01 = Vec4f(m_Buffer[index], m_Buffer[index], m_Buffer[index], 1);
+			const glm::vec4 c01 = glm::vec4(m_Buffer[index], m_Buffer[index], m_Buffer[index], 1);
 			index = std::min(maxIndex, (x + 1 + (y + 1) * width));
-			const Vec4f c11 = Vec4f(m_Buffer[index], m_Buffer[index], m_Buffer[index], 1);
-			return Bilinear(uv.x, uv.y, c00, c10, c01, c11);
+			const glm::vec4 c11 = glm::vec4(m_Buffer[index], m_Buffer[index], m_Buffer[index], 1);
+			return Bilinear(gx - x, gy - y, c00, c10, c01, c11);
 		}
 	}
 	break;
@@ -91,19 +94,19 @@ Vec4f Texture2D::Sampler(Vec2f uv, SamplerState *sampler)
 		if (sampler->pSamplerState.Filter == FILTER_POINT)
 		{
 			int index = (x + y * width) * 4;
-			return Vec4f(m_Buffer[index], m_Buffer[index + 1], m_Buffer[index + 2], 1);
+			return glm::vec4(m_Buffer[index], m_Buffer[index + 1], m_Buffer[index + 2], 1);
 		}
 		else if (sampler->pSamplerState.Filter == FILTER_LINEAR)
 		{
 			int index = (x + y * width) * 4;
 			unsigned int maxIndex = 4 * (width - 1) * (height - 1) - 4;
-			const Vec4f c00 = Vec4f(m_Buffer[index], m_Buffer[index + 1], m_Buffer[index + 2], 1);
+			const glm::vec4 c00 = glm::vec4(m_Buffer[index], m_Buffer[index + 1], m_Buffer[index + 2], 1);
 			index = std::min(maxIndex, (x + y * width + 1) * 4);
-			const Vec4f c10 = Vec4f(m_Buffer[index], m_Buffer[index + 1], m_Buffer[index + 2], 1);
+			const glm::vec4 c10 = glm::vec4(m_Buffer[index], m_Buffer[index + 1], m_Buffer[index + 2], 1);
 			index = std::min(maxIndex, (x + (y + 1) * width) * 4);
-			const Vec4f c01 = Vec4f(m_Buffer[index], m_Buffer[index + 1], m_Buffer[index + 2], 1);
+			const glm::vec4 c01 = glm::vec4(m_Buffer[index], m_Buffer[index + 1], m_Buffer[index + 2], 1);
 			index = std::min(maxIndex, (x + 1 + (y + 1) * width) * 4);
-			const Vec4f c11 = Vec4f(m_Buffer[index], m_Buffer[index + 1], m_Buffer[index + 2], 1);
+			const glm::vec4 c11 = glm::vec4(m_Buffer[index], m_Buffer[index + 1], m_Buffer[index + 2], 1);
 			return Bilinear(uv.x, uv.y, c00, c10, c01, c11);
 		}
 	}
@@ -111,5 +114,5 @@ Vec4f Texture2D::Sampler(Vec2f uv, SamplerState *sampler)
 	}
 
 	
-	return Vec4f(0, 0, 0, 0);
+	return glm::vec4(0, 0, 0, 0);
 }
