@@ -310,12 +310,10 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="H:\SoftRenderer\src\main.cpp" />
-    <ClInclude Include="H:\SoftRenderer\src\App.h" />
-    <ClCompile Include="H:\SoftRenderer\src\App.cpp" />
-    <ClInclude Include="H:\SoftRenderer\src\Platform\Window.h" />
-    <ClCompile Include="H:\SoftRenderer\src\Platform\Window.cpp" />
-    <ClInclude Include="H:\SoftRenderer\src\Platform\CasliWin.h" />
+    <ClInclude Include="H:\SoftRenderer\src\Casli\Renderer\VertexBuffer.h" />
+    <ClCompile Include="H:\SoftRenderer\src\Casli\Renderer\VertexBuffer.cpp" />
+    <ClInclude Include="H:\SoftRenderer\src\Casli\Renderer\IndexBuffer.h" />
+    <ClCompile Include="H:\SoftRenderer\src\Casli\Renderer\IndexBuffer.cpp" />
     <ClInclude Include="H:\SoftRenderer\src\Casli\Renderer\Texture.h" />
     <ClCompile Include="H:\SoftRenderer\src\Casli\Renderer\Texture.cpp" />
     <ClInclude Include="H:\SoftRenderer\src\Casli\Scene\Graphics.h" />
@@ -324,6 +322,20 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClInclude Include="H:\SoftRenderer\src\Casli\Renderer\LambertPixelShader.h" />
     <ClInclude Include="H:\SoftRenderer\src\Casli\Renderer\Sampler.h" />
     <ClCompile Include="H:\SoftRenderer\src\Casli\Renderer\Sampler.cpp" />
+    <ClInclude Include="H:\SoftRenderer\src\Casli\Renderer\Bindable.h" />
+    <ClCompile Include="H:\SoftRenderer\src\Casli\Renderer\Bindable.cpp" />
+    <ClInclude Include="H:\SoftRenderer\src\Casli\Renderer\ConstantBuffer.h" />
+    <ClCompile Include="H:\SoftRenderer\src\Casli\Renderer\ConstantBuffer.cpp" />
+    <ClInclude Include="H:\SoftRenderer\src\Casli\Test\Box.h" />
+    <ClCompile Include="H:\SoftRenderer\src\Casli\Test\Box.cpp" />
+    <ClInclude Include="H:\SoftRenderer\src\Casli\Test\Plane.h" />
+    <ClCompile Include="H:\SoftRenderer\src\Casli\Test\Plane.cpp" />
+    <ClCompile Include="H:\SoftRenderer\src\main.cpp" />
+    <ClInclude Include="H:\SoftRenderer\src\Casli\Scene\App.h" />
+    <ClCompile Include="H:\SoftRenderer\src\Casli\Scene\App.cpp" />
+    <ClInclude Include="H:\SoftRenderer\src\Platform\Window.h" />
+    <ClCompile Include="H:\SoftRenderer\src\Platform\Window.cpp" />
+    <ClInclude Include="H:\SoftRenderer\src\Platform\CasliWin.h" />
     <ClInclude Include="H:\SoftRenderer\src\Casli\Scene\Camera.h" />
     <ClCompile Include="H:\SoftRenderer\src\Casli\Scene\Camera.cpp" />
     <ClInclude Include="H:\SoftRenderer\src\Casli\Scene\Model.h" />

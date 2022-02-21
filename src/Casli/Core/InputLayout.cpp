@@ -3,7 +3,8 @@
 InputLayout::InputLayout(const INPUT_ELEMENT_DESC *InputLayout, unsigned int s)
 	: size(s)
 {
-	pInputLayout = InputLayout;
+	pInputLayout = new INPUT_ELEMENT_DESC[s];
+	memcpy(pInputLayout, InputLayout, sizeof(INPUT_ELEMENT_DESC) * s);
 }
 
 InputLayout::~InputLayout()

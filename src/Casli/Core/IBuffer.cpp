@@ -8,11 +8,17 @@ IBuffer::IBuffer(unsigned int byteWidth, unsigned int structureByteStride) : Byt
 IBuffer::IBuffer(unsigned int byteWidth, unsigned int structureByteStride, const void *buffer)
 	: ByteWidth(byteWidth), StructureByteStride(structureByteStride)
 {
-	m_Buffer = new unsigned char[byteWidth];
-	if (buffer != nullptr)
-		memcpy(m_Buffer, buffer, byteWidth);
+	if (buffer)
+	{
+		m_Buffer = (unsigned char *)buffer;
+		//m_Buffer = new unsigned char[byteWidth];
+		//memcpy(m_Buffer, buffer, byteWidth);
+	}
 	else
+	{
+		m_Buffer = new unsigned char[byteWidth];
 		memset(m_Buffer, -1, byteWidth);
+	}
 }
 
 IBuffer::~IBuffer()

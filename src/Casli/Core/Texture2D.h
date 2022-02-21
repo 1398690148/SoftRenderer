@@ -19,6 +19,8 @@ public:
 	glm::vec4 Sampler(glm::vec2 uv, SamplerState *sampler);
 private:
 	glm::vec4 Bilinear(const float &tx, const float  &ty, const glm::vec4 &c00, const glm::vec4 &c10, const glm::vec4 &c01, const glm::vec4 &c11);
+
+	void RemapUV(float &texCoord, TEXTURE_ADDRESS_MODE address);
 private:
 	unsigned int width;
 	unsigned int height;

@@ -6,9 +6,9 @@ class CORE_API DepthStencilView : public IBuffer
 {
 public:
 	DepthStencilView(Texture2D *buffer);
-	void ClearBuffer(const unsigned char depth);
-	unsigned char GetDepth(int i, int j);
-	void SetDepth(int i, int j, unsigned char depth);
+	void ClearBuffer(const float depth);
+	float GetDepth(int i, int j);
+	void SetDepth(int i, int j, float depth);
 private:
 	unsigned int width;
 	unsigned int height;

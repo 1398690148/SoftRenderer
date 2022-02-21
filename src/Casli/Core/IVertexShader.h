@@ -1,7 +1,7 @@
 #pragma once
 #include "CoreAPI.h"
 #include "Texture2D.h"
-#include "Sampler.h"
+#include "SamplerState.h"
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
@@ -32,5 +32,5 @@ public:
 	std::vector<Description> inDesc;
 	std::vector<Description> outDesc;
 	std::vector<Texture2D> textures;
-	std::vector<Sampler> samplers;
+	std::vector<SamplerState> samplers;
 };

@@ -1,7 +1,4 @@
 #include "Device.h"
-#include "VertexBuffer.h"
-#include "IndexBuffer.h"
-#include "ConstantBuffer.h"
 #include "Texture2D.h"
 #include "SamplerState.h"
 #include "RenderTargetView.h"
@@ -18,24 +15,7 @@ Device::~Device()
 
 void Device::CreateBuffer(BUFFER_DESC *bd, SUBRESOURCE_DATA *sd, IBuffer **buffer)
 {
-	switch (bd->BindFlags)
-	{
-	case BufferType::BIND_VERTEX_BUFFER:
-	{
-		*buffer = new VertexBuffer(bd->ByteWidth, bd->StructureByteStride, sd->pSysMem);
-	}
-	break;
-	case BufferType::BIND_INDEX_BUFFER:
-	{
-		*buffer = new IndexBuffer(bd->ByteWidth, bd->StructureByteStride, sd->pSysMem);
-	}
-	break;
-	case BufferType::BIND_CONSTANT_BUFFER:
-	{
-		*buffer = new ConstantBuffer(bd->ByteWidth, bd->StructureByteStride, sd->pSysMem);
-	}
-	break;
-	}
+	*buffer = new IBuffer(bd->ByteWidth, bd->StructureByteStride, sd->pSysMem);
 }
 
 void Device::CreateRenderTargetView(void *gFbo, int width, int height, RenderTargetView **pRTView)
@@ -61,7 +41,8 @@ bool Device::CreateTexture2D(TEXTURE2D_DESC *desc, SUBRESOURCE_DATA *sd, Texture
 	return (*pTexture) != nullptr;
 }
 
-void Device::CreateSamplerState(SAMPLER_DESC *desc, SamplerState **pSamplerState)
+bool Device::CreateSamplerState(SAMPLER_DESC *desc, SamplerState **pSamplerState)
 {
 	*pSamplerState = new SamplerState(desc);
+	return (pSamplerState != nullptr);
 }

@@ -93,4 +93,5 @@ typedef struct SAMPLER_DESC
 	TEXTURE_ADDRESS_MODE AddressU;
 	TEXTURE_ADDRESS_MODE AddressV;
 	TEXTURE_ADDRESS_MODE AddressW;
+	unsigned char borderColor[4];
 } SAMPLER_DESC;

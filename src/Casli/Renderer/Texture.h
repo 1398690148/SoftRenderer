@@ -1,20 +1,15 @@
 #pragma once
+#include "Bindable.h"
 
-class Texture
+class Texture : public Bindable
 {
 public:
-	Texture();
-	Texture(const char *path);
-	~Texture();
-	unsigned char *GetBufferPtr();
-	int GetWidth() const;
-	int GetHeight() const;
-	int GetChannel() const;
-
+	Texture(Graphics& gfx, const char *path, int idx);
+	void Bind(Graphics& gfx) override;
 private:
 	int width;
 	int height;
 	int channels;
-
-	unsigned char *buffer{};
+	int index;
+	Texture2D *pTexture;
 };

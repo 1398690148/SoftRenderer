@@ -20,6 +20,11 @@ void DeviceContext::ClearRenderTargetView(RenderTargetView *RenderTargetView, co
 	RenderTargetView->ClearBuffer(ColorRGBA);
 }
 
+void DeviceContext::ClearDepthStencilView(DepthStencilView * DepthStencilView)
+{
+	DepthStencilView->ClearBuffer(FLT_MAX);
+}
+
 void DeviceContext::IASetVertexBuffers(IBuffer * buf, const unsigned int *pStrides, const unsigned int *pOffsets)
 {
 	pVertexBuffer = buf;
@@ -68,9 +73,10 @@ void DeviceContext::IASetPrimitiveTopology(PRIMITIVE_TOPOLOGY topology)
 	pTopology = topology;
 }
 
-void DeviceContext::RSSetViewports(unsigned int NumViewports, const VIEWPORT * Viewports)
+void DeviceContext::RSSetViewports(unsigned int NumViewports, const VIEWPORT *Viewports)
 {
-	pViewports = Viewports;
+	pViewports = new VIEWPORT();
+	memcpy(pViewports, Viewports, sizeof(VIEWPORT));
 	viewport(0, 0, Viewports->Width, Viewports->Height);
 }
 
@@ -83,48 +89,52 @@ void DeviceContext::OMSetRenderTargets(RenderTargetView **RenderTargetView, Dept
 void DeviceContext::DrawIndex()
 {
 	ParseVertexBuffer();
-	//pVertexShader->buffer = new unsigned char[sizeof(Viewport)];
-	//memcpy(pVertexShader->buffer, &Viewport, sizeof(Viewport));
+	int Size = 0;
+	for (int i = 0; i < pVertexShader->inDesc.size(); i++)
+	{
+		Size += pVertexShader->inDesc[i].Size;
+	}
+	unsigned char *vertexBuffer = new unsigned char[Size];
 	////获取一个片元的索引
 	for (unsigned int offset = 0; offset < pIndexBuffer->GetByteWidth();)
 	{
 		unsigned int *indexBuffer = (unsigned int *)pIndexBuffer->GetBuffer(offset);
 		offset += pIndexBuffer->GetStructureByteStride() * 3;
 
-		int Size = 0;
 		for (int i = 0; i < pVertexShader->inDesc.size(); i++)
 		{
-			Size += pVertexShader->inDesc[i].Size;
+			const Attribute &attr = m_Data[pVertexShader->inDesc[i].Name];
+			memcpy(vertexBuffer + pVertexShader->inDesc[i].Offset, &attr.data[indexBuffer[0]], pVertexShader->inDesc[i].Size);
 		}
-		unsigned char *vertexBuffer = new unsigned char[Size];
+		unsigned char *o0 = pVertexShader->vertex(vertexBuffer);
 
 		for (int i = 0; i < pVertexShader->inDesc.size(); i++)
 		{
 			const Attribute &attr = m_Data[pVertexShader->inDesc[i].Name];
-			memcpy(vertexBuffer + attr.Offset, &attr.data[indexBuffer[0]], attr.Size);
+			memcpy(vertexBuffer + pVertexShader->inDesc[i].Offset, &attr.data[indexBuffer[1]], pVertexShader->inDesc[i].Size);
 		}
 		unsigned char *o1 = pVertexShader->vertex(vertexBuffer);
 
 		for (int i = 0; i < pVertexShader->inDesc.size(); i++)
 		{
 			const Attribute &attr = m_Data[pVertexShader->inDesc[i].Name];
-			memcpy(vertexBuffer + attr.Offset, &attr.data[indexBuffer[1]], attr.Size);
+			memcpy(vertexBuffer + pVertexShader->inDesc[i].Offset, &attr.data[indexBuffer[2]], pVertexShader->inDesc[i].Size);
 		}
 		unsigned char *o2 = pVertexShader->vertex(vertexBuffer);
 
-		for (int i = 0; i < pVertexShader->inDesc.size(); i++)
-		{
-			const Attribute &attr = m_Data[pVertexShader->inDesc[i].Name];
-			memcpy(vertexBuffer + attr.Offset, &attr.data[indexBuffer[2]], attr.Size);
-		}
-		unsigned char *o3 = pVertexShader->vertex(vertexBuffer);
-
-		triangle(o1, o2, o3);
-		delete vertexBuffer;
+		std::vector<glm::vec4> out0, out1, out2;
+		ParseShaderOutput(o0, out0);
+		ParseShaderOutput(o1, out1);
+		ParseShaderOutput(o2, out2);
+		triangle(out0, out1, out2);
+		delete o0;
+		delete o1;
+		delete o2;
 	}
+	//delete vertexBuffer;
 }
 
-glm::vec3 DeviceContext::barycentric(glm::i32vec2 A, glm::i32vec2 B, glm::i32vec2 C, glm::i32vec2 P)
+glm::vec3 DeviceContext::barycentric(glm::vec2 A, glm::vec2 B, glm::vec2 C, glm::vec2 P)
 {
 	glm::vec3 s[2];
 	for (int i = 1; i >= 0; i--)
@@ -139,27 +149,16 @@ glm::vec3 DeviceContext::barycentric(glm::i32vec2 A, glm::i32vec2 B, glm::i32vec
 	return glm::vec3(-1, 1, 1);
 }
 
-void DeviceContext::triangle(unsigned char *o1, unsigned char *o2, unsigned char *o3)
+void DeviceContext::triangle(std::vector<glm::vec4> &o0, std::vector<glm::vec4> &o1, std::vector<glm::vec4> &o2)
 {
-	std::vector<glm::vec4> shaderOutput0;
-	std::vector<glm::vec4> shaderOutput1;
-	std::vector<glm::vec4> shaderOutput2;
-	//解析顶点着色器输出
-	ParseShaderOutput(o1, shaderOutput0);
-	ParseShaderOutput(o2, shaderOutput1);
-	ParseShaderOutput(o3, shaderOutput2);
 	if (SV_PositionIndex == -1) return;
-
-	shaderOutput0[SV_PositionIndex] = shaderOutput0[SV_PositionIndex] / shaderOutput0[SV_PositionIndex].w;
-	shaderOutput1[SV_PositionIndex] = shaderOutput1[SV_PositionIndex] / shaderOutput1[SV_PositionIndex].w;
-	shaderOutput2[SV_PositionIndex] = shaderOutput2[SV_PositionIndex] / shaderOutput2[SV_PositionIndex].w;
-
-	shaderOutput0[SV_PositionIndex] = shaderOutput0[SV_PositionIndex] * Viewport;
-	shaderOutput1[SV_PositionIndex] = shaderOutput1[SV_PositionIndex] * Viewport;
-	shaderOutput2[SV_PositionIndex] = shaderOutput2[SV_PositionIndex] * Viewport;
-	glm::vec3 t0 = glm::i32vec3(shaderOutput0[SV_PositionIndex].x, shaderOutput0[SV_PositionIndex].y, shaderOutput0[SV_PositionIndex].z);
-	glm::vec3 t1 = glm::i32vec3(shaderOutput1[SV_PositionIndex].x, shaderOutput1[SV_PositionIndex].y, shaderOutput1[SV_PositionIndex].z);
-	glm::vec3 t2 = glm::i32vec3(shaderOutput2[SV_PositionIndex].x, shaderOutput2[SV_PositionIndex].y, shaderOutput2[SV_PositionIndex].z);
+	//视口变换
+	o0[SV_PositionIndex] = Viewport * o0[SV_PositionIndex];
+	o1[SV_PositionIndex] = Viewport * o1[SV_PositionIndex];
+	o2[SV_PositionIndex] = Viewport * o2[SV_PositionIndex];
+	glm::vec3 t0 = glm::i32vec3(o0[SV_PositionIndex].x, o0[SV_PositionIndex].y, o0[SV_PositionIndex].z);
+	glm::vec3 t1 = glm::i32vec3(o1[SV_PositionIndex].x, o1[SV_PositionIndex].y, o1[SV_PositionIndex].z);
+	glm::vec3 t2 = glm::i32vec3(o2[SV_PositionIndex].x, o2[SV_PositionIndex].y, o2[SV_PositionIndex].z);
 
 	if (t0.y == t1.y && t0.y == t2.y) return; // I dont care about degenerate triangles 
 	// sort the vertices, t0, t1, t2 lower−to−upper (bubblesort yay!) 
@@ -167,17 +166,17 @@ void DeviceContext::triangle(unsigned char *o1, unsigned char *o2, unsigned char
 	if (t0.y > t1.y)
 	{
 		std::swap(t0, t1);
-		std::swap(shaderOutput0, shaderOutput1);
+		std::swap(o0, o1);
 	}
 	if (t0.y > t2.y)
 	{
 		std::swap(t0, t2);
-		std::swap(shaderOutput0, shaderOutput2);
+		std::swap(o0, o2);
 	}
 	if (t1.y > t2.y)
 	{
 		std::swap(t1, t2);
-		std::swap(shaderOutput1, shaderOutput2);
+		std::swap(o1, o2);
 	}
 	int total_height = t2.y - t0.y;
 	for (int i = 0; i < total_height; i++) {
@@ -190,18 +189,21 @@ void DeviceContext::triangle(unsigned char *o1, unsigned char *o2, unsigned char
 		if (A.x > B.x) std::swap(A, B);
 		unsigned char *pixelInput = new unsigned char[100];
 		for (int j = A.x; j <= B.x; j++) {
-			glm::i32vec2 P(j, t0.y + i);
+			glm::vec2 P(j, t0.y + i);
+			//执行裁剪
+			if ((j < 0 && B.x < 0) || P.y < 0 || j >= pViewports->Width || P.y >= pViewports->Height) break;
+			if (j < 0) continue;
 			glm::vec3 bcScreen = barycentric(t0, t1, t2, P);
 			//插值深度
-			unsigned char depth = std::max(0, std::min(255, (int)(bcScreen[0] * t0.z + bcScreen[1] * t1.z + bcScreen[2] * t2.z)));
-			if (bcScreen[0] < 0 || bcScreen[1] < 0 || bcScreen[2] < 0 || pDepthStencilView->GetDepth(j, t0.y + i) > depth)
+			float depth = bcScreen[0] * t0.z + bcScreen[1] * t1.z + bcScreen[2] * t2.z;
+			if (bcScreen[0] < 0 || bcScreen[1] < 0 || bcScreen[2] < 0 || pDepthStencilView->GetDepth(j, t0.y + i) - 0.01f < depth)
 			{
 				continue;
 			}
 			//插值其他信息
 			for (int k = 0; k < pVertexShader->outDesc.size(); k++)
 			{
-				glm::vec4 attribute = shaderOutput0[k] * bcScreen[0] + shaderOutput1[k] * bcScreen[1] + shaderOutput2[k] * bcScreen[2];
+				glm::vec4 attribute = o0[k] * bcScreen[0] + o1[k] * bcScreen[1] + o2[k] * bcScreen[2];
 				memcpy(pixelInput + pVertexShader->outDesc[k].Offset, &attribute, pVertexShader->outDesc[k].Size);
 			}
 			glm::vec4 colors;
@@ -225,8 +227,6 @@ void DeviceContext::ParseVertexBuffer()
 		if (desc->SemanticName == "Position")
 		{
 			int num = pInputLayout->getData(i)->Size / pInputLayout->getData(i)->typeSize;
-			attr.Size = pInputLayout->getData(i)->Size;
-			attr.Offset = outOffset;
 			int inOffset = pInputLayout->getData(i)->Offset;
 			for (int j = 0; j < bufferSize; j++)
 			{
@@ -244,33 +244,30 @@ void DeviceContext::ParseVertexBuffer()
 				attr.data.push_back(position);
 			}
 		}
-		//else if (desc->SemanticName == "Normal")
-		//{
-		//	int num = pInputLayout->getData(i)->Size / pInputLayout->getData(i)->typeSize;
-		//	normalElemSize = pInputLayout->getData(i)->typeSize;
-		//	normalSize = pInputLayout->getData(i)->Size;
-		//	normalOffset = pInputLayout->getData(i)->Offset;
-		//	for (int j = 0; j < bufferSize; j++)
-		//	{
-		//		Vec4f Normal;
-		//		Normal[0] = *((float *)pVertexBuffer->GetBuffer(pVertexBuffer->GetStructureByteStride() * j + normalOffset));
-		//		Normal[1] = *((float *)pVertexBuffer->GetBuffer(pVertexBuffer->GetStructureByteStride() * j + normalOffset + desc->typeSize));
-		//		if (num > 2)
-		//		{
-		//			Normal[2] = *((float *)pVertexBuffer->GetBuffer(pVertexBuffer->GetStructureByteStride() * j + normalOffset + 2 * desc->typeSize));
-		//			if (num > 3)
-		//			{
-		//				Normal[3] = *((float *)pVertexBuffer->GetBuffer(pVertexBuffer->GetStructureByteStride() * j + normalOffset + 3 * desc->typeSize));
-		//			}
-		//		}
-		//		normals.push_back(Normal);
-		//	}
-		//}
+		else if (desc->SemanticName == "Normal")
+		{
+			int num = pInputLayout->getData(i)->Size / pInputLayout->getData(i)->typeSize;
+
+			int inOffset = pInputLayout->getData(i)->Offset;
+			for (int j = 0; j < bufferSize; j++)
+			{
+				glm::vec4 Normal;
+				Normal[0] = *((float *)pVertexBuffer->GetBuffer(pVertexBuffer->GetStructureByteStride() * j + inOffset));
+				Normal[1] = *((float *)pVertexBuffer->GetBuffer(pVertexBuffer->GetStructureByteStride() * j + inOffset + desc->typeSize));
+				if (num > 2)
+				{
+					Normal[2] = *((float *)pVertexBuffer->GetBuffer(pVertexBuffer->GetStructureByteStride() * j + inOffset + 2 * desc->typeSize));
+					if (num > 3)
+					{
+						Normal[3] = *((float *)pVertexBuffer->GetBuffer(pVertexBuffer->GetStructureByteStride() * j + inOffset + 3 * desc->typeSize));
+					}
+				}
+				attr.data.push_back(Normal);
+			}
+		}
 		else if (desc->SemanticName == "Color")
 		{
 			int num = pInputLayout->getData(i)->Size / pInputLayout->getData(i)->typeSize;
-			attr.Size = pInputLayout->getData(i)->Size / pInputLayout->getData(i)->typeSize * 4;
-			attr.Offset = outOffset;
 			int inOffset = pInputLayout->getData(i)->Offset;
 			for (int j = 0; j < bufferSize; j++)
 			{
@@ -320,8 +317,6 @@ void DeviceContext::ParseVertexBuffer()
 		else if (desc->SemanticName == "UV")
 		{
 			int num = pInputLayout->getData(i)->Size / pInputLayout->getData(i)->typeSize;
-			attr.Size = pInputLayout->getData(i)->Size;
-			attr.Offset = outOffset;
 			int inOffset = pInputLayout->getData(i)->Offset;
 			for (int j = 0; j < bufferSize; j++)
 			{
@@ -340,7 +335,7 @@ void DeviceContext::ParseVertexBuffer()
 	}
 }
 
-void DeviceContext::ParseShaderOutput(unsigned char * buffer, std::vector<glm::vec4> &output)
+void DeviceContext::ParseShaderOutput(unsigned char *buffer, std::vector<glm::vec4> &output)
 {
 	int offset = 0;
 	for (int i = 0; i < pVertexShader->outDesc.size(); i++)
@@ -349,22 +344,25 @@ void DeviceContext::ParseShaderOutput(unsigned char * buffer, std::vector<glm::v
 		{
 			SV_PositionIndex = i;
 		}
+		float *start = (float *)(buffer + offset);
 		switch (pVertexShader->outDesc[i].Size / pVertexShader->outDesc[i].typeSize)
 		{
 		case 2:
 		{
-			output.push_back(glm::vec4(*(float *)(buffer + offset), *(float *)(buffer + offset + pVertexShader->outDesc[i].typeSize), 0, 0));
+			output.push_back(glm::vec4(*start, *(start + 1), 0, 1));
+			start += 2;
 		}
 		break;
 		case 3:
 		{
-			output.push_back(glm::vec4(*(float *)(buffer + offset), *(float *)(buffer + offset + pVertexShader->outDesc[i].typeSize), *(float *)(buffer + offset + 2 * pVertexShader->outDesc[i].typeSize), 0));
+			output.push_back(glm::vec4(*start, *(start + 1), *(start + 2), 1));
+			start += 3;
 		}
 		break;
 		case 4:
 		{
-			output.push_back(glm::vec4(*(float *)(buffer + offset), *(float *)(buffer + offset + pVertexShader->outDesc[i].typeSize),
-				*(float *)(buffer + offset +2 *  pVertexShader->outDesc[i].typeSize), *(float *)(buffer + offset + 3 * pVertexShader->outDesc[i].typeSize)));
+			output.push_back(glm::vec4(*start, *(start + 1), *(start + 2), *(start + 3)) / *(start + 3));
+			start += 4;
 		}
 		break;
 		}
@@ -375,9 +373,9 @@ void DeviceContext::ParseShaderOutput(unsigned char * buffer, std::vector<glm::v
 void DeviceContext::viewport(int x, int y, int w, int h)
 {
 	Viewport = glm::mat4x4(1.0);
-	Viewport[0][3] = x + w / 2.f;
-	Viewport[1][3] = x + h / 2.f;
-	Viewport[2][3] = 255.f / 2.f;
+	Viewport[3][0] = x + w / 2.f;
+	Viewport[3][1] = x + h / 2.f;
+	Viewport[3][2] = 255.f / 2.f;
 
 	Viewport[0][0] = w / 2;
 	Viewport[1][1] = h / 2;

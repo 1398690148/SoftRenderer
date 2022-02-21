@@ -3,13 +3,11 @@ COPY .\src\Casli\Core\CoreAPI.h .\include
 COPY .\src\Casli\Core\Device.h .\include
 COPY .\src\Casli\Core\DeviceContext.h .\include
 COPY .\src\Casli\Core\IBuffer.h .\include
-COPY .\src\Casli\Core\IndexBuffer.h .\include
 COPY .\src\Casli\Core\IPixelShader.h .\include
 COPY .\src\Casli\Core\IVertexShader.h .\include
 COPY .\src\Casli\Core\RenderTargetView.h .\include
 COPY .\src\Casli\Core\Resource.h .\include
 COPY .\src\Casli\Core\SamplerState.h .\include
 COPY .\src\Casli\Core\Texture2D.h .\include
-COPY .\src\Casli\Core\VertexBuffer.h .\include
 COPY .\src\Casli\Core\InputLayout.h .\include
 COPY .\src\Casli\Core\Core.h .\include

@@ -18,5 +18,5 @@ public:
 	void CreateDepthStencilView(Texture2D *pDepthBuffer, DEPTH_STENCIL_VIEW_DESC *desc, DepthStencilView **ppDepthStencilView);
 	void CreateInputLayout(const INPUT_ELEMENT_DESC *pInputElementDescs, unsigned int NumElements, InputLayout **ppInputLayout);
 	bool CreateTexture2D(TEXTURE2D_DESC *desc, SUBRESOURCE_DATA *sd, Texture2D **pTexture);
-	void CreateSamplerState(SAMPLER_DESC *desc, SamplerState **pSamplerState);
+	bool CreateSamplerState(SAMPLER_DESC *desc, SamplerState **pSamplerState);
 };
