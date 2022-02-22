@@ -22,7 +22,7 @@ Plane::Plane(Graphics & gfx)
 	{
 		indices.push_back(i);
 	}
-	textures.push_back(new Texture(gfx, "../src/Casli/Image/awesomeface.png", 0));
+	textures = new Texture(gfx, "../src/Casli/Image/container.jpg", 0);
 	pVertexBuffer = new VertexBuffer(gfx, this->vertices);
 	pIndexBuffer = new IndexBuffer(gfx, this->indices);
 }
@@ -31,9 +31,9 @@ void Plane::Draw(Graphics &gfx)
 {
 	pVertexBuffer->Bind(gfx);
 	pIndexBuffer->Bind(gfx);
-	for (int i = 0; i < textures.size(); i++)
+	//for (int i = 0; i < textures.size(); i++)
 	{
-		textures[i]->Bind(gfx);
+		textures->Bind(gfx);
 	}
 	gfx.Draw();
 }

@@ -28,14 +28,14 @@ public:
 	{
 		Description position = { "Position", 4, 12, 0 };
 		Description normal = { "Normal", 4, 12, 12 };
-		Description uv = { "UV", 4, 8, 24 };
+		Description uv = { "TEXCOORD0", 4, 8, 24 };
 		inDesc.push_back(position);
 		inDesc.push_back(normal);
 		inDesc.push_back(uv);
 
 		Description sv_position = { "SV_Position", 4, 16, 0 };
-		Description sv_normal = { "Normal", 4, 12, 16 };
-		Description sv_uv = { "UV", 4, 8, 28 };
+		Description sv_normal = { "SV_Normal", 4, 12, 16 };
+		Description sv_uv = { "SV_TEXCOORD0", 4, 8, 28 };
 		outDesc.push_back(sv_position);
 		outDesc.push_back(sv_normal);
 		outDesc.push_back(sv_uv);

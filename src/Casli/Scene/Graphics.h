@@ -45,4 +45,5 @@ private:
 	IPixelShader *pPixelShader{};
 	IVertexShader *pVertexShader{};
 	Texture *tex{};
+	float angle = 0;
 };

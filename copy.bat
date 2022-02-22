@@ -11,3 +11,4 @@ COPY .\src\Casli\Core\SamplerState.h .\include
 COPY .\src\Casli\Core\Texture2D.h .\include
 COPY .\src\Casli\Core\InputLayout.h .\include
 COPY .\src\Casli\Core\Core.h .\include
+COPY .\src\Casli\Core\ShaderInput.h .\include

@@ -30,7 +30,7 @@ void App::DoFrame()
 {
 	wnd.Gfx().SetCamera(camera.GetMatrix());
 	wnd.Gfx().BeginFrame(1.f, 1.f, 1.f);
-	//model.Draw(wnd.Gfx());
 	model.Draw(wnd.Gfx());
+	//plane.Draw(wnd.Gfx());
 	wnd.Gfx().EndFrame();
 }

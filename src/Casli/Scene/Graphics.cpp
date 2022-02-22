@@ -16,7 +16,7 @@ Graphics::Graphics(unsigned int width, unsigned int height, HWND hWnd, HDC ghdcM
 	pContext = std::make_unique<DeviceContext>();
 	pDevice->CreateRenderTargetView(gFbo, width, height, &pTarget);
 
-	Texture2D *pDepthStencil;
+	Texture2D *pDepthStencil{};
 	TEXTURE2D_DESC descDepth = {};
 	descDepth.Width = 800u;
 	descDepth.Height = 600u;
@@ -67,7 +67,7 @@ void Graphics::BeginFrame(float red, float green, float blue)
 	{
 		{"Position", sizeof(float), 12, 0},
 		{"Normal", sizeof(float), 12, 12},
-		{"UV", sizeof(float), 8, 24},
+		{"TEXCOORD0", sizeof(float), 8, 24},
 	};
 	pDevice->CreateInputLayout(ied, (unsigned int)std::size(ied), &pInputLayout);
 	pContext->IASetInputLayout(pInputLayout);
@@ -78,6 +78,8 @@ void Graphics::BeginFrame(float red, float green, float blue)
 
 	glm::mat4 matrix = glm::mat4(1.0);
 	matrix = glm::translate(matrix, glm::vec3(0, -7.5, -15));
+	matrix = glm::rotate(matrix, glm::radians(angle += 1), glm::vec3(0.f, 1.f, 0.0f));
+	//matrix = glm::scale(matrix, glm::vec3(3, 3, 0));
 	matrix = projection * camera * matrix;
 	ConstantBuffer pConstantBuffer(*this, matrix);
 	pConstantBuffer.Bind(*this);

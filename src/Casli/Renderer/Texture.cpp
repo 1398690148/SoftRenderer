@@ -17,7 +17,7 @@ Texture::Texture(Graphics& gfx, const char *path, int idx) : index(idx)
 		TEXTURE2D_DESC textureDesc = {};
 		textureDesc.Width = width;
 		textureDesc.Height = height;
-		textureDesc.MipLevels = 1;
+		textureDesc.MipLevels = 5;
 		textureDesc.ArraySize = 1;
 		textureDesc.Format = FORMAT_UNSIGNEDCHAR;
 		textureDesc.BindFlags = BIND_SHADER_RESOURCE;
@@ -30,8 +30,13 @@ Texture::Texture(Graphics& gfx, const char *path, int idx) : index(idx)
 		{
 			throw;
 		}
+		if (textureDesc.MipLevels > 1)
+		{
+			GetContext(gfx)->GenerateMips(pTexture);
+		}
 	}
 	stbi_image_free(data);
+	
 }
 
 void Texture::Bind(Graphics &gfx)
