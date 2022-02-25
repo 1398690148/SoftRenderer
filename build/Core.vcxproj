@@ -322,11 +322,9 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="H:\SoftRenderer\src\Casli\Core\Texture2D.cpp" />
     <ClCompile Include="H:\SoftRenderer\src\Casli\Core\Utils.cpp" />
     <ClCompile Include="H:\SoftRenderer\src\Casli\Core\tgaimage.cpp" />
-    <ClInclude Include="H:\SoftRenderer\src\Casli\Core\Device.h" />
     <ClInclude Include="H:\SoftRenderer\src\Casli\Core\CoreAPI.h" />
     <ClInclude Include="H:\SoftRenderer\src\Casli\Core\DeviceContext.h" />
     <ClInclude Include="H:\SoftRenderer\src\Casli\Core\IBuffer.h" />
-    <ClInclude Include="H:\SoftRenderer\src\Casli\Core\IPixelShader.h" />
     <ClInclude Include="H:\SoftRenderer\src\Casli\Core\IVertexShader.h" />
     <ClInclude Include="H:\SoftRenderer\src\Casli\Core\Utils.h" />
     <ClInclude Include="H:\SoftRenderer\src\Casli\Core\SamplerState.h" />
