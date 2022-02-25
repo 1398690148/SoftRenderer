@@ -6,9 +6,9 @@ COPY .\src\Casli\Core\IBuffer.h .\include
 COPY .\src\Casli\Core\IPixelShader.h .\include
 COPY .\src\Casli\Core\IVertexShader.h .\include
 COPY .\src\Casli\Core\RenderTargetView.h .\include
-COPY .\src\Casli\Core\Resource.h .\include
 COPY .\src\Casli\Core\SamplerState.h .\include
 COPY .\src\Casli\Core\Texture2D.h .\include
 COPY .\src\Casli\Core\InputLayout.h .\include
 COPY .\src\Casli\Core\Core.h .\include
 COPY .\src\Casli\Core\ShaderInput.h .\include
+COPY .\src\Casli\Core\Utils.h .\include

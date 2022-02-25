@@ -25,9 +25,6 @@
     <ClCompile Include="H:\SoftRenderer\src\Casli\Core\RenderTargetView.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="H:\SoftRenderer\src\Casli\Core\Resource.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="H:\SoftRenderer\src\Casli\Core\SamplerState.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -35,6 +32,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="H:\SoftRenderer\src\Casli\Core\Texture2D.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="H:\SoftRenderer\src\Casli\Core\Utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="H:\SoftRenderer\src\Casli\Core\tgaimage.cpp">
@@ -60,7 +60,7 @@
     <ClInclude Include="H:\SoftRenderer\src\Casli\Core\IVertexShader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="H:\SoftRenderer\src\Casli\Core\Resource.h">
+    <ClInclude Include="H:\SoftRenderer\src\Casli\Core\Utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="H:\SoftRenderer\src\Casli\Core\SamplerState.h">

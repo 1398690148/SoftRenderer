@@ -2,11 +2,12 @@
 #include <memory>
 
 DepthStencilView::DepthStencilView(Texture2D *buffer)
-	: IBuffer(buffer->GetWidth() * buffer->GetHeight() * 4, buffer->GetStructureByteStride()), width(buffer->GetWidth()), height(buffer->GetHeight())
+	: IBuffer(buffer->GetWidth() * buffer->GetHeight() * 4, buffer->GetStructureByteStride()), 
+	width(buffer->GetWidth()), height(buffer->GetHeight()), maxHeight(buffer->GetHeight() - 1)
 {
 	if (buffer)
 	{
-		m_Buffer = (unsigned char *)(buffer->GetBuffer(0));
+		buffer->GetUniqueBuffer(&m_Buffer);
 	}
 	else
 	{
@@ -32,10 +33,10 @@ void DepthStencilView::ClearBuffer(const float depth)
 
 float DepthStencilView::GetDepth(int i, int j)
 {
-	return ((float *)m_Buffer)[i + (height - 1 - j) * width];
+	return ((float *)m_Buffer)[i + (maxHeight - j) * width];
 }
 
 void DepthStencilView::SetDepth(int i, int j, float depth)
 {
-	((float *)m_Buffer)[i + (height - 1 - j) * width] = depth;
+	((float *)m_Buffer)[i + (maxHeight - j) * width] = depth;
 }

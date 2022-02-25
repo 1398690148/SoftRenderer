@@ -13,24 +13,28 @@ Device::~Device()
 {
 }
 
-void Device::CreateBuffer(BUFFER_DESC *bd, SUBRESOURCE_DATA *sd, IBuffer **buffer)
+bool Device::CreateBuffer(BUFFER_DESC *bd, SUBRESOURCE_DATA *sd, IBuffer **buffer)
 {
 	*buffer = new IBuffer(bd->ByteWidth, bd->StructureByteStride, sd->pSysMem);
+	return (*buffer != nullptr);
 }
 
-void Device::CreateRenderTargetView(void *gFbo, int width, int height, RenderTargetView **pRTView)
+bool Device::CreateRenderTargetView(void *gFbo, int width, int height, RenderTargetView **pRTView)
 {
 	*pRTView = new RenderTargetView(width, height, 4, gFbo);
+	return (*pRTView != nullptr);
 }
 
-void Device::CreateDepthStencilView(Texture2D *pDepthBuffer, DEPTH_STENCIL_VIEW_DESC *desc, DepthStencilView **ppDepthStencilView)
+bool Device::CreateDepthStencilView(Texture2D *pDepthBuffer, DEPTH_STENCIL_VIEW_DESC *desc, DepthStencilView **ppDepthStencilView)
 {
 	*ppDepthStencilView = new DepthStencilView(pDepthBuffer);
+	return (*ppDepthStencilView != nullptr);
 }
 
-void Device::CreateInputLayout(const INPUT_ELEMENT_DESC * pInputElementDescs, unsigned int NumElements, InputLayout **ppInputLayout)
+bool Device::CreateInputLayout(const INPUT_ELEMENT_DESC * pInputElementDescs, unsigned int NumElements, InputLayout **ppInputLayout)
 {
 	*ppInputLayout = new InputLayout(pInputElementDescs, NumElements);
+	return (*ppInputLayout != nullptr);
 }
 
 bool Device::CreateTexture2D(TEXTURE2D_DESC *desc, SUBRESOURCE_DATA *sd, Texture2D **pTexture)

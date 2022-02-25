@@ -2,7 +2,7 @@
 #include "Texture.h"
 #include "stb_image/stb_image.cpp"
 
-Texture::Texture(Graphics& gfx, const char *path, int idx) : index(idx)
+Texture::Texture(Graphics& gfx, const char *path, int mipMapLevel, int idx) : index(idx)
 {
 	stbi_set_flip_vertically_on_load(true);
 	unsigned char* data = stbi_load(path, &width, &height, &channels, 0);
@@ -17,7 +17,7 @@ Texture::Texture(Graphics& gfx, const char *path, int idx) : index(idx)
 		TEXTURE2D_DESC textureDesc = {};
 		textureDesc.Width = width;
 		textureDesc.Height = height;
-		textureDesc.MipLevels = 5;
+		textureDesc.MipLevels = mipMapLevel;
 		textureDesc.ArraySize = 1;
 		textureDesc.Format = FORMAT_UNSIGNEDCHAR;
 		textureDesc.BindFlags = BIND_SHADER_RESOURCE;

@@ -3,7 +3,7 @@
 #include "../Renderer/LambertPixelShader.h"
 #include "../Renderer/Texture.h"
 #include "../Renderer/Sampler.h"
-#include "../Renderer/ConstantBuffer.h"
+#include "../Renderer/VertexConstantBuffer.h"
 #include "Model.h"
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -37,9 +37,10 @@ Graphics::Graphics(unsigned int width, unsigned int height, HWND hWnd, HDC ghdcM
 	pViewports.Height = 600;
 	pViewports.TopLeftX = 0;
 	pViewports.TopLeftY = 0;
+	pViewports.MaxDepth = 10000;
+	pViewports.MinDepth = 0;
 	pContext->RSSetViewports(1, &pViewports);
 
-	//tex = new Texture(*this, "../src/Casli/Model/Image/awesomeface.png", 0);
 	sampler = new Sampler(*this, 0);
 	pPixelShader = new LambertPixelShader();
 	pVertexShader = new LambertVertexShader();
@@ -72,17 +73,17 @@ void Graphics::BeginFrame(float red, float green, float blue)
 	pDevice->CreateInputLayout(ied, (unsigned int)std::size(ied), &pInputLayout);
 	pContext->IASetInputLayout(pInputLayout);
 
+	glm::mat4 matrix = glm::mat4(1.0);
+	//matrix = glm::scale(matrix, glm::vec3(3, 3, 1));
+	//matrix = glm::rotate(matrix, glm::radians(-60.f), glm::vec3(1.f, 0.f, 0.f));
+	//matrix = glm::translate(matrix, glm::vec3(0.f, -7.5f, -10.0f));
+	//matrix = projection * camera * matrix;
+	//pConstantBuffer = new VertexConstantBuffer(*this, matrix);
+	//pConstantBuffer->Bind(*this);
+
 	//tex->Bind(*this);
 	sampler->Bind(*this);
 	pContext->IASetPrimitiveTopology(PRIMITIVE_TOPOLOGY::PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-	glm::mat4 matrix = glm::mat4(1.0);
-	matrix = glm::translate(matrix, glm::vec3(0, -7.5, -15));
-	matrix = glm::rotate(matrix, glm::radians(angle += 1), glm::vec3(0.f, 1.f, 0.0f));
-	//matrix = glm::scale(matrix, glm::vec3(3, 3, 0));
-	matrix = projection * camera * matrix;
-	ConstantBuffer pConstantBuffer(*this, matrix);
-	pConstantBuffer.Bind(*this);
 }
 
 void Graphics::EndFrame()
@@ -102,8 +103,18 @@ void Graphics::SetCamera(glm::mat4x4 cam)
 	camera = cam;
 }
 
+const glm::mat4 &Graphics::GetCamera() const
+{
+	return camera;;
+}
+
 void Graphics::SetProjection(glm::mat4x4 proj)
 {
 	projection = proj;
+}
+
+const glm::mat4 &Graphics::GetProjection() const
+{
+	return projection;
 }
 

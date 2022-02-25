@@ -1,6 +1,8 @@
 #pragma once
 #include <string>
 
+#define PI std::acos(-1)
+
 enum BufferType
 {
 	BIND_VERTEX_BUFFER,
@@ -75,8 +77,10 @@ typedef struct DEPTH_STENCIL_VIEW_DESC
 
 enum FILTER
 {
-	FILTER_POINT,
-	FILTER_LINEAR,
+	FILTER_POINT_MIP_POINT,
+	FILTER_POINT_MIP_LINEAR,
+	FILTER_LINEAR_MIP_POINT,
+	FILTER_LINEAR_MIP_LINEAR,
 };
 
 enum TEXTURE_ADDRESS_MODE

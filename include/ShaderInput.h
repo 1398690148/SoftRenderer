@@ -24,9 +24,3 @@ struct Description
 	unsigned int Size;
 	unsigned int Offset;
 };
-
-namespace ShaderInput
-{
-	extern glm::vec2 ddx;
-	extern glm::vec2 ddy;
-}

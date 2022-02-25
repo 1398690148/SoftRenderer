@@ -2,7 +2,7 @@
 #include <memory>
 
 RenderTargetView::RenderTargetView(unsigned int w, unsigned int h, unsigned int structureByteStride, const void *buffer)
-	: IBuffer(w * h * 4, structureByteStride), width(w), height(h)
+	: IBuffer(w * h * structureByteStride, structureByteStride), width(w), height(h)
 {
 	if (buffer)
 	{
@@ -11,13 +11,12 @@ RenderTargetView::RenderTargetView(unsigned int w, unsigned int h, unsigned int 
 	else
 	{
 		m_Buffer = new unsigned char[ByteWidth];
-		memset(m_Buffer, -1, ByteWidth);
 	}
 }
 
 void RenderTargetView::ClearBuffer(const float ColorRGBA[4])
 {
-	unsigned int stride = sizeof(unsigned char) * 4;
+	unsigned int stride = sizeof(unsigned char) * StructureByteStride;
 	unsigned char *buffer = m_Buffer;
 	unsigned char color[4];
 	color[0] = (unsigned char)(ColorRGBA[2] * 255);
@@ -35,7 +34,7 @@ void RenderTargetView::ClearBuffer(const float ColorRGBA[4])
 
 void RenderTargetView::SetPixel(int i, int j, unsigned char r, unsigned char g, unsigned char b, unsigned char a)
 {
-	unsigned int stride = sizeof(unsigned char) * 4;
+	unsigned int stride = sizeof(unsigned char) * StructureByteStride;
 	unsigned char *buffer = m_Buffer + i * StructureByteStride + (height - 1 - j) * width * StructureByteStride;
 	unsigned char color[4] = {b, g, r, a};
 	memcpy(buffer, color, stride);

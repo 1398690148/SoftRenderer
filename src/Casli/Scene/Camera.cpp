@@ -23,30 +23,7 @@ glm::mat4x4 Camera::GetMatrix()
 	//return ModelView;
 }
 
-//Matrix Camera::GetTranslateMatrix()
-//{
-//	Matrix matrix = Matrix::identity();
-//	matrix[2][3] = -r;
-//	return matrix;
-//}
-//
-//Matrix Camera::GetRotationMatrix()
-//{
-//	Matrix matrix = Matrix::identity();
-//	float cosp = cos(phi);
-//	float sinp = sin(phi);
-//	float cosy = sin(yaw);
-//	float siny = sin(yaw);
-//	float cosr = sin(roll);
-//	float sinr = sin(roll);
-//	matrix[0][0] = cosp * cosr - cosy * sinp * sinr;
-//	matrix[0][1] = -cosy * cosr * sinp - cosp * sinr;
-//	matrix[0][2] = sinp * siny;
-//	matrix[1][0] = cosr * sinp + cosp * cosy * sinr;
-//	matrix[1][1] = cosp * cosy * cosr - sinp * sinr;
-//	matrix[1][2] = -cosp * siny;
-//	matrix[2][0] = siny * sinr;
-//	matrix[2][1] = cosr * siny;
-//	matrix[2][2] = cosy;
-//	return matrix;
-//}
+void Camera::Translate(glm::vec3 offset)
+{
+	eye += offset;
+}

@@ -10,6 +10,6 @@ public:
 	unsigned int getSize() const;
 	const INPUT_ELEMENT_DESC *getData(unsigned int offset);
 private:
-	INPUT_ELEMENT_DESC *pInputLayout;
+	INPUT_ELEMENT_DESC *pInputLayout{};
 	unsigned int size;
 };

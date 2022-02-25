@@ -1,25 +1,49 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="H:\SoftRenderer\src\Casli\Renderer\VertexBuffer.cpp">
+    <ClCompile Include="H:\SoftRenderer\src\Casli\Renderer\Bindable.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="H:\SoftRenderer\src\Casli\Renderer\DirectionalLight.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="H:\SoftRenderer\src\Casli\Renderer\IndexBuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="H:\SoftRenderer\src\Casli\Renderer\Texture.cpp">
+    <ClCompile Include="H:\SoftRenderer\src\Casli\Renderer\PixelConstantBuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="H:\SoftRenderer\src\Casli\Scene\Graphics.cpp">
+    <ClCompile Include="H:\SoftRenderer\src\Casli\Renderer\PointLight.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="H:\SoftRenderer\src\Casli\Renderer\Sampler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="H:\SoftRenderer\src\Casli\Renderer\Bindable.cpp">
+    <ClCompile Include="H:\SoftRenderer\src\Casli\Renderer\SpotLight.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="H:\SoftRenderer\src\Casli\Renderer\ConstantBuffer.cpp">
+    <ClCompile Include="H:\SoftRenderer\src\Casli\Renderer\Texture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="H:\SoftRenderer\src\Casli\Renderer\VertexBuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="H:\SoftRenderer\src\Casli\Renderer\VertexConstantBuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="H:\SoftRenderer\src\Casli\Scene\App.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="H:\SoftRenderer\src\Casli\Scene\Camera.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="H:\SoftRenderer\src\Casli\Scene\Graphics.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="H:\SoftRenderer\src\Casli\Scene\Mesh.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="H:\SoftRenderer\src\Casli\Scene\Model.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="H:\SoftRenderer\src\Casli\Test\Box.cpp">
@@ -31,19 +55,7 @@
     <ClCompile Include="H:\SoftRenderer\src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="H:\SoftRenderer\src\Casli\Scene\App.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="H:\SoftRenderer\src\Platform\Window.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="H:\SoftRenderer\src\Casli\Scene\Camera.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="H:\SoftRenderer\src\Casli\Scene\Model.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="H:\SoftRenderer\src\Casli\Scene\Mesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -55,9 +67,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="H:\SoftRenderer\src\Casli\Renderer\Texture.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="H:\SoftRenderer\src\Casli\Scene\Graphics.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="H:\SoftRenderer\src\Casli\Renderer\LambertVertexShader.h">
@@ -72,22 +81,28 @@
     <ClInclude Include="H:\SoftRenderer\src\Casli\Renderer\Bindable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="H:\SoftRenderer\src\Casli\Renderer\ConstantBuffer.h">
+    <ClInclude Include="H:\SoftRenderer\src\Casli\Renderer\VertexConstantBuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="H:\SoftRenderer\src\Casli\Test\Box.h">
+    <ClInclude Include="H:\SoftRenderer\src\Casli\Renderer\PixelConstantBuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="H:\SoftRenderer\src\Casli\Test\Plane.h">
+    <ClInclude Include="H:\SoftRenderer\src\Casli\Renderer\Light.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="H:\SoftRenderer\src\Casli\Renderer\DirectionalLight.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="H:\SoftRenderer\src\Casli\Renderer\PointLight.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="H:\SoftRenderer\src\Casli\Renderer\SpotLight.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="H:\SoftRenderer\src\Casli\Scene\Graphics.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="H:\SoftRenderer\src\Casli\Scene\App.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="H:\SoftRenderer\src\Platform\Window.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="H:\SoftRenderer\src\Platform\CasliWin.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="H:\SoftRenderer\src\Casli\Scene\Camera.h">
@@ -97,6 +112,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="H:\SoftRenderer\src\Casli\Scene\Mesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="H:\SoftRenderer\src\Casli\Test\Box.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="H:\SoftRenderer\src\Casli\Test\Plane.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="H:\SoftRenderer\src\Platform\Window.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="H:\SoftRenderer\src\Platform\CasliWin.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

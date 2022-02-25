@@ -9,7 +9,7 @@ InputLayout::InputLayout(const INPUT_ELEMENT_DESC *InputLayout, unsigned int s)
 
 InputLayout::~InputLayout()
 {
-
+	delete pInputLayout;
 }
 
 unsigned int InputLayout::getSize() const

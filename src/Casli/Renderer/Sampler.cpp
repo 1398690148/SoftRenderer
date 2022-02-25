@@ -3,7 +3,7 @@
 Sampler::Sampler(Graphics &gfx, int idx) : index(idx)
 {
 	SAMPLER_DESC samplerDesc = {};
-	samplerDesc.Filter = FILTER_POINT;
+	samplerDesc.Filter = FILTER_POINT_MIP_POINT;
 	samplerDesc.AddressU = TEXTURE_ADDRESS_WRAP;
 	samplerDesc.AddressV = TEXTURE_ADDRESS_WRAP;
 	samplerDesc.AddressW = TEXTURE_ADDRESS_WRAP;

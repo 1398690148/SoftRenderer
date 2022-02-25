@@ -1,11 +1,7 @@
 #pragma once
 #include "CoreAPI.h"
 #include "IBuffer.h"
-#include <glm/vec2.hpp>
-#include <glm/vec3.hpp>
-#include <glm/vec4.hpp>
-#include <glm/mat4x4.hpp>
-#include <glm/geometric.hpp>
+#include "Utils.h"
 #include <vector>
 #include <unordered_map>
 
@@ -19,7 +15,6 @@ class SamplerState;
 
 class CORE_API DeviceContext
 {
-	friend class RenderTargetView;
 public:
 	DeviceContext();
 	~DeviceContext();
@@ -31,26 +26,26 @@ public:
 	void PSSetShader(IPixelShader *shader);
 	void PSSetShaderResources(int slot, Texture2D **texture);
 	void PSSetSamplerState(int slot, SamplerState **sampler);
-	void VSSetConstantBuffers(IBuffer *constantBuffer);
+	void VSSetConstantBuffers(unsigned int StartOffset, unsigned int NumBuffers, IBuffer *constantBuffer);
+	void PSSetConstantBuffers(unsigned int StartOffset, unsigned int NumBuffers, IBuffer *constantBuffer);
 	void IASetInputLayout(InputLayout *InputLayout);
 	void IASetPrimitiveTopology(PRIMITIVE_TOPOLOGY topology);
 	void RSSetViewports(unsigned int NumViewports, const VIEWPORT *Viewports);
 	void OMSetRenderTargets(RenderTargetView **RenderTargetView, DepthStencilView **DepthStencilView);
-
 	void GenerateMips(Texture2D *texture);
-
 	void DrawIndex();
 
 private:
-	glm::vec3 Barycentric(glm::vec2 A, glm::vec2 B, glm::vec2 C, glm::vec2 P);
-	void Triangle(std::unordered_map<std::string, glm::vec4> &o1, std::unordered_map<std::string, glm::vec4> &o2, std::unordered_map<std::string, glm::vec4> &o3);
+	void Triangle(std::unordered_map<std::string, glm::vec4> vertex[3]);
 
 	void ParseVertexBuffer();
 	void ParseShaderOutput(unsigned char *buffer, std::unordered_map<std::string, glm::vec4> &output);
-
-	void viewport(int x, int y, int w, int h);
-	void ViewportTransform(glm::vec4 &t0, glm::vec4 &t1, glm::vec4 &t2);
+	
+	void ViewportTransform(std::unordered_map<std::string, glm::vec4> vertex[3]);
 	unsigned char *Vertex(int idx, unsigned char *vertexBuffer);
+	void DDXDDY(std::unordered_map<std::string, glm::vec4> vertex[3], glm::vec3 &t0, glm::vec3 &t1, glm::vec3 &t2, glm::vec2 &P);
+	void prePerspCorrection(std::unordered_map<std::string, glm::vec4> &output);
+	void Interpolation(std::unordered_map<std::string, glm::vec4> vertex[3], glm::vec3 &bcScreen);
 private:
 	IBuffer *pVertexBuffer{};
 	IBuffer *pIndexBuffer{};
@@ -65,10 +60,13 @@ private:
 	VIEWPORT *pViewports{};
 
 	glm::mat4 Viewport;
-
 	//顶点缓存中的数据
 	std::unordered_map<std::string, std::vector<glm::vec4>> m_Data;
+	unsigned char *tempBuffer;
 };
+
+
+
 
 class QuadFragments
 {

@@ -1,20 +1,48 @@
 #include "Model.h"
 #include <assimp/types.h>
 #include "../Renderer/Texture.h"
+#include <glm/gtc/matrix_transform.hpp>
+#include "../Renderer/VertexConstantBuffer.h"
 
 Model::Model(Graphics &gfx, const char *path)
 {
 	loadModel(gfx, path);
+	std::vector<glm::mat4> matrix;
+	matrix.push_back(glm::mat4(1.0));
+	matrix.push_back(glm::mat4(1.0));
+	matrix.push_back(glm::mat4(1.0));
+	pConstantBuffer = new VertexConstantBuffer(gfx, 0, (unsigned char*)&matrix[0], sizeof(glm::mat4) * matrix.size());
 }
 
 void Model::Draw(Graphics &gfx)
 {
+	std::vector<glm::mat4> matrix;
+	glm::mat4 MVP = glm::mat4(1.0);
+	glm::mat4 MT = glm::mat4(1.0);
+	glm::mat4 M = glm::mat4(1.0);
+	MVP = glm::translate(MVP, glm::vec3(0, -12.f, -7));
+	MVP = glm::rotate(MVP, glm::radians(z), glm::vec3(0, 1.f, 0));
+
+	M = glm::translate(M, glm::vec3(0, -12.f, -7));
+	M = glm::rotate(M, glm::radians(z), glm::vec3(0, 1.f, 0));
+
+	MT = glm::translate(MT, glm::vec3(0, -12.f, -7));
+	MT = glm::transpose(glm::inverse(glm::rotate(MT, glm::radians(z++), glm::vec3(0, 1.f, 0))));
+
+	MVP = gfx.GetProjection() * gfx.GetCamera() * MVP;
+	matrix.push_back(MVP);
+	matrix.push_back(M);
+	matrix.push_back(MT);
+	pConstantBuffer->SetMatrix(matrix);
+	pConstantBuffer->Bind(gfx);
 	for (auto &mesh : meshes)
 	{
 		mesh.Draw(gfx);
 		//meshes[0].Draw(gfx);
+		//meshes[1].Draw(gfx);
 		//meshes[2].Draw(gfx);
-
+		//meshes[3].Draw(gfx);
+		//meshes[4].Draw(gfx);
 		//meshes[6].Draw(gfx);
 		//meshes[5].Draw(gfx);
 	}
@@ -91,7 +119,7 @@ Mesh Model::processMesh(Graphics &gfx, aiMesh * mesh, const aiScene * scene)
 	{
 		aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
 		loadMaterialTextures(gfx, material, aiTextureType_DIFFUSE, "texture_diffuse", textures);
-		//loadMaterialTextures(gfx, material, aiTextureType_SPECULAR, "texture_specular", textures);
+		loadMaterialTextures(gfx, material, aiTextureType_SPECULAR, "texture_specular", textures);
 	}
 	return Mesh(gfx, vertices, indices, textures);
 }
@@ -103,10 +131,7 @@ void Model::loadMaterialTextures(Graphics &gfx, aiMaterial * mat, aiTextureType 
 		aiString str;
 		mat->GetTexture(type, i, &str);
 		std::string path = directory + "/" + str.C_Str();
-		Texture *texture = new Texture(gfx, path.c_str(), textures.size());
-		//texture.id = TextureFromFile(str.C_Str(), directory);
-		//texture.type = typeName;
-		//texture.path = str;
+		Texture *texture = new Texture(gfx, path.c_str(), 10, textures.size());
 		textures.push_back(texture);
 	}
 }

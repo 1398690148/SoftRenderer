@@ -22,12 +22,14 @@ private:
 
 	void RemapUV(float &texCoord, TEXTURE_ADDRESS_MODE address);
 
-	glm::vec4 Sampler(glm::vec2 uv, SamplerState *sampler, int lod);
+	glm::vec4 Sampler(glm::vec2 uv, SamplerState *sampler, float lod);
+	glm::vec4 GetColor(int index, int x, int y, int w);
 private:
-	unsigned int width;
-	unsigned int height;
+	int width;
+	int height;
 	int channels;
 	unsigned int mipLevels;
 	DataFormat format;
 	unsigned int SysMemPitch;
+	float tmax = 0;
 };

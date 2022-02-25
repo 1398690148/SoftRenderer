@@ -8,6 +8,7 @@
 
 class Mesh;
 class Texture;
+class VertexConstantBuffer;
 
 class Model
 {
@@ -22,4 +23,6 @@ private:
 private:
 	std::vector<Mesh> meshes;
 	std::string directory;
+	VertexConstantBuffer *pConstantBuffer{};
+	float z = 0;
 };

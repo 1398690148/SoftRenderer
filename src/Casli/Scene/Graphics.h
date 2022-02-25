@@ -4,7 +4,7 @@
 #include "RenderTargetView.h"
 #include "./Platform/CasliWin.h"
 
-class ConstantBuffer;
+class VertexConstantBuffer;
 class InputLayout;
 class Texture;
 class Sampler;
@@ -21,7 +21,9 @@ public:
 	void Draw();
 
 	void SetCamera(glm::mat4x4 cam);
+	const glm::mat4 &GetCamera() const;
 	void SetProjection(glm::mat4x4 proj);
+	const glm::mat4 &GetProjection() const;
 private:
 	void ClearBuffer(float red, float green, float blue);
 
@@ -38,8 +40,8 @@ private:
 
 	HWND hWnd;
 	HDC ghdcMainWnd;
+	VertexConstantBuffer *pConstantBuffer{};
 
-	ConstantBuffer *pConstantBuffer{};
 	InputLayout *pInputLayout;
 	Sampler *sampler{};
 	IPixelShader *pPixelShader{};

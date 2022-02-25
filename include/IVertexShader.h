@@ -4,11 +4,12 @@
 class CORE_API IVertexShader
 {
 public:
+	IVertexShader();
 	virtual unsigned char *vertex(unsigned char *input) = 0;
-	virtual ~IVertexShader() { delete buffer; }
-	unsigned char *buffer{};
+	virtual ~IVertexShader();
+	unsigned char *cbuffer{};
 	std::vector<Description> inDesc;
 	std::vector<Description> outDesc;
-	std::vector<Texture2D> textures;
-	std::vector<SamplerState> samplers;
+	Texture2D **textures{};
+	SamplerState **samplers{};
 };

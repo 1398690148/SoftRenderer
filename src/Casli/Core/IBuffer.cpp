@@ -1,24 +1,16 @@
 #include "IBuffer.h"
 #include <memory>
 
-IBuffer::IBuffer(unsigned int byteWidth, unsigned int structureByteStride) : ByteWidth(byteWidth), StructureByteStride(structureByteStride)
+IBuffer::IBuffer(unsigned int byteWidth, unsigned int structureByteStride) 
+	: ByteWidth(byteWidth), StructureByteStride(structureByteStride)
 {
 }
 
 IBuffer::IBuffer(unsigned int byteWidth, unsigned int structureByteStride, const void *buffer)
 	: ByteWidth(byteWidth), StructureByteStride(structureByteStride)
 {
-	if (buffer)
-	{
-		m_Buffer = (unsigned char *)buffer;
-		//m_Buffer = new unsigned char[byteWidth];
-		//memcpy(m_Buffer, buffer, byteWidth);
-	}
-	else
-	{
-		m_Buffer = new unsigned char[byteWidth];
-		memset(m_Buffer, -1, byteWidth);
-	}
+	m_Buffer = new unsigned char[byteWidth];
+	memcpy(m_Buffer, buffer, byteWidth);
 }
 
 IBuffer::~IBuffer()
@@ -27,9 +19,15 @@ IBuffer::~IBuffer()
 		delete m_Buffer;
 }
 
-unsigned char * IBuffer::GetBuffer(unsigned int offset)
+unsigned char *IBuffer::GetBuffer(unsigned int offset)
 {
 	return m_Buffer + offset;
+}
+
+void IBuffer::GetUniqueBuffer(unsigned char **buffer)
+{
+	*buffer = m_Buffer;
+	m_Buffer = nullptr;
 }
 
 inline unsigned int IBuffer::GetStructureByteStride() const

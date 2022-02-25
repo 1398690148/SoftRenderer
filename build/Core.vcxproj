@@ -317,10 +317,10 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="H:\SoftRenderer\src\Casli\Core\IVertexShader.cpp" />
     <ClCompile Include="H:\SoftRenderer\src\Casli\Core\InputLayout.cpp" />
     <ClCompile Include="H:\SoftRenderer\src\Casli\Core\RenderTargetView.cpp" />
-    <ClCompile Include="H:\SoftRenderer\src\Casli\Core\Resource.cpp" />
     <ClCompile Include="H:\SoftRenderer\src\Casli\Core\SamplerState.cpp" />
     <ClCompile Include="H:\SoftRenderer\src\Casli\Core\ShaderInput.cpp" />
     <ClCompile Include="H:\SoftRenderer\src\Casli\Core\Texture2D.cpp" />
+    <ClCompile Include="H:\SoftRenderer\src\Casli\Core\Utils.cpp" />
     <ClCompile Include="H:\SoftRenderer\src\Casli\Core\tgaimage.cpp" />
     <ClInclude Include="H:\SoftRenderer\src\Casli\Core\Device.h" />
     <ClInclude Include="H:\SoftRenderer\src\Casli\Core\CoreAPI.h" />
@@ -328,7 +328,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClInclude Include="H:\SoftRenderer\src\Casli\Core\IBuffer.h" />
     <ClInclude Include="H:\SoftRenderer\src\Casli\Core\IPixelShader.h" />
     <ClInclude Include="H:\SoftRenderer\src\Casli\Core\IVertexShader.h" />
-    <ClInclude Include="H:\SoftRenderer\src\Casli\Core\Resource.h" />
+    <ClInclude Include="H:\SoftRenderer\src\Casli\Core\Utils.h" />
     <ClInclude Include="H:\SoftRenderer\src\Casli\Core\SamplerState.h" />
     <ClInclude Include="H:\SoftRenderer\src\Casli\Core\Texture2D.h" />
     <ClInclude Include="H:\SoftRenderer\src\Casli\Core\tgaimage.h" />

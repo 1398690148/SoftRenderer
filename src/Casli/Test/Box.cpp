@@ -57,7 +57,7 @@ Box::Box(Graphics & gfx)
 	{
 		indices.push_back(i);
 	}
-	textures.push_back(new Texture(gfx, "../src/Casli/Image/awesomeface.png", 0));
+	textures.push_back(new Texture(gfx, "../src/Casli/Image/awesomeface.png", 1, 0));
 	pVertexBuffer = new VertexBuffer(gfx, this->vertices);
 	pIndexBuffer = new IndexBuffer(gfx, this->indices);
 }

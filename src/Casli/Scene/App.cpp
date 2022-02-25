@@ -5,10 +5,9 @@
 glm::vec3 eye(0, 0, 5);
 
 App::App()
-	:
-	wnd(800, 600, "The Donkey Fart Box"), camera(eye, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0), 45)
+	: wnd(800, 600, "The Donkey Fart Box"), camera(eye, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0), 45)
 {
-	glm::mat4 Projection = glm::perspective(glm::radians(45.f), 4.0f / 3.0f, 0.1f, 100.f);
+	glm::mat4 Projection = glm::perspective(glm::radians(30.f), 4.0f / 3.0f, 0.1f, 100.f);
 	wnd.Gfx().SetProjection(Projection);
 }
 
@@ -30,6 +29,9 @@ void App::DoFrame()
 {
 	wnd.Gfx().SetCamera(camera.GetMatrix());
 	wnd.Gfx().BeginFrame(1.f, 1.f, 1.f);
+	directionalLight.Bind(wnd.Gfx());
+	pointLight.Bind(wnd.Gfx());
+	spotLight.Bind(wnd.Gfx());
 	model.Draw(wnd.Gfx());
 	//plane.Draw(wnd.Gfx());
 	wnd.Gfx().EndFrame();

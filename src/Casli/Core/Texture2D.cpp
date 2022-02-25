@@ -4,27 +4,26 @@
 #include <glm/glm.hpp>
 #include <cmath>
 #include "tgaimage.h"
+#include <iostream>
 
 Texture2D::Texture2D(TEXTURE2D_DESC *desc, SUBRESOURCE_DATA *sd)
-	: IBuffer(sd ? sd->SysMemPitch * desc->Height : desc->Width * desc->Height * 4, sizeof(unsigned char)), width(desc->Width), height(desc->Height),
-	mipLevels(desc->MipLevels), format(desc->Format)
+	: IBuffer(sd ? sd->SysMemPitch * desc->Height : desc->Width * desc->Height * 4, sizeof(unsigned char)), 
+	width(desc->Width), height(desc->Height), mipLevels(desc->MipLevels), format(desc->Format)
 {
-	if (mipLevels > 1)
+	if (sd)
 	{
-		m_Buffer = new unsigned char[ByteWidth * 4 / 3];
-		memset(m_Buffer, 0, ByteWidth + ByteWidth / 3);
+		m_Buffer = (unsigned char *)sd->pSysMem;
+		if (mipLevels > 1)
+		{
+			m_Buffer = (unsigned char *)realloc(m_Buffer, ByteWidth * 3 / 2);
+		}
+		channels = sd->SysMemPitch / width;
 	}
 	else
 	{
 		m_Buffer = new unsigned char[ByteWidth];
+		memset(m_Buffer, 0, ByteWidth);
 	}
-	if (sd)
-	{
-		memcpy(m_Buffer, sd->pSysMem, ByteWidth);
-		SysMemPitch = sd->SysMemPitch;
-
-	}
-	channels = SysMemPitch / width;
 }
 
 Texture2D::~Texture2D()
@@ -33,6 +32,7 @@ Texture2D::~Texture2D()
 
 void Texture2D::GenerateMips()
 {
+	TGAImage image(1024, 1024, TGAImage::RGBA);
 	int currentPos = ByteWidth;
 	int startPos = 0;
 	int w = width;
@@ -61,9 +61,9 @@ void Texture2D::GenerateMips()
 				{
 					m_Buffer[currentPos++] = (c00 + c01 + c10 + c11).a / 4;
 				}
-				//TGAColor color((c00.r + c01.r + c10.r + c11.r) / 4, (c00.g + c01.g + c10.g + c11.g) / 4, 
-				//	(c00.b + c01.b + c10.b + c11.b) / 4, (c00.a + c01.a + c10.a + c11.a) / 4);
-				//image.set(i / 2, j / 2, color);
+				TGAColor color((c00.r + c01.r + c10.r + c11.r) / 4, (c00.g + c01.g + c10.g + c11.g) / 4, 
+					(c00.b + c01.b + c10.b + c11.b) / 4, (c00.a + c01.a + c10.a + c11.a) / 4);
+				image.set(i / 2, j / 2, color);
 			}
 		}
 		startPos += (ByteWidth / (coe * coe));
@@ -74,8 +74,8 @@ void Texture2D::GenerateMips()
 			break;
 		}
 	}
-	//image.flip_vertically();
-	//image.write_tga_file("../output.tga");
+	image.flip_vertically();
+	image.write_tga_file("../output.tga");
 }
 
 glm::vec4 Texture2D::Bilinear(const float &tx, const float  &ty,
@@ -120,7 +120,7 @@ void Texture2D::RemapUV(float &texCoord, TEXTURE_ADDRESS_MODE address)
 	}
 }
 
-glm::vec4 Texture2D::Sampler(glm::vec2 uv, SamplerState * sampler, int lod)
+glm::vec4 Texture2D::Sampler(glm::vec2 uv, SamplerState * sampler, float lod)
 {
 	RemapUV(uv.r, sampler->pSamplerState.AddressU);
 	RemapUV(uv.t, sampler->pSamplerState.AddressV);
@@ -132,88 +132,106 @@ glm::vec4 Texture2D::Sampler(glm::vec2 uv, SamplerState * sampler, int lod)
 	}
 	float gx = uv.x * (width - 1);
 	float gy = uv.y * (height - 1);
-
 	int x = uv.x * (width - 1);
 	int y = uv.y * (height - 1);
-	
+	int oldx = x;
+	int oldy = y;
+	int w = width;
+
 	int index = 0;
-	for (int i = 0; i < lod; i++)
+	for (int i = 0; i < floor(lod); i++)
 	{
 		index += ByteWidth / std::pow(4, i);
 		x >>= 1;
-		y >>= 2;
+		y >>= 1;
+		w >>= 1;
 	}
+	int index0 = index + (x + y * w) * channels;
+	int maxIndex = index + ByteWidth / std::pow(4, floor(lod));
 
-	switch (channels)
+	switch (sampler->pSamplerState.Filter)
 	{
-	case 1:
+	case FILTER_POINT_MIP_POINT:
 	{
-		if (sampler->pSamplerState.Filter == FILTER_POINT)
-		{
-			index = index + (x + y * width);
-			return glm::vec4(m_Buffer[index], m_Buffer[index], m_Buffer[index], 1);
-		}
-		else if (sampler->pSamplerState.Filter == FILTER_LINEAR)
-		{
-			int index0 = index + (x + y * width);
-			unsigned int maxIndex = 4 * (width - 1) * (height - 1) - 4;
-			const glm::vec4 c00 = glm::vec4(m_Buffer[index0], m_Buffer[index0], m_Buffer[index0], 255);
-			int index1 = std::min(maxIndex, index + (x + y * width + 1));
-			const glm::vec4 c10 = glm::vec4(m_Buffer[index1], m_Buffer[index1], m_Buffer[index1], 255);
-			int index2 = std::min(maxIndex, index + (x + (y + 1) * width));
-			const glm::vec4 c01 = glm::vec4(m_Buffer[index2], m_Buffer[index2], m_Buffer[index2], 255);
-			int index3 = std::min(maxIndex, index + (x + 1 + (y + 1) * width));
-			const glm::vec4 c11 = glm::vec4(m_Buffer[index3], m_Buffer[index3], m_Buffer[index3], 255);
-			return Bilinear(gx - x, gy - y, c00, c10, c01, c11);
-		}
+		return glm::vec4(m_Buffer[index0], m_Buffer[channels > 1 ? index0 + 1 : index0], 
+			m_Buffer[channels > 2 ? index0 + 2 : index0], channels > 3 ? m_Buffer[index0 + 3] : 255);
 	}
-	break;
-	case 3:
+	case FILTER_POINT_MIP_LINEAR:
 	{
-		if (sampler->pSamplerState.Filter == FILTER_POINT)
-		{
-			index = index + (x + y * width) * 3;
-			return glm::vec4(m_Buffer[index], m_Buffer[index + 1], m_Buffer[index + 2], 1);
-		}
-		else if (sampler->pSamplerState.Filter == FILTER_LINEAR)
-		{
-			int index0 = index + (x + y * width) * 3;
-			unsigned int maxIndex = 3 * (width - 1) * (height - 1) - 3;
-			const glm::vec4 c00 = glm::vec4(m_Buffer[index0], m_Buffer[index0 + 1], m_Buffer[index0 + 2], 255);
-			int index1 = std::min(maxIndex, (x + y * width + 1));
-			const glm::vec4 c10 = glm::vec4(m_Buffer[index1], m_Buffer[index1 + 1], m_Buffer[index1 + 2], 255);
-			int index2 = std::min(maxIndex, (x + (y + 1) * width));
-			const glm::vec4 c01 = glm::vec4(m_Buffer[index2], m_Buffer[index2 + 1], m_Buffer[index2 + 2], 255);
-			int index3 = std::min(maxIndex, (x + 1 + (y + 1) * width));
-			const glm::vec4 c11 = glm::vec4(m_Buffer[index3], m_Buffer[index3 + 1], m_Buffer[index3 + 2], 255);
-			return Bilinear(gx - x, gy - y, c00, c10, c01, c11);
-		}
+		glm::vec4 lcolor = glm::vec4(m_Buffer[index0], m_Buffer[channels > 1 ? index0 + 1 : index0],
+			m_Buffer[channels > 2 ? index0 + 2 : index0], channels > 3 ? m_Buffer[index0 + 3] : 255);
+
+		index0 += ByteWidth / std::pow(4, floor(lod + 1));
+		glm::vec4 hcolor = glm::vec4(m_Buffer[index0], m_Buffer[channels > 1 ? index0 + 1 : index0],
+			m_Buffer[channels > 2 ? index0 + 2 : index0], channels > 3 ? m_Buffer[index0 + 3] : 255);
+
+		return (floor(lod + 1) - lod) * lcolor + (lod - floor(lod)) * hcolor;
 	}
-	break;
-	case 4:
+	case FILTER_LINEAR_MIP_POINT:
 	{
-		if (sampler->pSamplerState.Filter == FILTER_POINT)
-		{
-			index = index + (x + y * width) * 4;
-			return glm::vec4(m_Buffer[index], m_Buffer[index + 1], m_Buffer[index + 2], m_Buffer[index + 3]);
-		}
-		else if (sampler->pSamplerState.Filter == FILTER_LINEAR)
-		{
-			int index0 = index + (x + y * width) * 4;
-			unsigned int maxIndex = 4 * (width - 1) * (height - 1) - 4;
-			const glm::vec4 c00 = glm::vec4(m_Buffer[index0], m_Buffer[index0 + 1], m_Buffer[index0 + 2], m_Buffer[index0 + 3]);
-			int index1 = std::min(maxIndex, (x + y * width + 1) * 4);
-			const glm::vec4 c10 = glm::vec4(m_Buffer[index1], m_Buffer[index1 + 1], m_Buffer[index1 + 2], m_Buffer[index1 + 3]);
-			int index2 = std::min(maxIndex, (x + (y + 1) * width) * 4);
-			const glm::vec4 c01 = glm::vec4(m_Buffer[index2], m_Buffer[index2 + 1], m_Buffer[index2 + 2], m_Buffer[index2 + 3]);
-			int index3 = std::min(maxIndex, (x + 1 + (y + 1) * width) * 4);
-			const glm::vec4 c11 = glm::vec4(m_Buffer[index3], m_Buffer[index3 + 1], m_Buffer[index3 + 2], m_Buffer[index3 + 3]);
-			return Bilinear(uv.x, uv.y, c00, c10, c01, c11);
-		}
+		const glm::vec4 cl00 = glm::vec4(m_Buffer[index0], m_Buffer[channels > 1 ? index0 + 1 : index0],
+			m_Buffer[channels > 2 ? index0 + 2 : index0], channels > 3 ? m_Buffer[index0 + 3] : 255);
+
+		int index1 = std::min(maxIndex, index + (x + y * w + 1) * channels);
+		const glm::vec4 cl10 = glm::vec4(m_Buffer[index1], m_Buffer[channels > 1 ? index1 + 1 : index1],
+			m_Buffer[channels > 2 ? index1 + 2 : index1], channels > 3 ? m_Buffer[index1 + 3] : 255);
+
+		int index2 = std::min(maxIndex, index + (x + (y + 1) * w) * channels);
+		const glm::vec4 cl01 = glm::vec4(m_Buffer[index2], m_Buffer[channels > 1 ? index2 + 1 : index2],
+			m_Buffer[channels > 2 ? index2 + 2 : index2], channels > 3 ? m_Buffer[index2 + 3] : 255);
+
+		int index3 = std::min(maxIndex, index + (x + 1 + (y + 1) * w) * channels);
+		const glm::vec4 cl11 = glm::vec4(m_Buffer[index3], m_Buffer[channels > 1 ? index3 + 1 : index3],
+			m_Buffer[channels > 2 ? index3 + 2 : index3], channels > 3 ? m_Buffer[index3 + 3] : 255);
+		return Bilinear(gx - oldx, gy - oldy, cl00, cl10, cl01, cl11);
 	}
-	break;
+	case FILTER_LINEAR_MIP_LINEAR:
+	{
+		const glm::vec4 cl00 = glm::vec4(m_Buffer[index0], m_Buffer[channels > 1 ? index0 + 1 : index0],
+			m_Buffer[channels > 2 ? index0 + 2 : index0], channels > 3 ? m_Buffer[index0 + 3] : 255);
+
+		int index1 = std::min(maxIndex, index + (x + y * w + 1) * channels);
+		const glm::vec4 cl10 = glm::vec4(m_Buffer[index1], m_Buffer[channels > 1 ? index1 + 1 : index1],
+			m_Buffer[channels > 2 ? index1 + 2 : index1], channels > 3 ? m_Buffer[index1 + 3] : 255);
+		
+		int index2 = std::min(maxIndex, index + (x + (y + 1) * w) * channels);
+		const glm::vec4 cl01 = glm::vec4(m_Buffer[index2], m_Buffer[channels > 1 ? index2 + 1 : index2],
+			m_Buffer[channels > 2 ? index2 + 2 : index2], channels > 3 ? m_Buffer[index2 + 3] : 255);
+
+		int index3 = std::min(maxIndex, index + (x + 1 + (y + 1) * w) * channels);
+		const glm::vec4 cl11 = glm::vec4(m_Buffer[index3], m_Buffer[channels > 1 ? index3 + 1 : index3],
+			m_Buffer[channels > 2 ? index3 + 2 : index3], channels > 3 ? m_Buffer[index3 + 3] : 255);
+		
+		index += ByteWidth / std::pow(4, floor(lod));
+		maxIndex = index + ByteWidth / std::pow(4, floor(lod + 1));
+		x >>= 1;
+		y >>= 1;
+		w >>= 1;
+ 		index0 = index + (x + y * w) * channels;
+		const glm::vec4 ch00 = glm::vec4(m_Buffer[index0], m_Buffer[channels > 1 ? index0 + 1 : index0],
+			m_Buffer[channels > 2 ? index0 + 2 : index0], channels > 3 ? m_Buffer[index0 + 3] : 255);
+		
+		index1 = std::min(maxIndex, index + (x + y * w + 1) * channels);
+		const glm::vec4 ch10 = glm::vec4(m_Buffer[index1], m_Buffer[channels > 1 ? index1 + 1 : index1],
+			m_Buffer[channels > 2 ? index1 + 2 : index1], channels > 3 ? m_Buffer[index1 + 3] : 255);
+
+		index2 = std::min(maxIndex, index + (x + (y + 1) * w) * channels);
+		const glm::vec4 ch01 = glm::vec4(m_Buffer[index2], m_Buffer[channels > 1 ? index2 + 1 : index2],
+			m_Buffer[channels > 2 ? index2 + 2 : index2], channels > 3 ? m_Buffer[index2 + 3] : 255);
+
+		index3 = std::min(maxIndex, index + (x + 1 + (y + 1) * w) * channels);
+		const glm::vec4 ch11 = glm::vec4(m_Buffer[index3], m_Buffer[channels > 1 ? index3 + 1 : index3],
+			m_Buffer[channels > 2 ? index3 + 2 : index3], channels > 3 ? m_Buffer[index3 + 3] : 255);
+
+		return (floor(lod + 1) - lod) * Bilinear(gx - oldx, gy - oldy, cl00, cl10, cl01, cl11) + (lod - floor(lod)) * Bilinear(gx - oldx, gy - oldy, ch00, ch10, ch01, ch11);
+	}
 	}
 	return glm::vec4(255, 255, 255, 255);
+}
+
+glm::vec4 Texture2D::GetColor(int index, int x, int y, int w)
+{
+	return glm::vec4();
 }
 
 glm::vec4 Texture2D::Sampler(glm::vec2 uv, SamplerState *sampler)
