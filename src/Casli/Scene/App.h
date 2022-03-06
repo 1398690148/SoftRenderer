@@ -24,5 +24,5 @@ private:
 	SpotLight spotLight{ wnd.Gfx(), glm::vec3(0, 1, 0), glm::vec3(0, 1, -4), glm::vec3(0, 0, -1), 0.2f, 0.4f, 0.2f, std::cos(acos(-1) / 180 * 10), 60 };
 	Model model{ wnd.Gfx(), "../src/Casli/Model/nanosuit/nanosuit.obj" };
 	//Box box{ wnd.Gfx() };
-	//Plane plane{ wnd.Gfx() };
+	Plane plane{ wnd.Gfx() };
 };

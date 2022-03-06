@@ -12,6 +12,7 @@ class InputLayout;
 class RenderTargetView;
 class Texture2D;
 class SamplerState;
+class BlendState;
 
 class CORE_API DeviceContext
 {
@@ -32,6 +33,7 @@ public:
 	void IASetPrimitiveTopology(PRIMITIVE_TOPOLOGY topology);
 	void RSSetViewports(unsigned int NumViewports, const VIEWPORT *Viewports);
 	void OMSetRenderTargets(RenderTargetView **RenderTargetView, DepthStencilView **DepthStencilView);
+	void OMSetBlendState(BlendState **blendState, const float *BlendFactor, unsigned int SampleMask);
 	void GenerateMips(Texture2D *texture);
 	void DrawIndex();
 
@@ -58,6 +60,7 @@ private:
 	DepthStencilView *pDepthStencilView{};
 	DepthStencilView *pDSV{};
 	VIEWPORT *pViewports{};
+	BlendState *pBlendState{};
 
 	glm::mat4 Viewport;
 	//顶点缓存中的数据

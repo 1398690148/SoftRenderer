@@ -13,6 +13,10 @@ Texture::Texture(Graphics& gfx, const char *path, int mipMapLevel, int idx) : in
 		for (int i = 0; i < size; i++)
 		{
 			buffer[i] = data[i];
+			if ((i + 1) % 4 == 0 && buffer[i] != 0)
+			{
+				int k = buffer[i];
+			}
 		}
 		TEXTURE2D_DESC textureDesc = {};
 		textureDesc.Width = width;

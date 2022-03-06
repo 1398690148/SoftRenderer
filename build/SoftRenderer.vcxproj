@@ -315,10 +315,12 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClInclude Include="H:\SoftRenderer\src\Platform\CasliWin.h" />
     <ClInclude Include="H:\SoftRenderer\src\Casli\Renderer\Bindable.h" />
     <ClCompile Include="H:\SoftRenderer\src\Casli\Renderer\Bindable.cpp" />
+    <ClInclude Include="H:\SoftRenderer\src\Casli\Renderer\Blender.h" />
+    <ClCompile Include="H:\SoftRenderer\src\Casli\Renderer\Blender.cpp" />
+    <ClInclude Include="H:\SoftRenderer\src\Casli\Renderer\Drawable.h" />
+    <ClCompile Include="H:\SoftRenderer\src\Casli\Renderer\Drawable.cpp" />
     <ClInclude Include="H:\SoftRenderer\src\Casli\Renderer\IndexBuffer.h" />
     <ClCompile Include="H:\SoftRenderer\src\Casli\Renderer\IndexBuffer.cpp" />
-    <ClInclude Include="H:\SoftRenderer\src\Casli\Renderer\LambertPixelShader.h" />
-    <ClInclude Include="H:\SoftRenderer\src\Casli\Renderer\LambertVertexShader.h" />
     <ClInclude Include="H:\SoftRenderer\src\Casli\Renderer\Light.h" />
     <ClInclude Include="H:\SoftRenderer\src\Casli\Renderer\DirectionalLight.h" />
     <ClCompile Include="H:\SoftRenderer\src\Casli\Renderer\DirectionalLight.cpp" />
@@ -346,6 +348,8 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="H:\SoftRenderer\src\Casli\Scene\Mesh.cpp" />
     <ClInclude Include="H:\SoftRenderer\src\Casli\Scene\Model.h" />
     <ClCompile Include="H:\SoftRenderer\src\Casli\Scene\Model.cpp" />
+    <ClInclude Include="H:\SoftRenderer\src\Casli\Scene\LambertPixelShader.h" />
+    <ClInclude Include="H:\SoftRenderer\src\Casli\Scene\LambertVertexShader.h" />
     <ClInclude Include="H:\SoftRenderer\src\Casli\Test\Box.h" />
     <ClCompile Include="H:\SoftRenderer\src\Casli\Test\Box.cpp" />
     <ClInclude Include="H:\SoftRenderer\src\Casli\Test\Plane.h" />

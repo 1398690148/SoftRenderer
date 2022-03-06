@@ -1,4 +1,6 @@
 #include "VertexConstantBuffer.h"
+#include "Casli/Core/Device.h"
+#include "Casli/Core/DeviceContext.h"
 
 VertexConstantBuffer::VertexConstantBuffer(Graphics &gfx, std::vector<glm::mat4> &matrix) : matrix(matrix)
 {

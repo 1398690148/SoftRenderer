@@ -1,14 +1,18 @@
 #pragma once
 #include "../Renderer/VertexBuffer.h"
 #include "../Renderer/IndexBuffer.h"
+#include "../Renderer/Drawable.h"
+
 class Graphics;
 class VertexConstantBuffer;
-class Plane
+class Blender;
+
+class Plane : public Drawable
 {
 public:
 	Plane(Graphics &gfx);
+	void Bindable(Graphics &gfx, unsigned char *ConstantBuffer);
 	void Draw(Graphics &gfx);
-	void SetMatrix(glm::mat4 mat);
 private:
 	std::vector<Vertex> vertices;
 	std::vector<unsigned int> indices;
@@ -17,4 +21,8 @@ private:
 	IndexBuffer *pIndexBuffer{};
 	VertexConstantBuffer *pConstantBuffer{};
 	glm::mat4 matrix;
+	Blender *pBlender{};
+	BlendState *oldBlender;
+	float *oldBlendFactor;
+	float oldBlendMask;
 };

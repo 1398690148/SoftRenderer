@@ -249,5 +249,5 @@ glm::vec4 Texture2D::Sampler(glm::vec2 uv, SamplerState *sampler, glm::vec2 ddx,
 		float L = glm::max(glm::dot(dfdx, dfdx), glm::dot(dfdy, dfdy));
 		return Sampler(uv, sampler, glm::max(0.5f * glm::log2(L), 0.0f));
 	}
-	return glm::vec4(255, 255, 255, 255);
+	return Sampler(uv, sampler);
 }

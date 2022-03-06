@@ -1,6 +1,6 @@
 #include "Graphics.h"
-#include "../Renderer/LambertVertexShader.h"
-#include "../Renderer/LambertPixelShader.h"
+#include "../Scene/LambertVertexShader.h"
+#include "../Scene/LambertPixelShader.h"
 #include "../Renderer/Texture.h"
 #include "../Renderer/Sampler.h"
 #include "../Renderer/VertexConstantBuffer.h"

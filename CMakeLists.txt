@@ -12,10 +12,12 @@ ENDIF()
 set(RENDERER 
 src/Casli/Renderer/Bindable.h
 src/Casli/Renderer/Bindable.cpp
+src/Casli/Renderer/Blender.h
+src/Casli/Renderer/Blender.cpp
+src/Casli/Renderer/Drawable.h
+src/Casli/Renderer/Drawable.cpp
 src/Casli/Renderer/IndexBuffer.h
 src/Casli/Renderer/IndexBuffer.cpp
-src/Casli/Renderer/LambertPixelShader.h
-src/Casli/Renderer/LambertVertexShader.h
 src/Casli/Renderer/Light.h
 src/Casli/Renderer/DirectionalLight.h
 src/Casli/Renderer/DirectionalLight.cpp
@@ -46,6 +48,8 @@ src/Casli/Scene/Mesh.h
 src/Casli/Scene/Mesh.cpp
 src/Casli/Scene/Model.h
 src/Casli/Scene/Model.cpp
+src/Casli/Scene/LambertPixelShader.h
+src/Casli/Scene/LambertVertexShader.h
 )
 
 set(TEST 
@@ -73,8 +77,8 @@ SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${PROJECT_SOURCE_DIR}/output/bin_d/)
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${PROJECT_SOURCE_DIR}/output/bin/)
 
 AUX_SOURCE_DIRECTORY(${PROJECT_SOURCE_DIR}/src/Casli/Core CORE_SRCS)
-ADD_LIBRARY(Core SHARED ${CORE_SRCS} ${PROJECT_SOURCE_DIR}/ ${PROJECT_SOURCE_DIR}/src/Casli/Core/CoreAPI.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/DeviceContext.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/IBuffer.h
-${PROJECT_SOURCE_DIR}/ ${PROJECT_SOURCE_DIR}/src/Casli/Core/IVertexShader.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/Utils.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/SamplerState.h 
+ADD_LIBRARY(Core SHARED ${CORE_SRCS} ${PROJECT_SOURCE_DIR}/src/Casli/Core/BlendState.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/CoreAPI.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/DeviceContext.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/IBuffer.h
+${PROJECT_SOURCE_DIR}/src/Casli/Core/Device.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/IVertexShader.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/Utils.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/SamplerState.h 
 ${PROJECT_SOURCE_DIR}/src/Casli/Core/Texture2D.h ./src/Casli/Core/tgaimage.h ./src/Casli/Core/ShaderInput.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/RenderTargetView.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/InputLayout.h 
 ${PROJECT_SOURCE_DIR}/src/Casli/Core/DepthStencilView.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/Core.h)
 

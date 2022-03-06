@@ -5,10 +5,22 @@
 #include "InputLayout.h"
 #include "RenderTargetView.h"
 #include "DepthStencilView.h"
+#include "BlendState.h"
 
 DeviceContext::DeviceContext()
 {
 	tempBuffer = new unsigned char[160];
+	BLEND_DESC desc = { 0 };
+	desc.AlphaToCoverageEnable = false;
+	desc.RenderTarget[0].BlendEnable = false;
+	desc.RenderTarget[0].SrcBlend = BLEND_SRC_ALPHA;
+	desc.RenderTarget[0].DestBlend = BLEND_INV_SRC_ALPHA;
+	desc.RenderTarget[0].BlendOp = BLEND_OP_ADD;
+	desc.RenderTarget[0].SrcBlendAlpha = BLEND_INV_SRC_ALPHA;
+	desc.RenderTarget[0].DestBlendAlpha = BLEND_ZERO;
+	desc.RenderTarget[0].BlendOpAlpha = BLEND_OP_ADD;
+	desc.RenderTarget[0].RenderTargetWriteMask = 0;
+	pBlendState = new BlendState(&desc);
 }
 
 DeviceContext::~DeviceContext()
@@ -65,10 +77,22 @@ void DeviceContext::PSSetSamplerState(int slot, SamplerState **sampler)
 	pPixelShader->samplers[slot] = *sampler;
 }
 
+void DeviceContext::OMSetBlendState(BlendState **blendState, const float *BlendFactor, unsigned int SampleMask)
+{
+	pBlendState = *blendState;
+}
+
+void DeviceContext::OMGetBlendState(BlendState **ppBlendState, float *BlendFactor, unsigned int *SampleMask)
+{
+	*ppBlendState = pBlendState;
+	BlendFactor = pBlendFactor;
+	*SampleMask = pSampleMask;
+}
+
 void DeviceContext::VSSetConstantBuffers(unsigned int StartOffset, unsigned int NumBuffers, IBuffer *constantBuffer)
 {
 	if (!constantBuffer) return;
-	pVertexShader->cbuffer = (unsigned char *)realloc(pVertexShader->cbuffer, StartOffset + constantBuffer->GetByteWidth()); //new unsigned char[constantBuffer->GetByteWidth()];
+	pVertexShader->cbuffer = (unsigned char *)realloc(pVertexShader->cbuffer, StartOffset + constantBuffer->GetByteWidth()); 
 	memcpy(pVertexShader->cbuffer + StartOffset, constantBuffer->GetBuffer(0), constantBuffer->GetByteWidth());
 }
 
@@ -189,13 +213,14 @@ void DeviceContext::Triangle(std::unordered_map<std::string, glm::vec4> vertex[3
 				DDXDDY(vertex, t0, t1, t2, P);
 			}
 			Interpolation(vertex, bcScreen);
-			glm::vec4 colors(0, 0, 0, 0);
-			bool discard = pPixelShader->fragment(tempBuffer, colors);
+			glm::vec4 color(0, 0, 0, 255);
+			bool discard = pPixelShader->fragment(tempBuffer, color);
+			if (pBlendState->blendDesc.RenderTarget[0].BlendEnable && color[3] == 0) continue;;
 			if (pDepthStencilView->GetDepth(j, t0.y + i) - 0.0001f < depth)
 			{
 				continue;
 			}
-			pRenderTargetView->SetPixel(P.x, P.y, colors[0], colors[1], colors[2], colors[3]);
+			pRenderTargetView->SetPixel(P.x, P.y, color[0], color[1], color[2], color[3]);
 			pDepthStencilView->SetDepth(j, t0.y + i, depth);
 		}
 	}
@@ -212,7 +237,7 @@ void DeviceContext::ParseVertexBuffer()
 		int inOffset = pInputLayout->getData(i)->Offset;
 		for (int j = 0; j < bufferSize; j++)
 		{
-			glm::vec4 v;
+			glm::vec4 v(0, 0, 0, 0);
 			v[0] = *((float *)pVertexBuffer->GetBuffer(pVertexBuffer->GetStructureByteStride() * j + inOffset));
 			v[1] = *((float *)pVertexBuffer->GetBuffer(pVertexBuffer->GetStructureByteStride() * j + inOffset + desc->typeSize));
 			if (num > 2)

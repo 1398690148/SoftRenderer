@@ -1,5 +1,5 @@
 #pragma once
-#include "../Scene/Graphics.h"
+#include "Casli/Scene/Graphics.h"
 
 class Bindable
 {

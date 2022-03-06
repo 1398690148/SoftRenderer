@@ -12,3 +12,4 @@ COPY .\src\Casli\Core\InputLayout.h .\include
 COPY .\src\Casli\Core\Core.h .\include
 COPY .\src\Casli\Core\ShaderInput.h .\include
 COPY .\src\Casli\Core\Utils.h .\include
+COPY .\src\Casli\Core\BlendState.h .\include

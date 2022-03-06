@@ -12,6 +12,7 @@ class InputLayout;
 class RenderTargetView;
 class Texture2D;
 class SamplerState;
+class BlendState;
 
 class CORE_API DeviceContext
 {
@@ -32,6 +33,8 @@ public:
 	void IASetPrimitiveTopology(PRIMITIVE_TOPOLOGY topology);
 	void RSSetViewports(unsigned int NumViewports, const VIEWPORT *Viewports);
 	void OMSetRenderTargets(RenderTargetView **RenderTargetView, DepthStencilView **DepthStencilView);
+	void OMSetBlendState(BlendState **blendState, const float *BlendFactor, unsigned int SampleMask);
+	void OMGetBlendState(BlendState **ppBlendState, float *BlendFactor, unsigned int *SampleMask);
 	void GenerateMips(Texture2D *texture);
 	void DrawIndex();
 
@@ -58,7 +61,10 @@ private:
 	DepthStencilView *pDepthStencilView{};
 	DepthStencilView *pDSV{};
 	VIEWPORT *pViewports{};
-
+	//混合状态
+	BlendState *pBlendState{};
+	float pBlendFactor[4];
+	unsigned int pSampleMask = 0;
 	glm::mat4 Viewport;
 	//顶点缓存中的数据
 	std::unordered_map<std::string, std::vector<glm::vec4>> m_Data;

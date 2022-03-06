@@ -12,6 +12,7 @@ class Sampler;
 class Graphics
 {
 	friend class Bindable;
+	friend class Drawable;
 public:
 	Graphics(unsigned int width, unsigned int height, HWND hWnd, HDC ghdcMainWnd, void *gFbo);
 	~Graphics();

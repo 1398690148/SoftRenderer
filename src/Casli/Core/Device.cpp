@@ -4,6 +4,7 @@
 #include "RenderTargetView.h"
 #include "InputLayout.h"
 #include "DepthStencilView.h"
+#include "BlendState.h"
 
 Device::Device()
 {
@@ -49,4 +50,10 @@ bool Device::CreateSamplerState(SAMPLER_DESC *desc, SamplerState **pSamplerState
 {
 	*pSamplerState = new SamplerState(desc);
 	return (pSamplerState != nullptr);
+}
+
+bool Device::CreateBlendState(BLEND_DESC *desc, BlendState ** pBlendState)
+{
+	*pBlendState = new BlendState(desc);
+	return (*pBlendState != nullptr);
 }

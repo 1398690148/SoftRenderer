@@ -33,6 +33,6 @@ void App::DoFrame()
 	pointLight.Bind(wnd.Gfx());
 	spotLight.Bind(wnd.Gfx());
 	model.Draw(wnd.Gfx());
-	//plane.Draw(wnd.Gfx());
+	plane.Draw(wnd.Gfx());
 	wnd.Gfx().EndFrame();
 }

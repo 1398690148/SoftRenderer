@@ -1,6 +1,5 @@
 #pragma once
 #include "Bindable.h"
-#include <glm/mat4x4.hpp>
 
 class VertexConstantBuffer : public Bindable
 {
