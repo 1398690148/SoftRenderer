@@ -1,16 +1,16 @@
 #pragma once
 #include <VertexBuffer.h>
-#include <IndexBuffer.h>
 #include <Drawable.h>
 
 class Graphics;
 class VertexConstantBuffer;
 class Blender;
+class IndexBuffer;
 
-class RENDERER_API Plane : public Drawable
+class RENDERER_API AlphaPlane : public Drawable
 {
 public:
-	Plane(Graphics &gfx, std::string texturePath, int mipLevel);
+	AlphaPlane(Graphics &gfx, std::string texturePath, int mipLevel);
 	void Draw(Graphics &gfx) override;
 	void Bind(Graphics &gfx, unsigned char *ConstantBuffer) override;
 
@@ -22,8 +22,8 @@ private:
 	IndexBuffer *pIndexBuffer{};
 	VertexConstantBuffer *pConstantBuffer{};
 	glm::mat4 matrix;
-	//Blender *pBlender{};
-	//BlendState *oldBlender;
-	//float oldBlendFactor;
-	//unsigned int oldSampleMask;
+	Blender *pBlender{};
+	BlendState *oldBlender;
+	float oldBlendFactor;
+	unsigned int oldSampleMask;
 };

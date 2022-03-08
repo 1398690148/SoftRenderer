@@ -1,6 +1,5 @@
 #pragma once
 #include "CoreAPI.h"
-#include "Core.h"
 
 class CORE_API IBuffer
 {

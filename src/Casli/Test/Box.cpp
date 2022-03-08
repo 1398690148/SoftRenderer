@@ -1,5 +1,5 @@
 #include "Box.h"
-#include "../Renderer/Texture.h"
+#include <Texture.h>
 
 Box::Box(Graphics & gfx)
 {

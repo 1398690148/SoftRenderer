@@ -49,6 +49,10 @@ private:
 	void DDXDDY(std::unordered_map<std::string, glm::vec4> vertex[3], glm::vec3 &t0, glm::vec3 &t1, glm::vec3 &t2, glm::vec2 &P);
 	void prePerspCorrection(std::unordered_map<std::string, glm::vec4> &output);
 	void Interpolation(std::unordered_map<std::string, glm::vec4> vertex[3], glm::vec3 &bcScreen);
+
+	void AlphaBlend(int x, int y, glm::vec4 &color);
+	void ParseSrcBlendParam(BLEND blend, glm::vec4 &srcColor, glm::vec4 dstColor);
+	void ParseDstBlendParam(BLEND blend, glm::vec4 srcColor, glm::vec4 &dstColor);
 private:
 	IBuffer *pVertexBuffer{};
 	IBuffer *pIndexBuffer{};

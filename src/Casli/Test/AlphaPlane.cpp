@@ -1,9 +1,10 @@
-#include <Plane.h>
+#include "AlphaPlane.h"
 #include <Texture.h>
 #include <VertexConstantBuffer.h>
 #include <Blender.h>
+#include <IndexBuffer.h>
 
-Plane::Plane(Graphics & gfx, std::string texturePath, int mipLevel)
+AlphaPlane::AlphaPlane(Graphics & gfx, std::string texturePath, int mipLevel)
 {
 	Vertex vertex;
 	float v[] = {
@@ -33,25 +34,25 @@ Plane::Plane(Graphics & gfx, std::string texturePath, int mipLevel)
 	matrix.push_back(glm::mat4(1.0));
 	matrix.push_back(glm::mat4(1.0));
 	pConstantBuffer = new VertexConstantBuffer(gfx, 0, (unsigned char*)&matrix[0], sizeof(glm::mat4) * matrix.size());
-	//pBlender = new Blender(gfx, true);
+	pBlender = new Blender(gfx, true, {});
 }
 
-void Plane::Bind(Graphics &gfx, unsigned char *ConstantBuffer)
+void AlphaPlane::Bind(Graphics &gfx, unsigned char *ConstantBuffer)
 {
 	pVertexBuffer->Bind(gfx);
 	pIndexBuffer->Bind(gfx);
 	pConstantBuffer->SetConstantBuffer(ConstantBuffer, sizeof(glm::mat4) * 3);
 	pConstantBuffer->Bind(gfx);
-	//GetContext(gfx)->OMGetBlendState(&oldBlender, &oldBlendFactor, &oldSampleMask);
-	//pBlender->Bind(gfx);
+	GetContext(gfx)->OMGetBlendState(&oldBlender, &oldBlendFactor, &oldSampleMask);
+	pBlender->Bind(gfx);
 }
 
-void Plane::Draw(Graphics &gfx)
+void AlphaPlane::Draw(Graphics &gfx)
 {
 	//for (int i = 0; i < textures.size(); i++)
 	{
 		textures->Bind(gfx);
 	}
 	gfx.Draw();
-	//GetContext(gfx)->OMSetBlendState(&oldBlender, &oldBlendFactor, oldSampleMask);
+	GetContext(gfx)->OMSetBlendState(&oldBlender, &oldBlendFactor, oldSampleMask);
 }

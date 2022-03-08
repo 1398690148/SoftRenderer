@@ -80,6 +80,8 @@ void DeviceContext::PSSetSamplerState(int slot, SamplerState **sampler)
 void DeviceContext::OMSetBlendState(BlendState **blendState, const float *BlendFactor, unsigned int SampleMask)
 {
 	pBlendState = *blendState;
+	if (BlendFactor)
+		memcpy(pBlendFactor, BlendFactor, sizeof(float));
 }
 
 void DeviceContext::OMGetBlendState(BlendState **ppBlendState, float *BlendFactor, unsigned int *SampleMask)
@@ -195,7 +197,7 @@ void DeviceContext::Triangle(std::unordered_map<std::string, glm::vec4> vertex[3
 		glm::vec3 A = t0 + (t2 - t0) * alpha;
 		glm::vec3 B = second_half ? t1 + (t2 - t1) * beta : t0 + (t1 - t0) * beta;
 		if (A.x > B.x) std::swap(A, B);
-		for (int j = A.x; j <= B.x; j++) 
+		for (int j = A.x; j < B.x; j++) 
 		{
 			glm::vec2 P(j, t0.y + i);
 			//执行裁剪
@@ -204,7 +206,9 @@ void DeviceContext::Triangle(std::unordered_map<std::string, glm::vec4> vertex[3
 			glm::vec3 bcScreen = Barycentric(t0, t1, t2, P);
 			//插值深度
 			float depth = BarycentricLerp(t0, t1, t2, bcScreen).z;
-			if (bcScreen[0] < 0 || bcScreen[1] < 0 || bcScreen[2] < 0 || pDepthStencilView->GetDepth(j, t0.y + i) - 0.0001f < depth)
+			//Early-Z
+			if (bcScreen[0] < 0 || bcScreen[1] < 0 || bcScreen[2] < 0 || 
+				(!pBlendState->blendDesc.RenderTarget[0].BlendEnable && pDepthStencilView->GetDepth(j, t0.y + i) - 0.0001f < depth))
 			{
 				continue;
 			}
@@ -215,11 +219,22 @@ void DeviceContext::Triangle(std::unordered_map<std::string, glm::vec4> vertex[3
 			Interpolation(vertex, bcScreen);
 			glm::vec4 color(0, 0, 0, 255);
 			bool discard = pPixelShader->fragment(tempBuffer, color);
-			if (pBlendState->blendDesc.RenderTarget[0].BlendEnable && color[3] == 0) continue;;
+			//Alpha Test/Alpha Blend
+			if (pBlendState->blendDesc.RenderTarget[0].BlendEnable)
+			{
+				if (discard)
+				{
+					continue;
+				}
+				AlphaBlend(P.x, P.y, color);
+				pRenderTargetView->SetPixel(P.x, P.y, color[0], color[1], color[2], color[3]);
+				continue;
+			}
 			if (pDepthStencilView->GetDepth(j, t0.y + i) - 0.0001f < depth)
 			{
 				continue;
 			}
+			color = glm::vec4(std::min(255.0f, color[0]), std::min(255.0f, color[1]), std::min(255.0f, color[2]), std::min(255.0f, color[3]));
 			pRenderTargetView->SetPixel(P.x, P.y, color[0], color[1], color[2], color[3]);
 			pDepthStencilView->SetDepth(j, t0.y + i, depth);
 		}
@@ -348,5 +363,113 @@ void DeviceContext::Interpolation(std::unordered_map<std::string, glm::vec4> ver
 			attribute /= attribute.w;
 		}
 		memcpy(tempBuffer + iter.Offset, &attribute, iter.Size);
+	}
+}
+
+void DeviceContext::AlphaBlend(int x, int y, glm::vec4 &color)
+{
+	glm::vec4 dstColor = pRenderTargetView->GetPixel(x, y);
+		
+	glm::vec4 srcColor = color;
+	ParseSrcBlendParam(pBlendState->blendDesc.RenderTarget[0].SrcBlend, color, dstColor);
+	ParseDstBlendParam(pBlendState->blendDesc.RenderTarget[0].DestBlend, srcColor, dstColor);
+	switch (pBlendState->blendDesc.RenderTarget[0].BlendOp)
+	{
+	case BLEND_OP_ADD:
+		color += dstColor;
+		break;
+	case BLEND_OP_MAX:
+		color = glm::vec4(std::max(dstColor[0], color[0]), std::max(dstColor[1], color[1]), std::max(dstColor[2], color[2]), std::max(dstColor[3], color[3]));
+		break;
+	case BLEND_OP_MIN:
+		color = glm::vec4(std::min(dstColor[0], color[0]), std::min(dstColor[1], color[1]), std::min(dstColor[2], color[2]), std::min(dstColor[3], color[3]));
+		break;
+	default:
+		break;
+	}
+	color = glm::vec4(std::min(255.0f, color[0]), std::min(255.0f, color[1]), std::min(255.0f, color[2]), std::min(255.0f, color[3]));
+}
+
+void DeviceContext::ParseSrcBlendParam(BLEND blend, glm::vec4 &srcColor, glm::vec4 dstColor)
+{
+	switch (blend)
+	{
+	case BLEND_ZERO:
+		srcColor = glm::vec4(0, 0, 0, 255);
+		break;
+	case BLEND_ONE:
+		srcColor = glm::vec4(255, 255, 255, 255);
+		break;
+	case BLEND_INV_SRC_COLOR:
+		srcColor = glm::vec4(255, 255, 255, 255) - srcColor;
+		break;
+	case BLEND_SRC_ALPHA:
+		srcColor *= (srcColor[3] / 255.f);
+		break;
+	case BLEND_INV_SRC_ALPHA:
+		srcColor *= (1 - srcColor[3] / 255.f);
+		break;
+	case BLEND_DEST_ALPHA:
+		srcColor *= dstColor[3] / 255.f;
+		break;
+	case BLEND_INV_DEST_ALPHA:
+		srcColor *= (1 - dstColor[3] / 255.f);
+		break;
+	case BLEND_DEST_COLOR:
+		srcColor = dstColor;
+		break;
+	case BLEND_INV_DEST_COLOR:
+		srcColor = glm::vec4(255, 255, 255, 255) - dstColor;
+		break;
+	case BLEND_BLEND_FACTOR:
+		srcColor *= pBlendFactor[0];
+		break;
+	case BLEND_INV_BLEND_FACTOR:
+		srcColor *= (1 - pBlendFactor[0]);
+		break;
+	default:
+		break;
+	}
+}
+
+void DeviceContext::ParseDstBlendParam(BLEND blend, glm::vec4 srcColor, glm::vec4 &dstColor)
+{
+	switch (blend)
+	{
+	case BLEND_ZERO:
+		dstColor = glm::vec4(0, 0, 0, 255);
+		break;
+	case BLEND_ONE:
+		dstColor = glm::vec4(255, 255, 255, 255);
+		break;
+	case BLEND_SRC_COLOR:
+		dstColor = srcColor;
+		break;
+	case BLEND_INV_SRC_COLOR:
+		dstColor = glm::vec4(255, 255, 255, 255) - srcColor;
+		break;
+	case BLEND_SRC_ALPHA:
+		dstColor *= srcColor[3] / 255.f;
+		break;
+	case BLEND_INV_SRC_ALPHA:
+		dstColor *= (1 - srcColor[3] / 255.f);
+		break;
+	case BLEND_DEST_ALPHA:
+		dstColor *= dstColor[3] / 255.f;
+		break;
+	case BLEND_INV_DEST_ALPHA:
+		dstColor *= (1 - dstColor[3] / 255.f);
+		break;
+	case BLEND_INV_DEST_COLOR:
+		dstColor = glm::vec4(255, 255, 255, 255) - dstColor;
+		break;
+	case BLEND_BLEND_FACTOR:
+		dstColor *= pBlendFactor[0];
+		break;
+	case BLEND_INV_BLEND_FACTOR:
+		dstColor *= (1 - pBlendFactor[0]);
+		break;
+	default:
+		break;
 	}
 }

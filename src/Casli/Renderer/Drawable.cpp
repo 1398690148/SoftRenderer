@@ -1,5 +1,5 @@
 #include "Drawable.h"
-#include "Casli/Scene/Graphics.h"
+#include <Graphics.h>
 
 Device *Drawable::GetDevice(Graphics & gfx)
 {

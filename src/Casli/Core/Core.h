@@ -20,14 +20,14 @@ enum DataFormat
 	FORMAT_FLOAT,
 };
 
-typedef struct BUFFER_DESC
+struct BUFFER_DESC
 {
 	BufferType BindFlags;
 	unsigned int ByteWidth;
 	unsigned int StructureByteStride;
-} BUFFER_DESC;
+};
 
-typedef struct TEXTURE2D_DESC
+struct TEXTURE2D_DESC
 {
 	unsigned int Width;
 	unsigned int Height;
@@ -35,9 +35,9 @@ typedef struct TEXTURE2D_DESC
 	unsigned int ArraySize;
 	DataFormat Format;
 	BufferType BindFlags;
-} TEXTURE2D_DESC;
+};
 
-typedef struct VIEWPORT
+struct VIEWPORT
 {
 	int Width;
 	int Height;
@@ -45,22 +45,22 @@ typedef struct VIEWPORT
 	int TopLeftY;
 	int MinDepth;
 	int MaxDepth;
-} VIEWPORT;
+};
 
-typedef struct INPUT_ELEMENT_DESC
+struct INPUT_ELEMENT_DESC
 {
 	std::string SemanticName;
 	unsigned int typeSize;
 	unsigned int Size;
 	unsigned int Offset;
-} INPUT_ELEMENT_DESC;
+};
 
-typedef struct SUBRESOURCE_DATA
+struct SUBRESOURCE_DATA
 {
 	const void *pSysMem;
 	//从纹理的一行开始到下一行的距离
 	unsigned int SysMemPitch;
-} SUBRESOURCE_DATA;
+};
 
 enum PRIMITIVE_TOPOLOGY
 {
@@ -68,12 +68,12 @@ enum PRIMITIVE_TOPOLOGY
 	PRIMITIVE_TOPOLOGY_TRIANGLELIST,
 };
 
-typedef struct DEPTH_STENCIL_VIEW_DESC
+struct DEPTH_STENCIL_VIEW_DESC
 {
 	DataFormat Format;
 	unsigned int width;
 	unsigned int height;
-} DEPTH_STENCIL_VIEW_DESC;
+};
 
 enum FILTER
 {
@@ -91,16 +91,16 @@ enum TEXTURE_ADDRESS_MODE
 	TEXTURE_ADDRESS_BORDER,
 };
 
-typedef struct SAMPLER_DESC
+struct SAMPLER_DESC
 {
 	FILTER Filter;
 	TEXTURE_ADDRESS_MODE AddressU;
 	TEXTURE_ADDRESS_MODE AddressV;
 	TEXTURE_ADDRESS_MODE AddressW;
 	unsigned char borderColor[4];
-} SAMPLER_DESC;
+};
 
-typedef enum BLEND {
+enum BLEND {
 	BLEND_ZERO = 1,
 	BLEND_ONE = 2,
 	BLEND_SRC_COLOR = 3,
@@ -111,16 +111,11 @@ typedef enum BLEND {
 	BLEND_INV_DEST_ALPHA = 8,
 	BLEND_DEST_COLOR = 9,
 	BLEND_INV_DEST_COLOR = 10,
-	BLEND_SRC_ALPHA_SAT = 11,
-	BLEND_BLEND_FACTOR = 14,
-	BLEND_INV_BLEND_FACTOR = 15,
-	BLEND_SRC1_COLOR = 16,
-	BLEND_INV_SRC1_COLOR = 17,
-	BLEND_SRC1_ALPHA = 18,
-	BLEND_INV_SRC1_ALPHA = 19
+	BLEND_BLEND_FACTOR = 11,
+	BLEND_INV_BLEND_FACTOR = 12,
 };
 
-typedef enum BLEND_OP {
+enum BLEND_OP {
 	BLEND_OP_ADD = 1,
 	BLEND_OP_SUBTRACT = 2,
 	BLEND_OP_REV_SUBTRACT = 3,
@@ -128,7 +123,7 @@ typedef enum BLEND_OP {
 	BLEND_OP_MAX = 5
 };
 
-typedef struct RENDER_TARGET_BLEND_DESC {
+struct RENDER_TARGET_BLEND_DESC {
 	bool BlendEnable;
 	BLEND SrcBlend;
 	BLEND DestBlend;
@@ -137,11 +132,11 @@ typedef struct RENDER_TARGET_BLEND_DESC {
 	BLEND DestBlendAlpha;
 	BLEND_OP BlendOpAlpha;
 	unsigned char RenderTargetWriteMask;
-} RENDER_TARGET_BLEND_DESC;
+};
 
-typedef struct BLEND_DESC
+struct BLEND_DESC
 {
 	bool AlphaToCoverageEnable;
 	bool IndependentBlendEnable;
 	RENDER_TARGET_BLEND_DESC RenderTarget[8];
-} BLEND_DESC;
+};

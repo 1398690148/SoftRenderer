@@ -1,6 +1,6 @@
 #pragma once
 #include "CoreAPI.h"
-#include "Core.h"
+#include "IBuffer.h"
 
 class CORE_API SamplerState
 {

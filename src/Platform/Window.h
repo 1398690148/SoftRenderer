@@ -2,9 +2,9 @@
 #include <memory>
 #include <optional>
 #include "CasliWin.h"
-#include "Casli/Scene/Graphics.h"
+#include <Graphics.h>
 
-class Window
+class RENDERER_API Window
 {
 public:
 	Window(int width, int height, const char* name);

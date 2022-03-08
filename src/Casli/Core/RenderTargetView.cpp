@@ -39,3 +39,10 @@ void RenderTargetView::SetPixel(int i, int j, unsigned char r, unsigned char g, 
 	unsigned char color[4] = {b, g, r, a};
 	memcpy(buffer, color, stride);
 }
+
+glm::vec4 RenderTargetView::GetPixel(int i, int j)
+{
+	unsigned int stride = sizeof(unsigned char) * StructureByteStride;
+	unsigned char *buffer = m_Buffer + i * StructureByteStride + (height - 1 - j) * width * StructureByteStride;
+	return glm::vec4(buffer[0], buffer[1], buffer[2], buffer[3]);
+}
