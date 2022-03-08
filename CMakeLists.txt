@@ -3,53 +3,67 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.16)
 PROJECT(SoftRenderer)
 
 add_compile_definitions(COREAPI_EXPORTS = 1) 
+add_compile_definitions(RENDERERAPI_EXPORTS = 1) 
 SET(CMAKE_CXX_STANDARD 17)
+SET(CMAKE_CXX_STANDARD_REQUIRED True)
 
 IF(NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE "Debug")
 ENDIF()
 
-set(RENDERER 
-src/Casli/Renderer/Bindable.h
-src/Casli/Renderer/Bindable.cpp
-src/Casli/Renderer/Blender.h
-src/Casli/Renderer/Blender.cpp
-src/Casli/Renderer/Drawable.h
-src/Casli/Renderer/Drawable.cpp
-src/Casli/Renderer/IndexBuffer.h
-src/Casli/Renderer/IndexBuffer.cpp
-src/Casli/Renderer/Light.h
-src/Casli/Renderer/DirectionalLight.h
-src/Casli/Renderer/DirectionalLight.cpp
-src/Casli/Renderer/PointLight.h
-src/Casli/Renderer/PointLight.cpp
-src/Casli/Renderer/SpotLight.h
-src/Casli/Renderer/SpotLight.cpp
-src/Casli/Renderer/PixelConstantBuffer.h 
-src/Casli/Renderer/PixelConstantBuffer.cpp
-src/Casli/Renderer/Sampler.h
-src/Casli/Renderer/Sampler.cpp
-src/Casli/Renderer/Texture.h
-src/Casli/Renderer/Texture.cpp
-src/Casli/Renderer/VertexBuffer.h
-src/Casli/Renderer/VertexBuffer.cpp
-src/Casli/Renderer/VertexConstantBuffer.h
-src/Casli/Renderer/VertexConstantBuffer.cpp
+set(BINDABLE 
+src/Casli/Renderer/Bindable/Bindable.h
+src/Casli/Renderer/Bindable/Bindable.cpp
+src/Casli/Renderer/Bindable/Blender.h
+src/Casli/Renderer/Bindable/Blender.cpp
+src/Casli/Renderer/Bindable/IndexBuffer.h
+src/Casli/Renderer/Bindable/IndexBuffer.cpp
+
+src/Casli/Renderer/Bindable/PixelConstantBuffer.h 
+src/Casli/Renderer/Bindable/PixelConstantBuffer.cpp
+src/Casli/Renderer/Bindable/Sampler.h
+src/Casli/Renderer/Bindable/Sampler.cpp
+src/Casli/Renderer/Bindable/Texture.h
+src/Casli/Renderer/Bindable/Texture.cpp
+src/Casli/Renderer/Bindable/VertexBuffer.h
+src/Casli/Renderer/Bindable/VertexBuffer.cpp
+src/Casli/Renderer/Bindable/VertexConstantBuffer.h
+src/Casli/Renderer/Bindable/VertexConstantBuffer.cpp
 )
 
-set(SCENE
-src/Casli/Scene/App.h
-src/Casli/Scene/App.cpp
-src/Casli/Scene/Camera.h
-src/Casli/Scene/Camera.cpp
-src/Casli/Scene/Graphics.h
-src/Casli/Scene/Graphics.cpp
-src/Casli/Scene/Mesh.h
-src/Casli/Scene/Mesh.cpp
-src/Casli/Scene/Model.h
-src/Casli/Scene/Model.cpp
-src/Casli/Scene/LambertPixelShader.h
-src/Casli/Scene/LambertVertexShader.h
+set(LIGHT 
+src/Casli/Renderer/Light/Light.h
+src/Casli/Renderer/Light/DirectionalLight.h
+src/Casli/Renderer/Light/DirectionalLight.cpp
+src/Casli/Renderer/Light/PointLight.h
+src/Casli/Renderer/Light/PointLight.cpp
+src/Casli/Renderer/Light/SpotLight.h
+src/Casli/Renderer/Light/SpotLight.cpp
+)
+
+set(RENDERER
+src/Casli/Renderer/RendererAPI.h
+src/Casli/Renderer/Drawable.h
+src/Casli/Renderer/Drawable.cpp
+src/Casli/Renderer/Camera.h
+src/Casli/Renderer/Camera.cpp
+src/Casli/Renderer/Mesh.h
+src/Casli/Renderer/Mesh.cpp
+src/Casli/Renderer/Model.h
+src/Casli/Renderer/Model.cpp
+src/Casli/Renderer/Graphics.h 
+src/Casli/Renderer/Graphics.cpp
+)
+
+set(SHADER 
+src/Casli/Shader/LambertPixelShader.h
+src/Casli/Shader/LambertVertexShader.h
+src/Casli/Shader/SampleTextureVS.h
+src/Casli/Shader/SampleTexturePS.h
+src/Casli/Shader/AlphaTestVS.h
+src/Casli/Shader/AlphaTestPS.h
+src/Casli/Shader/AlphaBlendVS.h
+src/Casli/Shader/AlphaBlendPS.h
 )
 
 set(TEST 
@@ -57,6 +71,8 @@ src/Casli/Test/Box.h
 src/Casli/Test/Box.cpp 
 src/Casli/Test/Plane.h 
 src/Casli/Test/Plane.cpp
+src/Casli/Test/AlphaPlane.h 
+src/Casli/Test/AlphaPlane.cpp
 )
 
 set(PLATFORM
@@ -65,16 +81,19 @@ src/Platform/Window.cpp
 src/Platform/CasliWin.h
 )
 
+source_group( Bindable FILES ${BINDABLE})
+source_group( Light FILES ${LIGHT})
 source_group( Renderer FILES ${RENDERER})
 source_group( Test FILES ${TEST})
 source_group( Scene FILES ${SCENE})
 source_group( Platform FILES ${PLATFORM})
+source_group( Shader FILES ${SHADER})
 
 #设置库生成目录
-SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${PROJECT_SOURCE_DIR}/output/bin_d/)
-SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${PROJECT_SOURCE_DIR}/output/bin_d/)
-SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${PROJECT_SOURCE_DIR}/output/bin_d/)
-SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${PROJECT_SOURCE_DIR}/output/bin/)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${PROJECT_SOURCE_DIR}/output/bin_d/)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${PROJECT_SOURCE_DIR}/output/bin_d/)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${PROJECT_SOURCE_DIR}/output/bin_d/)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${PROJECT_SOURCE_DIR}/output/bin/)
 
 AUX_SOURCE_DIRECTORY(${PROJECT_SOURCE_DIR}/src/Casli/Core CORE_SRCS)
 ADD_LIBRARY(Core SHARED ${CORE_SRCS} ${PROJECT_SOURCE_DIR}/src/Casli/Core/BlendState.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/CoreAPI.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/DeviceContext.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/IBuffer.h
@@ -83,17 +102,44 @@ ${PROJECT_SOURCE_DIR}/src/Casli/Core/Texture2D.h ./src/Casli/Core/tgaimage.h ./s
 ${PROJECT_SOURCE_DIR}/src/Casli/Core/DepthStencilView.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/Core.h)
 
 if (CMAKE_BUILD_TYPE EQUAL Debug)
-LINK_DIRECTORIES(${PROJECT_SOURCE_DIR}/output/bin_d)
+	LINK_DIRECTORIES(${PROJECT_SOURCE_DIR}/output/bin_d)
 else ()
-LINK_DIRECTORIES(${PROJECT_SOURCE_DIR}/output/bin)
+	LINK_DIRECTORIES(${PROJECT_SOURCE_DIR}/output/bin)
 endif()
 
-ADD_EXECUTABLE(${PROJECT_NAME} ${PLATFORM} ${RENDERER} ${SCENE} ${TEST} ./src/main.cpp)
-#设置release模式下关闭cmd窗口
-Set_Target_Properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
+ADD_LIBRARY(Renderer SHARED ${PLATFORM} ${RENDERER} ${BINDABLE} ${LIGHT} ${TEST} ${SHADER})
+TARGET_LINK_LIBRARIES(Renderer Core)
+TARGET_LINK_LIBRARIES(Renderer ../output/bin_d/assimp-vc141-mtd)
 
-INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/include)
-INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/src)
-INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/thirdparty)
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} Core)
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} ../output/bin_d/assimp-vc141-mtd)
+#MipMap测试场景
+add_executable(MipMap src/Casli/Scene/MipMap/App.h src/Casli/Scene/MipMap/App.cpp src/Casli/Scene/MipMap/main.cpp)
+TARGET_LINK_LIBRARIES(MipMap Renderer)
+#设置release模式下关闭cmd窗口
+Set_Target_Properties(MipMap PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
+
+#三种灯光测试场景
+add_executable(Light src/Casli/Scene/Light/App.h src/Casli/Scene/Light/App.cpp src/Casli/Scene/Light/main.cpp)
+TARGET_LINK_LIBRARIES(Light Renderer)
+#设置release模式下关闭cmd窗口
+Set_Target_Properties(Light PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
+
+# Alpha Test
+add_executable(AlphaTest src/Casli/Scene/AlphaTest/App.h src/Casli/Scene/AlphaTest/App.cpp src/Casli/Scene/AlphaTest/main.cpp)
+TARGET_LINK_LIBRARIES(AlphaTest Renderer)
+#设置release模式下关闭cmd窗口
+Set_Target_Properties(AlphaTest PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
+
+# Alpha Blend
+add_executable(AlphaBlend src/Casli/Scene/AlphaBlend/App.h src/Casli/Scene/AlphaBlend/App.cpp src/Casli/Scene/AlphaBlend/main.cpp)
+TARGET_LINK_LIBRARIES(AlphaBlend Renderer)
+#设置release模式下关闭cmd窗口
+Set_Target_Properties(AlphaBlend PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
+
+include_directories(${PROJECT_SOURCE_DIR}/include)
+include_directories(${PROJECT_SOURCE_DIR}/src/Casli/Renderer)
+include_directories(${PROJECT_SOURCE_DIR}/src/Casli/Renderer/Bindable)
+include_directories(${PROJECT_SOURCE_DIR}/src/Casli/Renderer/Light)
+include_directories(${PROJECT_SOURCE_DIR}/src/Casli/Shader)
+include_directories(${PROJECT_SOURCE_DIR}/src/Casli/Test)
+include_directories(${PROJECT_SOURCE_DIR}/src)
+include_directories(${PROJECT_SOURCE_DIR}/thirdparty)

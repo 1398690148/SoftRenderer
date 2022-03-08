@@ -1,5 +1,4 @@
-#include "CoreAPI.h"
-#include "IBuffer.h";
+#include "IBuffer.h"
 
 class Texture2D;
 class SamplerState;
