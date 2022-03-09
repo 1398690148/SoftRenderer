@@ -18,7 +18,6 @@ src/Casli/Renderer/Bindable/Blender.h
 src/Casli/Renderer/Bindable/Blender.cpp
 src/Casli/Renderer/Bindable/IndexBuffer.h
 src/Casli/Renderer/Bindable/IndexBuffer.cpp
-
 src/Casli/Renderer/Bindable/PixelConstantBuffer.h 
 src/Casli/Renderer/Bindable/PixelConstantBuffer.cpp
 src/Casli/Renderer/Bindable/Sampler.h
@@ -96,10 +95,11 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${PROJECT_SOURCE_DIR}/output/bin_d/)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${PROJECT_SOURCE_DIR}/output/bin/)
 
 AUX_SOURCE_DIRECTORY(${PROJECT_SOURCE_DIR}/src/Casli/Core CORE_SRCS)
-ADD_LIBRARY(Core SHARED ${CORE_SRCS} ${PROJECT_SOURCE_DIR}/src/Casli/Core/BlendState.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/CoreAPI.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/DeviceContext.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/IBuffer.h
-${PROJECT_SOURCE_DIR}/src/Casli/Core/Device.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/IVertexShader.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/Utils.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/SamplerState.h 
-${PROJECT_SOURCE_DIR}/src/Casli/Core/Texture2D.h ./src/Casli/Core/tgaimage.h ./src/Casli/Core/ShaderInput.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/RenderTargetView.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/InputLayout.h 
-${PROJECT_SOURCE_DIR}/src/Casli/Core/DepthStencilView.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/Core.h)
+ADD_LIBRARY(Core SHARED ${CORE_SRCS} ${PROJECT_SOURCE_DIR}/src/Casli/Core/BlendState.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/CoreAPI.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/DeviceContext.h 
+${PROJECT_SOURCE_DIR}/src/Casli/Core/IBuffer.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/Device.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/IVertexShader.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/IPixelShader.h 
+${PROJECT_SOURCE_DIR}/src/Casli/Core/Utils.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/SamplerState.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/Texture2D.h ./src/Casli/Core/tgaimage.h 
+./src/Casli/Core/ShaderInput.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/RenderTargetView.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/InputLayout.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/DepthStencilView.h 
+${PROJECT_SOURCE_DIR}/src/Casli/Core/Core.h)
 
 if (CMAKE_BUILD_TYPE EQUAL Debug)
 	LINK_DIRECTORIES(${PROJECT_SOURCE_DIR}/output/bin_d)
@@ -108,8 +108,10 @@ else ()
 endif()
 
 ADD_LIBRARY(Renderer SHARED ${PLATFORM} ${RENDERER} ${BINDABLE} ${LIGHT} ${TEST} ${SHADER})
+
+target_link_libraries(Core ../lib/TBBlib/ia32/tbb12 ../lib/TBBlib/ia32/tbb12_debug)
 TARGET_LINK_LIBRARIES(Renderer Core)
-TARGET_LINK_LIBRARIES(Renderer ../output/bin_d/assimp-vc141-mtd)
+TARGET_LINK_LIBRARIES(Renderer ../lib/assimp-vc141-mtd)
 
 #MipMap测试场景
 add_executable(MipMap src/Casli/Scene/MipMap/App.h src/Casli/Scene/MipMap/App.cpp src/Casli/Scene/MipMap/main.cpp)
@@ -143,3 +145,4 @@ include_directories(${PROJECT_SOURCE_DIR}/src/Casli/Shader)
 include_directories(${PROJECT_SOURCE_DIR}/src/Casli/Test)
 include_directories(${PROJECT_SOURCE_DIR}/src)
 include_directories(${PROJECT_SOURCE_DIR}/thirdparty)
+include_directories(${PROJECT_SOURCE_DIR}/thirdparty/oneapi-tbb-2021.5.0/include)
