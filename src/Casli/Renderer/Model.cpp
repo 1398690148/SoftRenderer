@@ -68,21 +68,23 @@ void Model::loadModel(Graphics &gfx, std::string path)
 
 void Model::processNode(Graphics &gfx, aiNode * node, const aiScene * scene)
 {
-	tbb::parallel_for(tbb::blocked_range<size_t>(0, node->mNumMeshes), [&](const tbb::blocked_range<size_t> &r)
-	{
-		for (unsigned int i = r.begin(); i != r.end(); i++)
+	//tbb::parallel_for(tbb::blocked_range<size_t>(0, node->mNumMeshes), [&](const tbb::blocked_range<size_t> &r)
+	//{
+		for (int i = 0; i < node->mNumMeshes; i++)
+		//for (unsigned int i = r.begin(); i != r.end(); i++)
 		{
 			aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
 			meshes.push_back(processMesh(gfx, mesh, scene));
 		}
-	});
-	tbb::parallel_for(tbb::blocked_range<size_t>(0, node->mNumChildren), [&](const tbb::blocked_range<size_t> &r)
-	{
-		for (unsigned int i = r.begin(); i != r.end(); i++)
+	//});
+	//tbb::parallel_for(tbb::blocked_range<size_t>(0, node->mNumChildren), [&](const tbb::blocked_range<size_t> &r)
+	//{
+		for (int i = 0; i < node->mNumChildren; i++)
+		//for (unsigned int i = r.begin(); i != r.end(); i++)
 		{
 			processNode(gfx, node->mChildren[i], scene);
 		}
-	});
+	//});
 }
 
 Mesh Model::processMesh(Graphics &gfx, aiMesh * mesh, const aiScene * scene)

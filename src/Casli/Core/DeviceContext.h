@@ -72,6 +72,7 @@ private:
 	glm::mat4 Viewport;
 	//顶点缓存中的数据
 	std::unordered_map<std::string, std::vector<glm::vec4>> m_Data;
+	unsigned char *tempBuffer;
 };
 
 class QuadFragments

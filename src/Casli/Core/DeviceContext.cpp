@@ -149,7 +149,7 @@ void DeviceContext::DrawIndex()
 	ParseVertexBuffer();
 	tbb::parallel_for(0, (int)indices.size(), 1, [&](size_t i)
 	{
-		unsigned char *buffer = new unsigned char[120];
+		unsigned char *buffer = new unsigned char[160];
 		unsigned char *o0 = Vertex(indices[i][0], buffer);
 		unsigned char *o1 = Vertex(indices[i][1], buffer);
 		unsigned char *o2 = Vertex(indices[i][2], buffer);
@@ -167,6 +167,24 @@ void DeviceContext::DrawIndex()
 		delete o2;
 		delete buffer;
 	});
+	//for (unsigned int i = 0; i < indices.size(); i += 3)
+	//{
+	//	unsigned char *o0 = Vertex(i, tempBuffer);
+	//	unsigned char *o1 = Vertex(i + 1, tempBuffer);
+	//	unsigned char *o2 = Vertex(i + 2, tempBuffer);
+
+	//	std::unordered_map<std::string, glm::vec4> vertex[3];
+	//	ParseShaderOutput(o0, vertex[0]);
+	//	ParseShaderOutput(o1, vertex[1]);
+	//	ParseShaderOutput(o2, vertex[2]);
+	//	if (vertex[0].find("SV_Position") == vertex[0].end()) return;
+	//	//视口变换
+	//	ViewportTransform(vertex);
+	//	Triangle(vertex);
+	//	delete o0;
+	//	delete o1;
+	//	delete o2;
+	//}
 }
 
 void DeviceContext::Triangle(std::unordered_map<std::string, glm::vec4> vertex[3])
@@ -238,7 +256,7 @@ void DeviceContext::Triangle(std::unordered_map<std::string, glm::vec4> vertex[3
 			{
 				continue;
 			}
-			//color = glm::vec4(std::min(255.0f, color[0]), std::min(255.0f, color[1]), std::min(255.0f, color[2]), std::min(255.0f, color[3]));
+			color = glm::vec4(min(255.0f, color[0]), min(255.0f, color[1]), min(255.0f, color[2]), min(255.0f, color[3]));
 			pRenderTargetView->SetPixel(P.x, P.y, color[0], color[1], color[2], color[3]);
 			pDepthStencilView->SetDepth(j, t0.y + i, depth);
 		}
@@ -255,32 +273,29 @@ void DeviceContext::Triangle(std::unordered_map<std::string, glm::vec4> vertex[3
 void DeviceContext::ParseVertexBuffer()
 {
 	int bufferSize = pVertexBuffer->GetByteWidth() / pVertexBuffer->GetStructureByteStride();
-	auto ParseVertex = [&](const tbb::blocked_range<size_t> &r) {
-		for (int i = r.begin(); i != r.end(); i++)
+	for (int i = 0; i < pInputLayout->getSize(); i++)
+	{
+		const INPUT_ELEMENT_DESC *desc = pInputLayout->getData(i);
+		std::vector<glm::vec4> attr;
+		int num = pInputLayout->getData(i)->Size / pInputLayout->getData(i)->typeSize;
+		int inOffset = pInputLayout->getData(i)->Offset;
+		for (int j = 0; j < bufferSize; j++)
 		{
-			const INPUT_ELEMENT_DESC *desc = pInputLayout->getData(i);
-			std::vector<glm::vec4> attr;
-			int num = pInputLayout->getData(i)->Size / pInputLayout->getData(i)->typeSize;
-			int inOffset = pInputLayout->getData(i)->Offset;
-			for (int j = 0; j < bufferSize; j++)
+			glm::vec4 v(0, 0, 0, 0);
+			v[0] = *((float *)pVertexBuffer->GetBuffer(pVertexBuffer->GetStructureByteStride() * j + inOffset));
+			v[1] = *((float *)pVertexBuffer->GetBuffer(pVertexBuffer->GetStructureByteStride() * j + inOffset + desc->typeSize));
+			if (num > 2)
 			{
-				glm::vec4 v(0, 0, 0, 0);
-				v[0] = *((float *)pVertexBuffer->GetBuffer(pVertexBuffer->GetStructureByteStride() * j + inOffset));
-				v[1] = *((float *)pVertexBuffer->GetBuffer(pVertexBuffer->GetStructureByteStride() * j + inOffset + desc->typeSize));
-				if (num > 2)
+				v[2] = *((float *)pVertexBuffer->GetBuffer(pVertexBuffer->GetStructureByteStride() * j + inOffset + 2 * desc->typeSize));
+				if (num > 3)
 				{
-					v[2] = *((float *)pVertexBuffer->GetBuffer(pVertexBuffer->GetStructureByteStride() * j + inOffset + 2 * desc->typeSize));
-					if (num > 3)
-					{
-						v[3] = *((float *)pVertexBuffer->GetBuffer(pVertexBuffer->GetStructureByteStride() * j + inOffset + 3 * desc->typeSize));
-					}
+					v[3] = *((float *)pVertexBuffer->GetBuffer(pVertexBuffer->GetStructureByteStride() * j + inOffset + 3 * desc->typeSize));
 				}
-				attr.push_back(v);
 			}
-			m_Data[desc->SemanticName] = attr;
+			attr.push_back(v);
 		}
-	};
-	tbb::parallel_for(tbb::blocked_range<size_t>(0, pInputLayout->getSize()), ParseVertex);
+		m_Data[desc->SemanticName] = attr;
+	}
 }
 
 void DeviceContext::ParseShaderOutput(unsigned char *buffer, std::unordered_map<std::string, glm::vec4> &output)
@@ -371,18 +386,16 @@ unsigned char *DeviceContext::Interpolation(std::unordered_map<std::string, glm:
 {
 	//插值其他信息
 	unsigned char *buffer = new unsigned char[100];
-	tbb::parallel_for(tbb::blocked_range<size_t>(0, pPixelShader->inDesc.size()), [&](const tbb::blocked_range<size_t> &r) {
-		for (size_t i = r.begin(); i != r.end(); i++)
+	for (int i = 0; i < pPixelShader->inDesc.size(); i++)
+	{
+		glm::vec4 attribute = vertex[0][pPixelShader->inDesc[i].Name] * bcScreen[0] +
+			vertex[1][pPixelShader->inDesc[i].Name] * bcScreen[1] + vertex[2][pPixelShader->inDesc[i].Name] * bcScreen[2];
+		if (pPixelShader->inDesc[i].Name == "SV_TEXCOORD0" || pPixelShader->inDesc[i].Name == "SV_Normal")
 		{
-			glm::vec4 attribute = vertex[0][pPixelShader->inDesc[i].Name] * bcScreen[0] + 
-				vertex[1][pPixelShader->inDesc[i].Name] * bcScreen[1] + vertex[2][pPixelShader->inDesc[i].Name] * bcScreen[2];
-			if (pPixelShader->inDesc[i].Name == "SV_TEXCOORD0" || pPixelShader->inDesc[i].Name == "SV_Normal")
-			{
-				attribute /= attribute.w;
-			}
-			memcpy(buffer + pPixelShader->inDesc[i].Offset, &attribute, pPixelShader->inDesc[i].Size);
+			attribute /= attribute.w;
 		}
-	});
+		memcpy(buffer + pPixelShader->inDesc[i].Offset, &attribute, pPixelShader->inDesc[i].Size);
+	}
 	return buffer;
 }
 
