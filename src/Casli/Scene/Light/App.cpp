@@ -13,6 +13,7 @@ App::App()
 	wnd.Gfx().SetProjection(Projection);
 	wnd.Gfx().SetVertexShader(new LambertVertexShader());
 	wnd.Gfx().SetPixelShader(new LambertPixelShader());
+	InitMatrix();
 }
 
 int App::Go()
@@ -36,6 +37,24 @@ void App::DoFrame()
 	directionalLight.Bind(wnd.Gfx());
 	pointLight.Bind(wnd.Gfx());
 	spotLight.Bind(wnd.Gfx());
+	model.Bind(wnd.Gfx(), (unsigned char *)(&CBuffer[0]), sizeof(glm::mat4) * 3);
 	model.Draw(wnd.Gfx());
 	wnd.Gfx().EndFrame();
+}
+
+void App::InitMatrix()
+{
+	CBuffer.clear();
+
+	glm::mat4 MVP = glm::mat4(1.0);
+	glm::mat4 MT = glm::mat4(1.0);
+	glm::mat4 M = glm::mat4(1.0);
+	MVP = glm::translate(MVP, glm::vec3(0, -12.f, -7));
+	M = glm::translate(M, glm::vec3(0, -12.f, -7));
+	MT = glm::translate(MT, glm::vec3(0, -12.f, -7));
+	MT = glm::transpose(glm::inverse(MT));
+	MVP = wnd.Gfx().GetProjection() * camera.GetMatrix() * MVP;
+	CBuffer.push_back(MVP);
+	CBuffer.push_back(M);
+	CBuffer.push_back(MT);
 }

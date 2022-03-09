@@ -48,9 +48,9 @@ void App::DoFrame()
 {
 	wnd.Gfx().SetCamera(camera.GetMatrix());
 	wnd.Gfx().BeginFrame(1.f, 1.f, 1.f);
-	plane.Bind(wnd.Gfx(), (unsigned char *)(&planesCBuffer[0][0]));
+	plane.Bind(wnd.Gfx(), (unsigned char *)(&planesCBuffer[0][0]), sizeof(glm::mat4));
 	plane.Draw(wnd.Gfx());
-	mipPlane.Bind(wnd.Gfx(), (unsigned char *)(&planesCBuffer[1][0]));
+	mipPlane.Bind(wnd.Gfx(), (unsigned char *)(&planesCBuffer[1][0]), sizeof(glm::mat4));
 	mipPlane.Draw(wnd.Gfx());
 	wnd.Gfx().EndFrame();
 }

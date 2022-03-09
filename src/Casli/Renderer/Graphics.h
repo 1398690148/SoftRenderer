@@ -48,7 +48,5 @@ private:
 	VertexConstantBuffer *pConstantBuffer{};
 
 	InputLayout *pInputLayout;
-	Sampler *sampler{};
-	Texture *tex{};
 	float angle = 0;
 };

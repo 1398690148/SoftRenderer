@@ -10,7 +10,7 @@ class Drawable
 public:
 	Drawable() {}
 	virtual void Draw(Graphics &gfx) = 0;
-	virtual void Bind(Graphics &gfx, unsigned char *ConstantBuffer) = 0;
+	virtual void Bind(Graphics &gfx, unsigned char *ConstantBuffer, size_t size) = 0;
 
 protected:
 	static Device *GetDevice(Graphics &gfx);

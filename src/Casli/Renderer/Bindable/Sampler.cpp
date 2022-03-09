@@ -1,9 +1,9 @@
 #include "Sampler.h"
 
-Sampler::Sampler(Graphics &gfx, int idx) : index(idx)
+Sampler::Sampler(Graphics &gfx, int idx, FILTER filter) : index(idx)
 {
 	SAMPLER_DESC samplerDesc = {};
-	samplerDesc.Filter = FILTER_POINT_MIP_POINT;
+	samplerDesc.Filter = filter;
 	samplerDesc.AddressU = TEXTURE_ADDRESS_WRAP;
 	samplerDesc.AddressV = TEXTURE_ADDRESS_WRAP;
 	samplerDesc.AddressW = TEXTURE_ADDRESS_WRAP;

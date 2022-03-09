@@ -1,7 +1,4 @@
 #include <Graphics.h>
-
-#include <Texture.h>
-#include <Sampler.h>
 #include <VertexConstantBuffer.h>
 
 glm::vec3 light_dir(1, 1, 1);
@@ -37,8 +34,6 @@ Graphics::Graphics(unsigned int width, unsigned int height, HWND hWnd, HDC ghdcM
 	pViewports.MaxDepth = 10000;
 	pViewports.MinDepth = 0;
 	pContext->RSSetViewports(1, &pViewports);
-
-	sampler = new Sampler(*this, 0);
 }
 
 Graphics::~Graphics()
@@ -66,7 +61,6 @@ void Graphics::BeginFrame(float red, float green, float blue)
 	pDevice->CreateInputLayout(ied, (unsigned int)std::size(ied), &pInputLayout);
 	pContext->IASetInputLayout(pInputLayout);
 
-	sampler->Bind(*this);
 	pContext->IASetPrimitiveTopology(PRIMITIVE_TOPOLOGY::PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
 

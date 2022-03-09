@@ -37,11 +37,11 @@ AlphaPlane::AlphaPlane(Graphics & gfx, std::string texturePath, int mipLevel)
 	pBlender = new Blender(gfx, true, {});
 }
 
-void AlphaPlane::Bind(Graphics &gfx, unsigned char *ConstantBuffer)
+void AlphaPlane::Bind(Graphics &gfx, unsigned char *ConstantBuffer, size_t size)
 {
 	pVertexBuffer->Bind(gfx);
 	pIndexBuffer->Bind(gfx);
-	pConstantBuffer->SetConstantBuffer(ConstantBuffer, sizeof(glm::mat4) * 3);
+	pConstantBuffer->SetConstantBuffer(ConstantBuffer, size);
 	pConstantBuffer->Bind(gfx);
 	GetContext(gfx)->OMGetBlendState(&oldBlender, &oldBlendFactor, &oldSampleMask);
 	pBlender->Bind(gfx);

@@ -3,18 +3,19 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <vector>
-#include <Bindable.h>
-#include "Mesh.h"
+#include <Drawable.h>
+#include <Mesh.h>
 
-class Mesh;
 class Texture;
 class VertexConstantBuffer;
+class Sampler;
 
-class RENDERER_API Model
+class RENDERER_API Model : public Drawable
 {
 public:
-	Model(Graphics &gfx, const char *path);
+	Model(Graphics &gfx, const char *path, int mipLevel = 1, FILTER filter = FILTER_POINT_MIP_POINT);
 	void Draw(Graphics &gfx);
+	void Bind(Graphics &gfx, unsigned char *ConstantBuffer, size_t size) override;
 private:
 	void loadModel(Graphics &gfx, std::string path);
 	void processNode(Graphics &gfx, aiNode *node, const aiScene *scene);
@@ -24,5 +25,5 @@ private:
 	std::vector<Mesh> meshes;
 	std::string directory;
 	VertexConstantBuffer *pConstantBuffer{};
-	float z = 0;
+	Sampler *sampler{};
 };

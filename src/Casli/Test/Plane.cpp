@@ -1,9 +1,9 @@
 #include <Plane.h>
 #include <Texture.h>
 #include <VertexConstantBuffer.h>
-#include <Blender.h>
+#include <Sampler.h>
 
-Plane::Plane(Graphics & gfx, std::string texturePath, int mipLevel)
+Plane::Plane(Graphics & gfx, std::string texturePath, int mipLevel, FILTER filter)
 {
 	Vertex vertex;
 	float v[] = {
@@ -33,17 +33,16 @@ Plane::Plane(Graphics & gfx, std::string texturePath, int mipLevel)
 	matrix.push_back(glm::mat4(1.0));
 	matrix.push_back(glm::mat4(1.0));
 	pConstantBuffer = new VertexConstantBuffer(gfx, 0, (unsigned char*)&matrix[0], sizeof(glm::mat4) * matrix.size());
-	//pBlender = new Blender(gfx, true);
+	sampler = new Sampler(gfx, 0, filter);
 }
 
-void Plane::Bind(Graphics &gfx, unsigned char *ConstantBuffer)
+void Plane::Bind(Graphics &gfx, unsigned char *ConstantBuffer, size_t size)
 {
 	pVertexBuffer->Bind(gfx);
 	pIndexBuffer->Bind(gfx);
-	pConstantBuffer->SetConstantBuffer(ConstantBuffer, sizeof(glm::mat4) * 3);
+	pConstantBuffer->SetConstantBuffer(ConstantBuffer, size);
 	pConstantBuffer->Bind(gfx);
-	//GetContext(gfx)->OMGetBlendState(&oldBlender, &oldBlendFactor, &oldSampleMask);
-	//pBlender->Bind(gfx);
+	sampler->Bind(gfx);
 }
 
 void Plane::Draw(Graphics &gfx)

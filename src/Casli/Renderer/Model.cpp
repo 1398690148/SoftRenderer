@@ -1,12 +1,12 @@
 #include "Model.h"
-#include <assimp/types.h>
 #include <Texture.h>
+#include <Sampler.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <VertexConstantBuffer.h>
 #include <tbb/blocked_range.h>
 #include <tbb/parallel_for.h>
 
-Model::Model(Graphics &gfx, const char *path)
+Model::Model(Graphics &gfx, const char *path, int mipLevel, FILTER filter)
 {
 	loadModel(gfx, path);
 	std::vector<glm::mat4> matrix;
@@ -14,29 +14,11 @@ Model::Model(Graphics &gfx, const char *path)
 	matrix.push_back(glm::mat4(1.0));
 	matrix.push_back(glm::mat4(1.0));
 	pConstantBuffer = new VertexConstantBuffer(gfx, 0, (unsigned char*)&matrix[0], sizeof(glm::mat4) * matrix.size());
+	sampler = new Sampler(gfx, 0, filter);
 }
 
 void Model::Draw(Graphics &gfx)
 {
-	std::vector<glm::mat4> matrix;
-	glm::mat4 MVP = glm::mat4(1.0);
-	glm::mat4 MT = glm::mat4(1.0);
-	glm::mat4 M = glm::mat4(1.0);
-	MVP = glm::translate(MVP, glm::vec3(0, -12.f, -7));
-	MVP = glm::rotate(MVP, glm::radians(z), glm::vec3(0, 1.f, 0));
-
-	M = glm::translate(M, glm::vec3(0, -12.f, -7));
-	M = glm::rotate(M, glm::radians(z), glm::vec3(0, 1.f, 0));
-
-	MT = glm::translate(MT, glm::vec3(0, -12.f, -7));
-	MT = glm::transpose(glm::inverse(glm::rotate(MT, glm::radians(z++), glm::vec3(0, 1.f, 0))));
-
-	MVP = gfx.GetProjection() * gfx.GetCamera() * MVP;
-	matrix.push_back(MVP);
-	matrix.push_back(M);
-	matrix.push_back(MT);
-	pConstantBuffer->SetConstantBuffer((unsigned char *)(&matrix[0]), sizeof(glm::mat4) * 3);
-	pConstantBuffer->Bind(gfx);
 	for (auto &mesh : meshes)
 	{
 		mesh.Draw(gfx);
@@ -48,6 +30,13 @@ void Model::Draw(Graphics &gfx)
 		//meshes[6].Draw(gfx);
 		//meshes[5].Draw(gfx);
 	}
+}
+
+void Model::Bind(Graphics & gfx, unsigned char *ConstantBuffer, size_t size)
+{
+	pConstantBuffer->SetConstantBuffer(ConstantBuffer, size);
+	pConstantBuffer->Bind(gfx);
+	sampler->Bind(gfx);
 }
 
 void Model::loadModel(Graphics &gfx, std::string path)
@@ -68,23 +57,23 @@ void Model::loadModel(Graphics &gfx, std::string path)
 
 void Model::processNode(Graphics &gfx, aiNode * node, const aiScene * scene)
 {
-	//tbb::parallel_for(tbb::blocked_range<size_t>(0, node->mNumMeshes), [&](const tbb::blocked_range<size_t> &r)
-	//{
-		for (int i = 0; i < node->mNumMeshes; i++)
-		//for (unsigned int i = r.begin(); i != r.end(); i++)
+	tbb::parallel_for(tbb::blocked_range<size_t>(0, node->mNumMeshes), [&](const tbb::blocked_range<size_t> &r)
+	{
+		//for (int i = 0; i < node->mNumMeshes; i++)
+		for (unsigned int i = r.begin(); i != r.end(); i++)
 		{
 			aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
 			meshes.push_back(processMesh(gfx, mesh, scene));
 		}
-	//});
-	//tbb::parallel_for(tbb::blocked_range<size_t>(0, node->mNumChildren), [&](const tbb::blocked_range<size_t> &r)
-	//{
-		for (int i = 0; i < node->mNumChildren; i++)
-		//for (unsigned int i = r.begin(); i != r.end(); i++)
+	});
+	tbb::parallel_for(tbb::blocked_range<size_t>(0, node->mNumChildren), [&](const tbb::blocked_range<size_t> &r)
+	{
+		//for (int i = 0; i < node->mNumChildren; i++)
+		for (unsigned int i = r.begin(); i != r.end(); i++)
 		{
 			processNode(gfx, node->mChildren[i], scene);
 		}
-	//});
+	});
 }
 
 Mesh Model::processMesh(Graphics &gfx, aiMesh * mesh, const aiScene * scene)

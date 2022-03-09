@@ -12,7 +12,7 @@ class RENDERER_API AlphaPlane : public Drawable
 public:
 	AlphaPlane(Graphics &gfx, std::string texturePath, int mipLevel);
 	void Draw(Graphics &gfx) override;
-	void Bind(Graphics &gfx, unsigned char *ConstantBuffer) override;
+	void Bind(Graphics &gfx, unsigned char *ConstantBuffer, size_t size) override;
 
 private:
 	std::vector<Vertex> vertices;
