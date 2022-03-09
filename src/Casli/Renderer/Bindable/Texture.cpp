@@ -1,6 +1,8 @@
 #include <algorithm>
 #include <Texture.h>
 #include "stb_image/stb_image.cpp"
+#include <tbb/blocked_range.h>
+#include <tbb/parallel_for.h>
 
 Texture::Texture(Graphics& gfx, const char *path, int mipMapLevel, int idx) : index(idx)
 {
@@ -10,14 +12,17 @@ Texture::Texture(Graphics& gfx, const char *path, int mipMapLevel, int idx) : in
 	{
 		int size = width * height * channels;
 		unsigned char *buffer = new unsigned char[size];
-		for (int i = 0; i < size; i++)
+		tbb::parallel_for(tbb::blocked_range<size_t>(0, size), [&](const tbb::blocked_range<size_t> &r)
+		{
+			for (int i = r.begin(); i != r.end(); i++)
+			{
+				buffer[i] = data[i];
+			}
+		});
+		/*for (int i = 0; i < size; i++)
 		{
 			buffer[i] = data[i];
-			if ((i + 1) % 4 == 0 && buffer[i] != 0)
-			{
-				int k = buffer[i];
-			}
-		}
+		}*/
 		TEXTURE2D_DESC textureDesc = {};
 		textureDesc.Width = width;
 		textureDesc.Height = height;

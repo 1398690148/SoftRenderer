@@ -23,7 +23,7 @@ struct RENDERER_API SampleTexturePS : public IPixelShader
 	virtual bool fragment(unsigned char *in, glm::vec4 &color)
 	{
 		PixelInput *input = (PixelInput *)in;
-		color = textures[0]->Sampler(input->uv, samplers[0], dFdx, dFdy);
+		color = textures[0]->Sampler(input->uv, samplers[0], dFdx.local(), dFdy.local());
 		return false;
 	}
 };

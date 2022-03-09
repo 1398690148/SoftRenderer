@@ -5,6 +5,8 @@
 #include <cmath>
 #include "tgaimage.h"
 #include <iostream>
+#include "tbb/blocked_range.h"
+#include "tbb/parallel_for.h"
 
 Texture2D::Texture2D(TEXTURE2D_DESC *desc, SUBRESOURCE_DATA *sd)
 	: IBuffer(sd ? sd->SysMemPitch * desc->Height : desc->Width * desc->Height * 4, sizeof(unsigned char)), 
@@ -39,6 +41,10 @@ void Texture2D::GenerateMips()
 	int h = height;
 	for (int k = 1, coe = 1; k <= mipLevels; k++, coe *= 2)
 	{
+		//tbb::parallel_for(tbb::blocked_range<size_t>(0, h), [&](const tbb::blocked_range<size_t> &r)
+		//{
+		//
+		//});
 		for (int j = 0; j < h; j += 2)
 		{
 			for (int i = 0; i < w; i += 2)
@@ -47,10 +53,10 @@ void Texture2D::GenerateMips()
 				int index1 = startPos + ((i + 1) + j * w) * channels;
 				int index2 = startPos + (i + (j + 1) * w) * channels;
 				int index3 = startPos + ((i + 1) + (j + 1) * w) * channels;
-				glm::vec4 c00 = glm::vec4(m_Buffer[index0], m_Buffer[index0 + 1], m_Buffer[index0 + 2], 255);
-				glm::vec4 c01 = glm::vec4(m_Buffer[index1], m_Buffer[index1 + 1], m_Buffer[index1 + 2], 255);
-				glm::vec4 c10 = glm::vec4(m_Buffer[index2], m_Buffer[index2 + 1], m_Buffer[index2 + 2], 255);
-				glm::vec4 c11 = glm::vec4(m_Buffer[index3], m_Buffer[index3 + 1], m_Buffer[index3 + 2], 255);
+				glm::vec4 c00 = glm::vec4(m_Buffer[index0], m_Buffer[index0 + 1], m_Buffer[index0 + 2], channels > 3 ? m_Buffer[index0 + 3] : 255);
+				glm::vec4 c01 = glm::vec4(m_Buffer[index1], m_Buffer[index1 + 1], m_Buffer[index1 + 2], channels > 3 ? m_Buffer[index1 + 3] : 255);
+				glm::vec4 c10 = glm::vec4(m_Buffer[index2], m_Buffer[index2 + 1], m_Buffer[index2 + 2], channels > 3 ? m_Buffer[index2 + 3] : 255);
+				glm::vec4 c11 = glm::vec4(m_Buffer[index3], m_Buffer[index3 + 1], m_Buffer[index3 + 2], channels > 3 ? m_Buffer[index3 + 3] : 255);
 				m_Buffer[currentPos++] = (c00 + c01 + c10 + c11).r / 4;
 				if (channels > 1)
 				{
@@ -120,7 +126,7 @@ void Texture2D::RemapUV(float &texCoord, TEXTURE_ADDRESS_MODE address)
 	}
 }
 
-glm::vec4 Texture2D::Sampler(glm::vec2 uv, SamplerState * sampler, float lod)
+glm::vec4 Texture2D::Sampler(glm::vec2 uv, SamplerState *sampler, float lod)
 {
 	RemapUV(uv.r, sampler->pSamplerState.AddressU);
 	RemapUV(uv.t, sampler->pSamplerState.AddressV);
@@ -139,15 +145,18 @@ glm::vec4 Texture2D::Sampler(glm::vec2 uv, SamplerState * sampler, float lod)
 	int w = width;
 
 	int index = 0;
-	for (int i = 0; i < floor(lod); i++)
+	tbb::parallel_for(tbb::blocked_range<size_t>(0, floor(lod)), [&](const tbb::blocked_range<size_t> &r)
 	{
-		index += ByteWidth / std::pow(4, i);
-		x >>= 1;
-		y >>= 1;
-		w >>= 1;
-	}
-	int index0 = index + (x + y * w) * channels;
+		for (size_t i = r.begin(); i < r.end(); i++)
+		{
+			index += ByteWidth / std::pow(4, i);
+			x >>= 1;
+			y >>= 1;
+			w >>= 1;
+		}
+	});
 	int maxIndex = index + ByteWidth / std::pow(4, floor(lod));
+	int index0 = index +(x + y * w) * channels;
 
 	switch (sampler->pSamplerState.Filter)
 	{
@@ -247,7 +256,7 @@ glm::vec4 Texture2D::Sampler(glm::vec2 uv, SamplerState *sampler, glm::vec2 ddx,
 		glm::vec2 dfdx = ddx * glm::vec2(width, height);
 		glm::vec2 dfdy = ddy * glm::vec2(width, height);
 		float L = glm::max(glm::dot(dfdx, dfdx), glm::dot(dfdy, dfdy));
-		return Sampler(uv, sampler, glm::max(0.5f * glm::log2(L), 0.0f));
+		return Sampler(uv, sampler, glm::max(0.5f * log2(L), 0.0f));
 	}
 	return Sampler(uv, sampler);
 }

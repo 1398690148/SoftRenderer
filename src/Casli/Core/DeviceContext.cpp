@@ -6,6 +6,10 @@
 #include "RenderTargetView.h"
 #include "DepthStencilView.h"
 #include "BlendState.h"
+#include "tbb/parallel_for.h"
+#include "tbb/blocked_range.h"
+#include "tbb/blocked_range2d.h"
+#include <iostream>
 
 DeviceContext::DeviceContext()
 {
@@ -188,7 +192,7 @@ void DeviceContext::Triangle(std::unordered_map<std::string, glm::vec4> vertex[3
 		std::swap(vertex[1], vertex[2]);
 	}
 	int total_height = t2.y - t0.y;
-	for (int i = 0; i < total_height; i++) 
+	auto drawTriangle = [&](size_t i)
 	{
 		bool second_half = i > t1.y - t0.y || t1.y == t0.y;
 		int segment_height = second_half ? t2.y - t1.y : t1.y - t0.y;
@@ -197,7 +201,7 @@ void DeviceContext::Triangle(std::unordered_map<std::string, glm::vec4> vertex[3
 		glm::vec3 A = t0 + (t2 - t0) * alpha;
 		glm::vec3 B = second_half ? t1 + (t2 - t1) * beta : t0 + (t1 - t0) * beta;
 		if (A.x > B.x) std::swap(A, B);
-		for (int j = A.x; j < B.x; j++) 
+		for (int j = A.x; j < B.x; j++)
 		{
 			glm::vec2 P(j, t0.y + i);
 			//执行裁剪
@@ -207,18 +211,16 @@ void DeviceContext::Triangle(std::unordered_map<std::string, glm::vec4> vertex[3
 			//插值深度
 			float depth = BarycentricLerp(t0, t1, t2, bcScreen).z;
 			//Early-Z
-			if (bcScreen[0] < 0 || bcScreen[1] < 0 || bcScreen[2] < 0 || 
+			if (bcScreen[0] < 0 || bcScreen[1] < 0 || bcScreen[2] < 0 ||
 				(!pBlendState->blendDesc.RenderTarget[0].BlendEnable && pDepthStencilView->GetDepth(j, t0.y + i) - 0.0001f < depth))
 			{
 				continue;
 			}
-			if (vertex[0].find("SV_TEXCOORD0") != vertex[0].end())
-			{
-				DDXDDY(vertex, t0, t1, t2, P);
-			}
-			Interpolation(vertex, bcScreen);
+			DDXDDY(vertex, t0, t1, t2, P);
+			unsigned char *buffer = Interpolation(vertex, bcScreen);
 			glm::vec4 color(0, 0, 0, 255);
-			bool discard = pPixelShader->fragment(tempBuffer, color);
+			bool discard = pPixelShader->fragment(buffer, color);
+			delete buffer;
 			//Alpha Test/Alpha Blend
 			if (pBlendState->blendDesc.RenderTarget[0].BlendEnable)
 			{
@@ -234,39 +236,49 @@ void DeviceContext::Triangle(std::unordered_map<std::string, glm::vec4> vertex[3
 			{
 				continue;
 			}
-			color = glm::vec4(std::min(255.0f, color[0]), std::min(255.0f, color[1]), std::min(255.0f, color[2]), std::min(255.0f, color[3]));
+			color = glm::vec4(min(255.0f, color[0]), min(255.0f, color[1]), min(255.0f, color[2]), min(255.0f, color[3]));
 			pRenderTargetView->SetPixel(P.x, P.y, color[0], color[1], color[2], color[3]);
 			pDepthStencilView->SetDepth(j, t0.y + i, depth);
 		}
-	}
+	};
+	tbb::parallel_for(tbb::blocked_range<size_t>(0, total_height), [&](const tbb::blocked_range<size_t> &r)
+	{
+		for (size_t i = r.begin(); i != r.end(); i++)
+		{
+			drawTriangle(i);
+		}
+	});
 }
 
 void DeviceContext::ParseVertexBuffer()
 {
 	int bufferSize = pVertexBuffer->GetByteWidth() / pVertexBuffer->GetStructureByteStride();
-	for (int i = 0; i < pInputLayout->getSize(); i++)
-	{
-		const INPUT_ELEMENT_DESC *desc = pInputLayout->getData(i);
-		std::vector<glm::vec4> attr;
-		int num = pInputLayout->getData(i)->Size / pInputLayout->getData(i)->typeSize;
-		int inOffset = pInputLayout->getData(i)->Offset;
-		for (int j = 0; j < bufferSize; j++)
+	auto ParseVertex = [&](const tbb::blocked_range<size_t> &r) {
+		for (int i = r.begin(); i != r.end(); i++)
 		{
-			glm::vec4 v(0, 0, 0, 0);
-			v[0] = *((float *)pVertexBuffer->GetBuffer(pVertexBuffer->GetStructureByteStride() * j + inOffset));
-			v[1] = *((float *)pVertexBuffer->GetBuffer(pVertexBuffer->GetStructureByteStride() * j + inOffset + desc->typeSize));
-			if (num > 2)
+			const INPUT_ELEMENT_DESC *desc = pInputLayout->getData(i);
+			std::vector<glm::vec4> attr;
+			int num = pInputLayout->getData(i)->Size / pInputLayout->getData(i)->typeSize;
+			int inOffset = pInputLayout->getData(i)->Offset;
+			for (int j = 0; j < bufferSize; j++)
 			{
-				v[2] = *((float *)pVertexBuffer->GetBuffer(pVertexBuffer->GetStructureByteStride() * j + inOffset + 2 * desc->typeSize));
-				if (num > 3)
+				glm::vec4 v(0, 0, 0, 0);
+				v[0] = *((float *)pVertexBuffer->GetBuffer(pVertexBuffer->GetStructureByteStride() * j + inOffset));
+				v[1] = *((float *)pVertexBuffer->GetBuffer(pVertexBuffer->GetStructureByteStride() * j + inOffset + desc->typeSize));
+				if (num > 2)
 				{
-					v[3] = *((float *)pVertexBuffer->GetBuffer(pVertexBuffer->GetStructureByteStride() * j + inOffset + 3 * desc->typeSize));
+					v[2] = *((float *)pVertexBuffer->GetBuffer(pVertexBuffer->GetStructureByteStride() * j + inOffset + 2 * desc->typeSize));
+					if (num > 3)
+					{
+						v[3] = *((float *)pVertexBuffer->GetBuffer(pVertexBuffer->GetStructureByteStride() * j + inOffset + 3 * desc->typeSize));
+					}
 				}
+				attr.push_back(v);
 			}
-			attr.push_back(v);
+			m_Data[desc->SemanticName] = attr;
 		}
-		m_Data[desc->SemanticName] = attr;
-	}
+	};
+	tbb::parallel_for(tbb::blocked_range<size_t>(0, pInputLayout->getSize()), ParseVertex);
 }
 
 void DeviceContext::ParseShaderOutput(unsigned char *buffer, std::unordered_map<std::string, glm::vec4> &output)
@@ -320,6 +332,7 @@ unsigned char * DeviceContext::Vertex(int idx, unsigned char *vertexBuffer)
 
 void DeviceContext::DDXDDY(std::unordered_map<std::string, glm::vec4> vertex[3], glm::vec3 &t0, glm::vec3 &t1, glm::vec3 &t2, glm::vec2 &P)
 {
+	if (vertex[0].find("SV_TEXCOORD0") == vertex[0].end()) return;
 	QuadFragments quadFragment;
 	glm::vec3 texCoord0 = vertex[0]["SV_TEXCOORD0"];
 	glm::vec3 texCoord1 = vertex[1]["SV_TEXCOORD0"];
@@ -334,8 +347,8 @@ void DeviceContext::DDXDDY(std::unordered_map<std::string, glm::vec4> vertex[3],
 	quadFragment.m_fragments[3] /= quadFragment.m_fragments[3].z;
 	glm::vec2 ddx(quadFragment.dUdx(), quadFragment.dUdy());
 	glm::vec2 ddy(quadFragment.dVdx(), quadFragment.dVdy());
-	memcpy(&pPixelShader->dFdx, &ddx, sizeof(glm::vec2));
-	memcpy(&pPixelShader->dFdy, &ddy, sizeof(glm::vec2));
+	memcpy(&pPixelShader->dFdx.local(), &ddx, sizeof(glm::vec2));
+	memcpy(&pPixelShader->dFdy.local(), &ddy, sizeof(glm::vec2));
 }
 
 void DeviceContext::prePerspCorrection(std::unordered_map<std::string, glm::vec4>& output)
@@ -352,18 +365,23 @@ void DeviceContext::prePerspCorrection(std::unordered_map<std::string, glm::vec4
 	output["SV_Position"] /= output["SV_Position"].w;
 }
 
-void DeviceContext::Interpolation(std::unordered_map<std::string, glm::vec4> vertex[3], glm::vec3 &bcScreen)
+unsigned char *DeviceContext::Interpolation(std::unordered_map<std::string, glm::vec4> vertex[3], glm::vec3 &bcScreen)
 {
 	//插值其他信息
-	for (auto iter : pPixelShader->inDesc)
-	{
-		glm::vec4 attribute = vertex[0][iter.Name] * bcScreen[0] + vertex[1][iter.Name] * bcScreen[1] + vertex[2][iter.Name] * bcScreen[2];
-		if (iter.Name == "SV_TEXCOORD0" || iter.Name == "SV_Normal")
+	unsigned char *buffer = new unsigned char[100];
+	tbb::parallel_for(tbb::blocked_range<size_t>(0, pPixelShader->inDesc.size()), [&](const tbb::blocked_range<size_t> &r) {
+		for (size_t i = r.begin(); i != r.end(); i++)
 		{
-			attribute /= attribute.w;
+			glm::vec4 attribute = vertex[0][pPixelShader->inDesc[i].Name] * bcScreen[0] + 
+				vertex[1][pPixelShader->inDesc[i].Name] * bcScreen[1] + vertex[2][pPixelShader->inDesc[i].Name] * bcScreen[2];
+			if (pPixelShader->inDesc[i].Name == "SV_TEXCOORD0" || pPixelShader->inDesc[i].Name == "SV_Normal")
+			{
+				attribute /= attribute.w;
+			}
+			memcpy(buffer + pPixelShader->inDesc[i].Offset, &attribute, pPixelShader->inDesc[i].Size);
 		}
-		memcpy(tempBuffer + iter.Offset, &attribute, iter.Size);
-	}
+	});
+	return buffer;
 }
 
 void DeviceContext::AlphaBlend(int x, int y, glm::vec4 &color)
@@ -379,15 +397,15 @@ void DeviceContext::AlphaBlend(int x, int y, glm::vec4 &color)
 		color += dstColor;
 		break;
 	case BLEND_OP_MAX:
-		color = glm::vec4(std::max(dstColor[0], color[0]), std::max(dstColor[1], color[1]), std::max(dstColor[2], color[2]), std::max(dstColor[3], color[3]));
+		color = glm::vec4(max(dstColor[0], color[0]), max(dstColor[1], color[1]), max(dstColor[2], color[2]), max(dstColor[3], color[3]));
 		break;
 	case BLEND_OP_MIN:
-		color = glm::vec4(std::min(dstColor[0], color[0]), std::min(dstColor[1], color[1]), std::min(dstColor[2], color[2]), std::min(dstColor[3], color[3]));
+		color = glm::vec4(min(dstColor[0], color[0]), min(dstColor[1], color[1]), min(dstColor[2], color[2]), min(dstColor[3], color[3]));
 		break;
 	default:
 		break;
 	}
-	color = glm::vec4(std::min(255.0f, color[0]), std::min(255.0f, color[1]), std::min(255.0f, color[2]), std::min(255.0f, color[3]));
+	color = glm::vec4(min(255.0f, color[0]), min(255.0f, color[1]), min(255.0f, color[2]), min(255.0f, color[3]));
 }
 
 void DeviceContext::ParseSrcBlendParam(BLEND blend, glm::vec4 &srcColor, glm::vec4 dstColor)

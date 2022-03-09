@@ -1,5 +1,6 @@
 #pragma once
 #include "ShaderInput.h"
+#include <tbb/enumerable_thread_specific.h>
 
 class CORE_API IPixelShader
 {
@@ -11,7 +12,7 @@ public:
 	unsigned char *cbuffer{};
 	Texture2D **textures{};
 	SamplerState **samplers{};
-	glm::vec2 dFdx;
-	glm::vec2 dFdy;
+	tbb::enumerable_thread_specific<glm::vec2> dFdx;
+	tbb::enumerable_thread_specific<glm::vec2> dFdy;
 };
 

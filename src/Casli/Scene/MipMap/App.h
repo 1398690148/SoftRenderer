@@ -20,6 +20,6 @@ private:
 	Window wnd;
 	Camera camera;
 	Plane plane{ wnd.Gfx(), "../src/Casli/Image/wall_diffuse.jpg", 1 };
-	Plane mipPlane{ wnd.Gfx(), "../src/Casli/Image/wall_diffuse.jpg", 8 };
+	Plane mipPlane{ wnd.Gfx(), "../src/Casli/Image/wall_diffuse.jpg", 10 };
 	std::vector<std::vector<glm::mat4>> planesCBuffer;
 };

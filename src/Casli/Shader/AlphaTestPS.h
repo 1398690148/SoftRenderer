@@ -24,7 +24,7 @@ struct RENDERER_API AlphaTestPS : public IPixelShader
 	virtual bool fragment(unsigned char *in, glm::vec4 &color)
 	{
 		PixelInput *input = (PixelInput *)in;
-		color = textures[0]->Sampler(input->uv, samplers[0], dFdx, dFdy);
+		color = textures[0]->Sampler(input->uv, samplers[0], dFdx.local(), dFdy.local());
 		if (color[3] == 0) return true;
 		return false;
 	}

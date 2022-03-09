@@ -1,5 +1,7 @@
 #include "DepthStencilView.h"
 #include <memory>
+#include <tbb/parallel_for.h>
+#include <tbb/blocked_range.h>
 
 DepthStencilView::DepthStencilView(Texture2D *buffer)
 	: IBuffer(buffer->GetWidth() * buffer->GetHeight() * 4, buffer->GetStructureByteStride()), 
@@ -13,10 +15,17 @@ DepthStencilView::DepthStencilView(Texture2D *buffer)
 	{
 		m_Buffer = new unsigned char[ByteWidth];
 	}
-	for (int i = buffer->GetWidth() * buffer->GetHeight() - 1; i >= 0; i--)
+	tbb::parallel_for(tbb::blocked_range<size_t>(buffer->GetWidth() * buffer->GetHeight() - 1, 0), [&](const tbb::blocked_range<size_t> &r)
 	{
-		((float *)m_Buffer)[i] = FLT_MAX;
-	}
+		for (int i = r.begin(); i >= r.end(); i--)
+		{
+			((float *)m_Buffer)[i] = FLT_MAX;
+		}
+	});
+	//for (int i = buffer->GetWidth() * buffer->GetHeight() - 1; i >= 0; i--)
+	//{
+	//	((float *)m_Buffer)[i] = FLT_MAX;
+	//}
 }
 
 void DepthStencilView::ClearBuffer(const float depth)

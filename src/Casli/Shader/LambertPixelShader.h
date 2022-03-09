@@ -80,7 +80,7 @@ struct LambertPixelShader : public IPixelShader
 			color[i] = std::min(color[i], 1.0f);
 		}
 		
-		color = textures[0]->Sampler(input->uv, samplers[0], dFdx, dFdy) * color;
+		color = textures[0]->Sampler(input->uv, samplers[0], dFdx.local(), dFdy.local()) * color;
 		return false;
 	}
 };
