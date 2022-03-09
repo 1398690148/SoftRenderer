@@ -54,7 +54,6 @@ void App::DoFrame()
 	wnd.Gfx().BeginFrame(1.f, 1.f, 1.f);
 	std::cout << timetoStr() << std::endl;
 	model.Draw(wnd.Gfx());
-	std::cout << timetoStr() << std::endl;
 	wnd.Gfx().SetVertexShader(new AlphaBlendVS());
 	wnd.Gfx().SetPixelShader(new AlphaBlendPS());
 	plane.Bind(wnd.Gfx(), (unsigned char *)(&planeCBuffer[0]));

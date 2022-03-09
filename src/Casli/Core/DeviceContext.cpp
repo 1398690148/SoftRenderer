@@ -10,10 +10,11 @@
 #include "tbb/blocked_range.h"
 #include "tbb/blocked_range2d.h"
 #include <iostream>
+#include <execution>
+#include <algorithm>
 
 DeviceContext::DeviceContext()
 {
-	tempBuffer = new unsigned char[160];
 	BLEND_DESC desc = { 0 };
 	desc.AlphaToCoverageEnable = false;
 	desc.RenderTarget[0].BlendEnable = false;
@@ -29,7 +30,6 @@ DeviceContext::DeviceContext()
 
 DeviceContext::~DeviceContext()
 {
-	delete tempBuffer;
 }
 
 void DeviceContext::ClearRenderTargetView(RenderTargetView *RenderTargetView, const float ColorRGBA[4])
@@ -54,8 +54,8 @@ void DeviceContext::IASetIndexBuffer(IBuffer * buf, unsigned int Offset)
 	for (int offset = 0; offset < pIndexBuffer->GetByteWidth();)
 	{
 		unsigned int *indexBuffer = (unsigned int *)pIndexBuffer->GetBuffer(offset);
-		indices.push_back(indexBuffer[0]);
-		offset += pIndexBuffer->GetStructureByteStride();
+		indices.push_back({ indexBuffer[0], indexBuffer[1], indexBuffer[2] });
+		offset += pIndexBuffer->GetStructureByteStride() * 3;
 	}
 }
 
@@ -147,11 +147,12 @@ void DeviceContext::GenerateMips(Texture2D *texture)
 void DeviceContext::DrawIndex()
 {
 	ParseVertexBuffer();
-	for (unsigned int i = 0; i < indices.size(); i += 3)
+	tbb::parallel_for(0, (int)indices.size(), 1, [&](size_t i)
 	{
-		unsigned char *o0 = Vertex(i, tempBuffer);
-		unsigned char *o1 = Vertex(i + 1, tempBuffer);
-		unsigned char *o2 = Vertex(i + 2, tempBuffer);
+		unsigned char *buffer = new unsigned char[120];
+		unsigned char *o0 = Vertex(indices[i][0], buffer);
+		unsigned char *o1 = Vertex(indices[i][1], buffer);
+		unsigned char *o2 = Vertex(indices[i][2], buffer);
 
 		std::unordered_map<std::string, glm::vec4> vertex[3];
 		ParseShaderOutput(o0, vertex[0]);
@@ -164,7 +165,8 @@ void DeviceContext::DrawIndex()
 		delete o0;
 		delete o1;
 		delete o2;
-	}
+		delete buffer;
+	});
 }
 
 void DeviceContext::Triangle(std::unordered_map<std::string, glm::vec4> vertex[3])
@@ -236,7 +238,7 @@ void DeviceContext::Triangle(std::unordered_map<std::string, glm::vec4> vertex[3
 			{
 				continue;
 			}
-			color = glm::vec4(min(255.0f, color[0]), min(255.0f, color[1]), min(255.0f, color[2]), min(255.0f, color[3]));
+			//color = glm::vec4(std::min(255.0f, color[0]), std::min(255.0f, color[1]), std::min(255.0f, color[2]), std::min(255.0f, color[3]));
 			pRenderTargetView->SetPixel(P.x, P.y, color[0], color[1], color[2], color[3]);
 			pDepthStencilView->SetDepth(j, t0.y + i, depth);
 		}
@@ -325,7 +327,7 @@ unsigned char * DeviceContext::Vertex(int idx, unsigned char *vertexBuffer)
 	for (int i = 0; i < pVertexShader->inDesc.size(); i++)
 	{
 		const std::vector<glm::vec4> &attr = m_Data[pVertexShader->inDesc[i].Name];
-		memcpy(vertexBuffer + pVertexShader->inDesc[i].Offset, &attr[indices[idx]], pVertexShader->inDesc[i].Size);
+		memcpy(vertexBuffer + pVertexShader->inDesc[i].Offset, &attr[idx], pVertexShader->inDesc[i].Size);
 	}
 	return pVertexShader->vertex(vertexBuffer);
 }

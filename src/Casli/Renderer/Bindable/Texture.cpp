@@ -19,10 +19,6 @@ Texture::Texture(Graphics& gfx, const char *path, int mipMapLevel, int idx) : in
 				buffer[i] = data[i];
 			}
 		});
-		/*for (int i = 0; i < size; i++)
-		{
-			buffer[i] = data[i];
-		}*/
 		TEXTURE2D_DESC textureDesc = {};
 		textureDesc.Width = width;
 		textureDesc.Height = height;
