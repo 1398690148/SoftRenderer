@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 
-#define PI std::acos(-1)
+#define PI 3.14159265f
 
 enum BufferType
 {
@@ -139,4 +139,17 @@ struct BLEND_DESC
 	bool AlphaToCoverageEnable;
 	bool IndependentBlendEnable;
 	RENDER_TARGET_BLEND_DESC RenderTarget[8];
+};
+
+//Cull back face mode
+enum CullFaceMode
+{
+	CULL_DISABLE,
+	CULL_FRONT,
+	CULL_BACK,
+};
+
+struct ShaderState
+{
+	CullFaceMode m_CullFaceMode = CullFaceMode::CULL_BACK;
 };

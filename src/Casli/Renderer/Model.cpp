@@ -6,9 +6,9 @@
 #include <tbb/blocked_range.h>
 #include <tbb/parallel_for.h>
 
-Model::Model(Graphics &gfx, const char *path, int mipLevel, FILTER filter)
+Model::Model(Graphics &gfx, const char *path, int mipLevel, FILTER filter) : Drawable(gfx)
 {
-	loadModel(gfx, path);
+	loadModel(path);
 	std::vector<glm::mat4> matrix;
 	matrix.push_back(glm::mat4(1.0));
 	matrix.push_back(glm::mat4(1.0));
@@ -17,29 +17,23 @@ Model::Model(Graphics &gfx, const char *path, int mipLevel, FILTER filter)
 	sampler = new Sampler(gfx, 0, filter);
 }
 
-void Model::Draw(Graphics &gfx)
+void Model::Draw()
 {
 	for (auto &mesh : meshes)
 	{
-		mesh.Draw(gfx);
-		//meshes[0].Draw(gfx);
-		//meshes[1].Draw(gfx);
-		//meshes[2].Draw(gfx);
-		//meshes[3].Draw(gfx);
-		//meshes[4].Draw(gfx);
-		//meshes[6].Draw(gfx);
-		//meshes[5].Draw(gfx);
+		mesh.Draw(pGfx);
 	}
 }
 
-void Model::Bind(Graphics & gfx, unsigned char *ConstantBuffer, size_t size)
+void Model::Bind(unsigned char *ConstantBuffer, size_t size)
 {
+	GetContext(pGfx)->SetRenderState(state);
 	pConstantBuffer->SetConstantBuffer(ConstantBuffer, size);
-	pConstantBuffer->Bind(gfx);
-	sampler->Bind(gfx);
+	pConstantBuffer->Bind(pGfx);
+	sampler->Bind(pGfx);
 }
 
-void Model::loadModel(Graphics &gfx, std::string path)
+void Model::loadModel(std::string path)
 {
 	Assimp::Importer importer;
 	const aiScene *scene = importer.ReadFile(path, aiProcess_CalcTangentSpace |
@@ -52,31 +46,23 @@ void Model::loadModel(Graphics &gfx, std::string path)
 		return;
 	}
 	directory = path.substr(0, path.find_last_of('/'));
-	processNode(gfx, scene->mRootNode, scene);
+	processNode(scene->mRootNode, scene);
 }
 
-void Model::processNode(Graphics &gfx, aiNode * node, const aiScene * scene)
+void Model::processNode(aiNode * node, const aiScene * scene)
 {
-	tbb::parallel_for(tbb::blocked_range<size_t>(0, node->mNumMeshes), [&](const tbb::blocked_range<size_t> &r)
+	for (int i = 0; i < node->mNumMeshes; i++)
 	{
-		//for (int i = 0; i < node->mNumMeshes; i++)
-		for (unsigned int i = r.begin(); i != r.end(); i++)
-		{
-			aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-			meshes.push_back(processMesh(gfx, mesh, scene));
-		}
-	});
-	tbb::parallel_for(tbb::blocked_range<size_t>(0, node->mNumChildren), [&](const tbb::blocked_range<size_t> &r)
+		aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
+		meshes.push_back(processMesh(mesh, scene));
+	}
+	for (int i = 0; i < node->mNumChildren; i++)
 	{
-		//for (int i = 0; i < node->mNumChildren; i++)
-		for (unsigned int i = r.begin(); i != r.end(); i++)
-		{
-			processNode(gfx, node->mChildren[i], scene);
-		}
-	});
+		processNode(node->mChildren[i], scene);
+	}
 }
 
-Mesh Model::processMesh(Graphics &gfx, aiMesh * mesh, const aiScene * scene)
+Mesh Model::processMesh(aiMesh * mesh, const aiScene * scene)
 {
 	std::vector<Vertex> vertices;
 	std::vector<unsigned int> indices;
@@ -92,10 +78,15 @@ Mesh Model::processMesh(Graphics &gfx, aiMesh * mesh, const aiScene * scene)
 		vector.z = mesh->mVertices[i].z;
 		vertex.Position = vector;
 		//法线
-		vector.x = mesh->mNormals[i].x;
-		vector.y = mesh->mNormals[i].y;
-		vector.z = mesh->mNormals[i].z;
-		vertex.Normal = vector;
+		if (mesh->mNormals)
+		{
+			vector.x = mesh->mNormals[i].x;
+			vector.y = mesh->mNormals[i].y;
+			vector.z = mesh->mNormals[i].z;
+			vertex.Normal = vector;
+		}
+		else
+			vertex.Normal = glm::vec3(0.0f, 0.0f, 0.0f);
 		//纹理坐标
 		if (mesh->mTextureCoords[0]) // 网格是否有纹理坐标？
 		{
@@ -117,20 +108,20 @@ Mesh Model::processMesh(Graphics &gfx, aiMesh * mesh, const aiScene * scene)
 	if (mesh->mMaterialIndex >= 0)
 	{
 		aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
-		loadMaterialTextures(gfx, material, aiTextureType_DIFFUSE, "texture_diffuse", textures);
-		loadMaterialTextures(gfx, material, aiTextureType_SPECULAR, "texture_specular", textures);
+		loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse", textures);
+		loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular", textures);
 	}
-	return Mesh(gfx, vertices, indices, textures);
+	return Mesh(pGfx, vertices, indices, textures);
 }
 
-void Model::loadMaterialTextures(Graphics &gfx, aiMaterial * mat, aiTextureType type, std::string typeName, std::vector<Texture *> &textures)
+void Model::loadMaterialTextures(aiMaterial * mat, aiTextureType type, std::string typeName, std::vector<Texture *> &textures)
 {
 	for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
 	{
 		aiString str;
 		mat->GetTexture(type, i, &str);
 		std::string path = directory + "/" + str.C_Str();
-		Texture *texture = new Texture(gfx, path.c_str(), 10, textures.size());
+		Texture *texture = new Texture(pGfx, path.c_str(), 10, textures.size());
 		textures.push_back(texture);
 	}
 }

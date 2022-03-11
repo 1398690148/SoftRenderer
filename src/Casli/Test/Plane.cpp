@@ -3,7 +3,8 @@
 #include <VertexConstantBuffer.h>
 #include <Sampler.h>
 
-Plane::Plane(Graphics & gfx, std::string texturePath, int mipLevel, FILTER filter)
+Plane::Plane(Graphics &gfx, std::string texturePath, int mipLevel, FILTER filter)
+	: Drawable(gfx)
 {
 	Vertex vertex;
 	float v[] = {
@@ -36,21 +37,21 @@ Plane::Plane(Graphics & gfx, std::string texturePath, int mipLevel, FILTER filte
 	sampler = new Sampler(gfx, 0, filter);
 }
 
-void Plane::Bind(Graphics &gfx, unsigned char *ConstantBuffer, size_t size)
+void Plane::Bind(unsigned char *ConstantBuffer, size_t size)
 {
-	pVertexBuffer->Bind(gfx);
-	pIndexBuffer->Bind(gfx);
+	pVertexBuffer->Bind(pGfx);
+	pIndexBuffer->Bind(pGfx);
 	pConstantBuffer->SetConstantBuffer(ConstantBuffer, size);
-	pConstantBuffer->Bind(gfx);
-	sampler->Bind(gfx);
+	pConstantBuffer->Bind(pGfx);
+	sampler->Bind(pGfx);
 }
 
-void Plane::Draw(Graphics &gfx)
+void Plane::Draw()
 {
 	//for (int i = 0; i < textures.size(); i++)
 	{
-		textures->Bind(gfx);
+		textures->Bind(pGfx);
 	}
-	gfx.Draw();
+	pGfx.Draw();
 	//GetContext(gfx)->OMSetBlendState(&oldBlender, &oldBlendFactor, oldSampleMask);
 }

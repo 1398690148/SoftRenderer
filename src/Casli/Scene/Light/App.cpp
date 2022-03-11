@@ -3,11 +3,12 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include "LambertVertexShader.h"
 #include "LambertPixelShader.h"
+#include <tbb/tick_count.h>
 
 glm::vec3 eye(0, 0, 5);
 
 App::App()
-	: wnd(800, 600, "The Donkey Fart Box"), camera(eye, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0), 45)
+	: wnd(800, 600, "The Donkey Fart Box"), camera(eye, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0))
 {
 	glm::mat4 Projection = glm::perspective(glm::radians(30.f), 4.0f / 3.0f, 0.1f, 100.f);
 	wnd.Gfx().SetProjection(Projection);
@@ -32,14 +33,32 @@ int App::Go()
 
 void App::DoFrame()
 {
+	tbb::tick_count t0 = tbb::tick_count().now();
 	wnd.Gfx().SetCamera(camera.GetMatrix());
 	wnd.Gfx().BeginFrame(1.f, 1.f, 1.f);
 	directionalLight.Bind(wnd.Gfx());
 	pointLight.Bind(wnd.Gfx());
 	spotLight.Bind(wnd.Gfx());
-	model.Bind(wnd.Gfx(), (unsigned char *)(&CBuffer[0]), sizeof(glm::mat4) * 3);
-	model.Draw(wnd.Gfx());
+	model.Bind((unsigned char *)(&CBuffer[0]), sizeof(glm::mat4) * 3);
+	model.Draw();
+	while (const auto delta = wnd.mouse.Read())
+	{
+		switch (delta->GetType())
+		{
+		case Mouse::Event::Type::Move:
+			camera.Rotate((float)delta->GetPosX(), (float)delta->GetPosY());
+			break;
+		case Mouse::Event::Type::WheelUp:
+			camera.Translate((float)-delta->GetPosX());
+		case Mouse::Event::Type::WheelDown:
+			camera.Translate((float)delta->GetPosX());
+			break;
+		}
+	}
 	wnd.Gfx().EndFrame();
+	//std::cout << "Time: " << (tbb::tick_count::now() - t0).seconds() << std::endl;
+	int fps = 1.0f / (tbb::tick_count::now() - t0).seconds();
+	wnd.SetTitle("FPS: " + std::to_string(fps));
 }
 
 void App::InitMatrix()

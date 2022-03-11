@@ -45,8 +45,5 @@ private:
 
 	HWND hWnd;
 	HDC ghdcMainWnd;
-	VertexConstantBuffer *pConstantBuffer{};
-
 	InputLayout *pInputLayout;
-	float angle = 0;
 };

@@ -10,8 +10,7 @@
 #include "tbb/blocked_range.h"
 #include "tbb/blocked_range2d.h"
 #include <iostream>
-#include <execution>
-#include <algorithm>
+#include "tbb/parallel_invoke.h"
 
 DeviceContext::DeviceContext()
 {
@@ -59,14 +58,21 @@ void DeviceContext::IASetIndexBuffer(IBuffer * buf, unsigned int Offset)
 	}
 }
 
-void DeviceContext::VSSetShader(IVertexShader * shader)
+void DeviceContext::VSSetShader(IVertexShader *shader)
 {
 	pVertexShader = shader;
 }
 
-void DeviceContext::PSSetShader(IPixelShader * shader)
+void DeviceContext::PSSetShader(IPixelShader *shader)
 {
 	pPixelShader = shader;
+	for (int i = 0; i < shader->inDesc.size(); i++)
+	{
+		pixelInMapTable[shader->inDesc[i].Name] = i;
+	}
+	posIdx = pixelInMapTable["SV_Position"];
+	//texCoordIdx = pixelInMapTable["SV_TEXCOORD0"];
+	//normalIdx = pixelInMapTable["SV_Normal"];
 }
 
 void DeviceContext::PSSetShaderResources(int slot, Texture2D **texture)
@@ -93,6 +99,11 @@ void DeviceContext::OMGetBlendState(BlendState **ppBlendState, float *BlendFacto
 	*ppBlendState = pBlendState;
 	BlendFactor = pBlendFactor;
 	*SampleMask = pSampleMask;
+}
+
+void DeviceContext::SetRenderState(ShaderState state)
+{
+	pShaderState = state;
 }
 
 void DeviceContext::VSSetConstantBuffers(unsigned int StartOffset, unsigned int NumBuffers, IBuffer *constantBuffer)
@@ -147,18 +158,21 @@ void DeviceContext::GenerateMips(Texture2D *texture)
 void DeviceContext::DrawIndex()
 {
 	ParseVertexBuffer();
-	tbb::parallel_for(0, (int)indices.size(), 1, [&](size_t i)
+	tbb::parallel_for(0, (int)indices.size(), [&](size_t i)
 	{
 		unsigned char *buffer = new unsigned char[160];
 		unsigned char *o0 = Vertex(indices[i][0], buffer);
 		unsigned char *o1 = Vertex(indices[i][1], buffer);
 		unsigned char *o2 = Vertex(indices[i][2], buffer);
 
-		std::unordered_map<std::string, glm::vec4> vertex[3];
+		std::vector<glm::vec4> vertex[3];
+		for (int i = 0; i < 3; i++)
+		{
+			vertex[i].resize(pixelInMapTable.size());
+		}
 		ParseShaderOutput(o0, vertex[0]);
 		ParseShaderOutput(o1, vertex[1]);
 		ParseShaderOutput(o2, vertex[2]);
-		if (vertex[0].find("SV_Position") == vertex[0].end()) return;
 		//视口变换
 		ViewportTransform(vertex);
 		Triangle(vertex);
@@ -167,106 +181,205 @@ void DeviceContext::DrawIndex()
 		delete o2;
 		delete buffer;
 	});
-	//for (unsigned int i = 0; i < indices.size(); i += 3)
-	//{
-	//	unsigned char *o0 = Vertex(i, tempBuffer);
-	//	unsigned char *o1 = Vertex(i + 1, tempBuffer);
-	//	unsigned char *o2 = Vertex(i + 2, tempBuffer);
-
-	//	std::unordered_map<std::string, glm::vec4> vertex[3];
-	//	ParseShaderOutput(o0, vertex[0]);
-	//	ParseShaderOutput(o1, vertex[1]);
-	//	ParseShaderOutput(o2, vertex[2]);
-	//	if (vertex[0].find("SV_Position") == vertex[0].end()) return;
-	//	//视口变换
-	//	ViewportTransform(vertex);
-	//	Triangle(vertex);
-	//	delete o0;
-	//	delete o1;
-	//	delete o2;
-	//}
 }
 
-void DeviceContext::Triangle(std::unordered_map<std::string, glm::vec4> vertex[3])
+bool DeviceContext::shouldCulled(const glm::ivec2 &v0, const glm::ivec2 &v1, const glm::ivec2 &v2)
 {
-	glm::vec3 t0 = glm::i32vec3(vertex[0]["SV_Position"].x, vertex[0]["SV_Position"].y, vertex[0]["SV_Position"].z);
-	glm::vec3 t1 = glm::i32vec3(vertex[1]["SV_Position"].x, vertex[1]["SV_Position"].y, vertex[1]["SV_Position"].z);
-	glm::vec3 t2 = glm::i32vec3(vertex[2]["SV_Position"].x, vertex[2]["SV_Position"].y, vertex[2]["SV_Position"].z);
+	if (pShaderState.m_CullFaceMode == CullFaceMode::CULL_DISABLE) return false;
+	//Back face culling in screen space
+	auto e1 = v1 - v0;
+	auto e2 = v2 - v0;
+	int orient = e1.x * e2.y - e1.y * e2.x;
+	return pShaderState.m_CullFaceMode == CullFaceMode::CULL_FRONT ? orient > 0 : orient < 0;
+}
 
-	if (t0.y == t1.y && t0.y == t2.y) return; // I dont care about degenerate triangles 
-	// sort the vertices, t0, t1, t2 lower−to−upper (bubblesort yay!) 
-	//排序顶点时不要忘记排序其他属性
-	if (t0.y > t1.y)
+//std::vector<glm::vec4> clipingSutherlandHodgemanAux(
+//	const std::vector<glm::vec4> &polygon,
+//	const int &axis,
+//	const int &side)
+//{
+//	std::vector<glm::vec4> insidePolygon;
+//
+//	int numVerts = polygon.size();
+//	for (int i = 0; i < numVerts; ++i)
+//	{
+//		const auto &begVert = polygon[(i - 1 + numVerts) % numVerts];
+//		const auto &endVert = polygon[i];
+//		char begIsInside = ((side * (begVert[axis]) <= begVert.w) ? 1 : -1);
+//		char endIsInside = ((side * (endVert[axis]) <= endVert.w) ? 1 : -1);
+//		//One of them is outside
+//		if (begIsInside * endIsInside < 0)
+//		{
+//			// t = (w1 - y1)/((w1-y1)-(w2-y2))
+//			float t = (begVert.w - side * begVert[axis])
+//				/ ((begVert.w - side * begVert[axis]) - (endVert.w - side * endVert[axis]));
+//			auto intersectedVert = glm::lerp(begVert, endVert, t);
+//			insidePolygon.push_back(intersectedVert);
+//		}
+//		//If current vertices is inside
+//		if (endIsInside > 0)
+//		{
+//			insidePolygon.push_back(endVert);
+//		}
+//	}
+//	return insidePolygon;
+//}
+//
+//std::vector<glm::vec4> clipingSutherlandHodgeman(
+//	const glm::vec4 &v0,
+//	const glm::vec4 &v1,
+//	const glm::vec4 &v2,
+//	const float &near,
+//	const float &far)
+//{
+//	//Clipping in the homogeneous clipping space
+//	//Refs:
+//	//https://fabiensanglard.net/polygon_codec/clippingdocument/Clipping.pdf
+//	//https://fabiensanglard.net/polygon_codec/
+//
+//	//Optimization: complete outside or complete inside
+//	//Note: in the following situation, we could return the answer without complicate cliping,
+//	//      and this optimization should be very important.
+//	{
+//		auto isPointInsideInClipingFrustum = [](const glm::vec4 &p, const float &near, const float &far) -> bool
+//		{
+//			return (p.x <= p.w && p.x >= -p.w) && (p.y <= p.w && p.y >= -p.w)
+//				&& (p.z <= p.w && p.z >= -p.w) && (p.w <= far && p.w >= near);
+//		};
+//
+//		//Totally inside
+//		if (isPointInsideInClipingFrustum(v0, near, far) &&
+//			isPointInsideInClipingFrustum(v1, near, far) &&
+//			isPointInsideInClipingFrustum(v2, near, far))
+//		{
+//			return { v0,v1,v2 };
+//		}
+//
+//		//Totally outside
+//		if (v0.w < near && v1.w < near && v2.w < near)
+//			return{};
+//		if (v0.w > far && v1.w > far && v2.w > far)
+//			return{};
+//		if (v0.x > v0.w && v1.x > v1.w && v2.x > v2.w)
+//			return{};
+//		if (v0.x < -v0.w && v1.x < -v1.w && v2.x < -v2.w)
+//			return{};
+//		if (v0.y > v0.w && v1.y > v1.w && v2.y > v2.w)
+//			return{};
+//		if (v0.y < -v0.w && v1.y < -v1.w && v2.y < -v2.w)
+//			return{};
+//		if (v0.z > v0.w && v1.z > v1.w && v2.z > v2.w)
+//			return{};
+//		if (v0.z < -v0.w && v1.z < -v1.w && v2.z < -v2.w)
+//			return{};
+//	}
+//	std::vector<glm::vec4> insideVertices;
+//	std::vector<glm::vec4> tmp = { v0, v1, v2 };
+//	enum Axis { X = 0, Y = 1, Z = 2 };
+//
+//	//w=x plane & w=-x plane
+//	{
+//		insideVertices = clipingSutherlandHodgemanAux(tmp, Axis::X, +1);
+//		tmp = insideVertices;
+//
+//		insideVertices = clipingSutherlandHodgemanAux(tmp, Axis::X, -1);
+//		tmp = insideVertices;
+//	}
+//
+//	//w=y plane & w=-y plane
+//	{
+//		insideVertices = clipingSutherlandHodgemanAux(tmp, Axis::Y, +1);
+//		tmp = insideVertices;
+//
+//		insideVertices = clipingSutherlandHodgemanAux(tmp, Axis::Y, -1);
+//		tmp = insideVertices;
+//	}
+//
+//	//w=z plane & w=-z plane
+//	{
+//		insideVertices = clipingSutherlandHodgemanAux(tmp, Axis::Z, +1);
+//		tmp = insideVertices;
+//
+//		insideVertices = clipingSutherlandHodgemanAux(tmp, Axis::Z, -1);
+//		tmp = insideVertices;
+//	}
+//
+//	//w=1e-5 plane
+//	{
+//		insideVertices = {};
+//		int numVerts = tmp.size();
+//		constexpr float wClippingPlane = 1e-5;
+//		for (int i = 0; i < numVerts; ++i)
+//		{
+//			const auto &begVert = tmp[(i - 1 + numVerts) % numVerts];
+//			const auto &endVert = tmp[i];
+//			float begIsInside = (begVert.w < wClippingPlane) ? -1 : 1;
+//			float endIsInside = (endVert.w < wClippingPlane) ? -1 : 1;
+//			//One of them is outside
+//			if (begIsInside * endIsInside < 0)
+//			{
+//				// t = (w_clipping_plane-w1)/((w1-w2)
+//				float t = (wClippingPlane - begVert.w) / (begVert.w - endVert.w);
+//				auto intersectedVert = glm::lerp(begVert, endVert, t);
+//				insideVertices.push_back(intersectedVert);
+//			}
+//			//If current vertices is inside
+//			if (endIsInside > 0)
+//			{
+//				insideVertices.push_back(endVert);
+//			}
+//		}
+//	}
+//	return insideVertices;
+//}
+
+void DeviceContext::Triangle(std::vector<glm::vec4> vertex[3])
+{
+	std::vector<glm::ivec3> points = { vertex[0][posIdx], vertex[1][posIdx], vertex[2][posIdx] };
+	if (shouldCulled(points[0], points[1], points[2])) return;
+
+	glm::ivec2 bboxmin(pViewports->Width - 1, pViewports->Height - 1);
+	glm::ivec2 bboxmax(0, 0);
+	glm::ivec2 clamp(pViewports->Width - 1, pViewports->Height - 1);
+
+	for (int i = 0; i < 3; i++) 
 	{
-		std::swap(t0, t1);
-		std::swap(vertex[0], vertex[1]);
+		bboxmin.x = max(0, min(bboxmin.x, points[i].x));
+		bboxmin.y = max(0, min(bboxmin.y, points[i].y));
+		bboxmax.x = min(clamp.x, max(bboxmax.x, points[i].x));
+		bboxmax.y = min(clamp.y, max(bboxmax.y, points[i].y));
 	}
-	if (t0.y > t2.y)
-	{
-		std::swap(t0, t2);
-		std::swap(vertex[0], vertex[2]);
-	}
-	if (t1.y > t2.y)
-	{
-		std::swap(t1, t2);
-		std::swap(vertex[1], vertex[2]);
-	}
-	int total_height = t2.y - t0.y;
-	auto drawTriangle = [&](size_t i)
-	{
-		bool second_half = i > t1.y - t0.y || t1.y == t0.y;
-		int segment_height = second_half ? t2.y - t1.y : t1.y - t0.y;
-		float alpha = (float)i / total_height;
-		float beta = (float)(i - (second_half ? t1.y - t0.y : 0)) / segment_height; // be careful: with above conditions no division by zero here 
-		glm::vec3 A = t0 + (t2 - t0) * alpha;
-		glm::vec3 B = second_half ? t1 + (t2 - t1) * beta : t0 + (t1 - t0) * beta;
-		if (A.x > B.x) std::swap(A, B);
-		for (int j = A.x; j < B.x; j++)
+	tbb::parallel_for(bboxmin.x, bboxmax.x + 1, [&](size_t x) {
+		tbb::parallel_for(bboxmin.y, bboxmax.y + 1, [&](size_t y)
 		{
-			glm::vec2 P(j, t0.y + i);
-			//执行裁剪
-			if ((j < 0 && B.x < 0) || P.y < 0 || j >= pViewports->Width || P.y >= pViewports->Height) break;
-			if (j < 0) continue;
-			glm::vec3 bcScreen = Barycentric(t0, t1, t2, P);
+			glm::ivec2 P(x, y);
+			glm::vec3 bcScreen = Barycentric(points[0], points[1], points[2], P);
 			//插值深度
-			float depth = BarycentricLerp(t0, t1, t2, bcScreen).z;
+			float depth = BarycentricLerp(points[0], points[1], points[2], bcScreen).z;
 			//Early-Z
 			if (bcScreen[0] < 0 || bcScreen[1] < 0 || bcScreen[2] < 0 ||
-				(!pBlendState->blendDesc.RenderTarget[0].BlendEnable && pDepthStencilView->GetDepth(j, t0.y + i) - 0.0001f < depth))
-			{
-				continue;
-			}
-			DDXDDY(vertex, t0, t1, t2, P);
-			unsigned char *buffer = Interpolation(vertex, bcScreen);
+				(!pBlendState->blendDesc.RenderTarget[0].BlendEnable && pDepthStencilView->GetDepth(P.x, P.y) - 0.0001f < depth))
+				return;
+			if (pixelInMapTable.count("SV_TEXCOORD0"))
+				DDXDDY(vertex, points[0], points[1], points[2], P);
 			glm::vec4 color(0, 0, 0, 255);
+			unsigned char *buffer = Interpolation(vertex, bcScreen);
 			bool discard = pPixelShader->fragment(buffer, color);
 			delete buffer;
-			//Alpha Test/Alpha Blend
 			if (pBlendState->blendDesc.RenderTarget[0].BlendEnable)
 			{
-				if (discard)
-				{
-					continue;
-				}
+				if (discard) return;
 				AlphaBlend(P.x, P.y, color);
 				pRenderTargetView->SetPixel(P.x, P.y, color[0], color[1], color[2], color[3]);
-				continue;
+				return;
 			}
-			if (pDepthStencilView->GetDepth(j, t0.y + i) - 0.0001f < depth)
+			if (pDepthStencilView->GetDepth(P.x, P.y) - 0.0001f < depth)
 			{
-				continue;
+				return;
 			}
-			color = glm::vec4(min(255.0f, color[0]), min(255.0f, color[1]), min(255.0f, color[2]), min(255.0f, color[3]));
 			pRenderTargetView->SetPixel(P.x, P.y, color[0], color[1], color[2], color[3]);
-			pDepthStencilView->SetDepth(j, t0.y + i, depth);
-		}
-	};
-	tbb::parallel_for(tbb::blocked_range<size_t>(0, total_height), [&](const tbb::blocked_range<size_t> &r)
-	{
-		for (size_t i = r.begin(); i != r.end(); i++)
-		{
-			drawTriangle(i);
-		}
+			pDepthStencilView->SetDepth(P.x, P.y, depth);
+		});
 	});
 }
 
@@ -292,13 +405,13 @@ void DeviceContext::ParseVertexBuffer()
 					v[3] = *((float *)pVertexBuffer->GetBuffer(pVertexBuffer->GetStructureByteStride() * j + inOffset + 3 * desc->typeSize));
 				}
 			}
-			attr.push_back(v);
+			attr.emplace_back(v);
 		}
 		m_Data[desc->SemanticName] = attr;
 	}
 }
 
-void DeviceContext::ParseShaderOutput(unsigned char *buffer, std::unordered_map<std::string, glm::vec4> &output)
+void DeviceContext::ParseShaderOutput(unsigned char *buffer, std::vector<glm::vec4> &output)
 {
 	int offset = 0;
 	for (int i = 0; i < pVertexShader->outDesc.size(); i++)
@@ -308,19 +421,19 @@ void DeviceContext::ParseShaderOutput(unsigned char *buffer, std::unordered_map<
 		{
 		case 2:
 		{
-			output[pVertexShader->outDesc[i].Name] = glm::vec4((*start), *(start + 1), 1, 1);
+			output[i] = glm::vec4((*start), *(start + 1), 1, 1);
 			start += 2;
 		}
 		break;
 		case 3:
 		{
-			output[pVertexShader->outDesc[i].Name] = glm::vec4(*start, *(start + 1), *(start + 2), 1);
+			output[i] = glm::vec4(*start, *(start + 1), *(start + 2), 1);
 			start += 3;
 		}
 		break;
 		case 4:
 		{
-			output[pVertexShader->outDesc[i].Name] = glm::vec4(*start, *(start + 1), *(start + 2), *(start + 3));
+			output[i] = glm::vec4(*start, *(start + 1), *(start + 2), *(start + 3));
 			start += 4;
 		}
 		break;
@@ -330,11 +443,11 @@ void DeviceContext::ParseShaderOutput(unsigned char *buffer, std::unordered_map<
 	prePerspCorrection(output);
 }
 
-void DeviceContext::ViewportTransform(std::unordered_map<std::string, glm::vec4> vertex[3])
+void DeviceContext::ViewportTransform(std::vector<glm::vec4> vertex[3])
 {
-	vertex[0]["SV_Position"] = Viewport * vertex[0]["SV_Position"];
-	vertex[1]["SV_Position"] = Viewport * vertex[1]["SV_Position"];
-	vertex[2]["SV_Position"] = Viewport * vertex[2]["SV_Position"];
+	vertex[0][posIdx] = Viewport * vertex[0][posIdx];
+	vertex[1][posIdx] = Viewport * vertex[1][posIdx];
+	vertex[2][posIdx] = Viewport * vertex[2][posIdx];
 }
 
 unsigned char * DeviceContext::Vertex(int idx, unsigned char *vertexBuffer)
@@ -347,20 +460,20 @@ unsigned char * DeviceContext::Vertex(int idx, unsigned char *vertexBuffer)
 	return pVertexShader->vertex(vertexBuffer);
 }
 
-void DeviceContext::DDXDDY(std::unordered_map<std::string, glm::vec4> vertex[3], glm::vec3 &t0, glm::vec3 &t1, glm::vec3 &t2, glm::vec2 &P)
+void DeviceContext::DDXDDY(std::vector<glm::vec4> vertex[3], glm::ivec3 &t0, glm::ivec3 &t1, glm::ivec3 &t2, glm::ivec2 &P)
 {
-	if (vertex[0].find("SV_TEXCOORD0") == vertex[0].end()) return;
+	unsigned int texCoordIdx = pixelInMapTable["SV_TEXCOORD0"];
 	QuadFragments quadFragment;
-	glm::vec3 texCoord0 = vertex[0]["SV_TEXCOORD0"];
-	glm::vec3 texCoord1 = vertex[1]["SV_TEXCOORD0"];
-	glm::vec3 texCoord2 = vertex[2]["SV_TEXCOORD0"];
+	glm::vec3 texCoord0 = vertex[0][texCoordIdx];
+	glm::vec3 texCoord1 = vertex[1][texCoordIdx];
+	glm::vec3 texCoord2 = vertex[2][texCoordIdx];
 	quadFragment.m_fragments[0] = BarycentricLerp(texCoord0, texCoord1, texCoord2, Barycentric(t0, t1, t2, glm::vec3(P.x, P.y, 1.0)));
-	quadFragment.m_fragments[1] = BarycentricLerp(texCoord0, texCoord1, texCoord2, Barycentric(t0, t1, t2, glm::vec3(P.x + 1, P.y, 1.0)));
-	quadFragment.m_fragments[2] = BarycentricLerp(texCoord0, texCoord1, texCoord2, Barycentric(t0, t1, t2, glm::vec3(P.x, P.y + 1, 1.0)));
-	quadFragment.m_fragments[3] = BarycentricLerp(texCoord0, texCoord1, texCoord2, Barycentric(t0, t1, t2, glm::vec3(P.x + 1, P.y + 1, 1.0)));
 	quadFragment.m_fragments[0] /= quadFragment.m_fragments[0].z;
+	quadFragment.m_fragments[1] = BarycentricLerp(texCoord0, texCoord1, texCoord2, Barycentric(t0, t1, t2, glm::vec3(P.x + 1, P.y, 1.0)));
 	quadFragment.m_fragments[1] /= quadFragment.m_fragments[1].z;
+	quadFragment.m_fragments[2] = BarycentricLerp(texCoord0, texCoord1, texCoord2, Barycentric(t0, t1, t2, glm::vec3(P.x, P.y + 1, 1.0)));
 	quadFragment.m_fragments[2] /= quadFragment.m_fragments[2].z;
+	quadFragment.m_fragments[3] = BarycentricLerp(texCoord0, texCoord1, texCoord2, Barycentric(t0, t1, t2, glm::vec3(P.x + 1, P.y + 1, 1.0)));
 	quadFragment.m_fragments[3] /= quadFragment.m_fragments[3].z;
 	glm::vec2 ddx(quadFragment.dUdx(), quadFragment.dUdy());
 	glm::vec2 ddy(quadFragment.dVdx(), quadFragment.dVdy());
@@ -368,28 +481,25 @@ void DeviceContext::DDXDDY(std::unordered_map<std::string, glm::vec4> vertex[3],
 	memcpy(&pPixelShader->dFdy.local(), &ddy, sizeof(glm::vec2));
 }
 
-void DeviceContext::prePerspCorrection(std::unordered_map<std::string, glm::vec4>& output)
+void DeviceContext::prePerspCorrection(std::vector<glm::vec4> &output)
 {
-	if (output.find("SV_Position") == output.end()) return;
-	if (output.find("SV_TEXCOORD0") != output.end())
-	{
-		output["SV_TEXCOORD0"] /= output["SV_Position"].w;
-	}
-	if (output.find("SV_Normal") != output.end())
-	{
-		output["SV_Normal"] /= output["SV_Position"].w;
-	}
-	output["SV_Position"] /= output["SV_Position"].w;
+	unsigned int normalIdx = pixelInMapTable["SV_NORMAL"];
+	unsigned int texCoordIdx = pixelInMapTable["SV_TEXCOORD0"];
+	if (normalIdx)
+		output[normalIdx] /= output[posIdx].w;
+	if (texCoordIdx)
+		output[texCoordIdx] /= output[posIdx].w;
+	output[posIdx] /= output[posIdx].w;
 }
 
-unsigned char *DeviceContext::Interpolation(std::unordered_map<std::string, glm::vec4> vertex[3], glm::vec3 &bcScreen)
+unsigned char *DeviceContext::Interpolation(std::vector<glm::vec4> vertex[3], glm::vec3 &bcScreen)
 {
 	//插值其他信息
 	unsigned char *buffer = new unsigned char[100];
 	for (int i = 0; i < pPixelShader->inDesc.size(); i++)
 	{
-		glm::vec4 attribute = vertex[0][pPixelShader->inDesc[i].Name] * bcScreen[0] +
-			vertex[1][pPixelShader->inDesc[i].Name] * bcScreen[1] + vertex[2][pPixelShader->inDesc[i].Name] * bcScreen[2];
+		glm::vec4 attribute = vertex[0][i] * bcScreen[0] +
+			vertex[1][i] * bcScreen[1] + vertex[2][i] * bcScreen[2];
 		if (pPixelShader->inDesc[i].Name == "SV_TEXCOORD0" || pPixelShader->inDesc[i].Name == "SV_Normal")
 		{
 			attribute /= attribute.w;

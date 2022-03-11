@@ -1,20 +1,20 @@
 #include "App.h"
-#include <math.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include "AlphaTestVS.h"
 #include "AlphaTestPS.h"
+#include <iostream>
+#include <tbb/tick_count.h>
 
 glm::vec3 eye(0, 0, 5);
 
 App::App()
-	: wnd(800, 600, "The Donkey Fart Box"), camera(eye, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0), 45)
+	: wnd(800, 600, "The Donkey Fart Box") 
 {
-	glm::mat4 Projection = glm::perspective(glm::radians(30.f), 4.0f / 3.0f, 0.1f, 100.f);
-	wnd.Gfx().SetProjection(Projection);
+	parser.parse("../src/Casli/Configure/AlphaTest.scene", wnd.Gfx(), false);
+	camera = Camera(parser.m_scene.m_CameraPos, parser.m_scene.m_CameraFront, parser.m_scene.m_CameraUp);
+	wnd.Gfx().SetProjection(glm::perspective(glm::radians(parser.m_scene.m_FrustumFovy), 4.0f / 3.0f, parser.m_scene.m_FrustumNear, parser.m_scene.m_FrustumFar));
 	wnd.Gfx().SetVertexShader(new AlphaTestVS());
 	wnd.Gfx().SetPixelShader(new AlphaTestPS());
-	drawable.push_back(DrawableInfo(&model, 1, 3));
-	drawable.push_back(DrawableInfo(&plane, 0, 1));
 }
 
 int App::Go()
@@ -33,38 +33,51 @@ int App::Go()
 
 void App::DoFrame()
 {
+	tbb::tick_count t0 = tbb::tick_count().now();
+	const auto dt = timer.Mark() * speed_factor;
+
 	wnd.Gfx().SetCamera(camera.GetMatrix());
 	InitMatrix();
 	wnd.Gfx().BeginFrame(1.f, 1.f, 1.f);
-	for (int i = 0; i < drawable.size(); i++)
+	auto &drawable = parser.m_scene.m_entities;
+	for (auto iter : drawable)
 	{
-		drawable[i].drawable->Bind(wnd.Gfx(), (unsigned char *)(&CBuffer[drawable[i].idx]), sizeof(glm::mat4) * drawable[i].size);
-		drawable[i].drawable->Draw(wnd.Gfx());
+		CBuffer.clear();
+		glm::mat4 Model = iter.second->GetModelMatrix();
+		CBuffer.push_back(wnd.Gfx().GetProjection() * camera.GetMatrix() * Model);
+		CBuffer.push_back(Model);
+		CBuffer.push_back(glm::transpose(Model));
+		iter.second->Bind((unsigned char *)&CBuffer[0], sizeof(glm::mat4) * CBuffer.size());
+		iter.second->Draw();
 	}
-	//model.Bind(wnd.Gfx(), (unsigned char *)(&CBuffer[1]), sizeof(glm::mat4) * 3);
-	//model.Draw(wnd.Gfx());
-	//plane.Bind(wnd.Gfx(), (unsigned char *)(&CBuffer[0]), sizeof(glm::mat4));
-	//plane.Draw(wnd.Gfx());
+	while (const auto e = wnd.kbd.ReadKey())
+	{
+		if (!e->IsPress())
+		{
+			continue;
+		}
+	}
+	while (const auto delta = wnd.mouse.Read())
+	{
+		switch (delta->GetType())
+		{
+		case Mouse::Event::Type::Move:
+			camera.Rotate((float)delta->GetPosX(), (float)delta->GetPosY());
+			break;
+		case Mouse::Event::Type::WheelUp:
+			camera.Translate((float)-delta->GetPosX());
+		case Mouse::Event::Type::WheelDown:
+			camera.Translate((float)delta->GetPosX());
+			break;
+		}
+	}
 	wnd.Gfx().EndFrame();
+	//std::cout << "Time: " << (tbb::tick_count::now() - t0).seconds() << std::endl;
+	int fps = 1.0f / (tbb::tick_count::now() - t0).seconds();
+	wnd.SetTitle("FPS: " + std::to_string(fps));
 }
 
 void App::InitMatrix()
 {
-	CBuffer.clear();
 
-	glm::mat4 Model = glm::mat4(1.0);
-	Model = glm::scale(Model, glm::vec3(2, 2, 1));
-	CBuffer.push_back(wnd.Gfx().GetProjection() * camera.GetMatrix() * Model);
-
-	glm::mat4 MVP = glm::mat4(1.0);
-	glm::mat4 MT = glm::mat4(1.0);
-	glm::mat4 M = glm::mat4(1.0);
-	MVP = glm::translate(MVP, glm::vec3(0, -12.f, -7));
-	M = glm::translate(M, glm::vec3(0, -12.f, -7));
-	MT = glm::translate(MT, glm::vec3(0, -12.f, -7));
-	MT = glm::transpose(glm::inverse(MT));
-	MVP = wnd.Gfx().GetProjection() * camera.GetMatrix() * MVP;
-	CBuffer.push_back(MVP);
-	CBuffer.push_back(M);
-	CBuffer.push_back(MT);
 }

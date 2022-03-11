@@ -1,0 +1,41 @@
+Camera:
+	Eye 0 0 2.3
+	Focus 0.0 0.0 0.0
+	Up 0.0 1.0 0.0
+
+Frustum:
+	Fovy 45.0
+	Near 0.1
+	Nar 100.0
+	
+Entity:
+	Name nanosuit
+	Path ../src/Casli/Model/nanosuit/nanosuit.obj
+	Translate 0 -10 0
+	Rotation 0.0 1.0 0.0 0.0
+	Scale 0.1 0.1 0.1
+	Cullface: back
+	Alphablend: alphablend
+	Material:
+		Transparency 1.0
+		Ns 0.0000
+		Ka 0.0100 0.0100 0.0100
+		Kd 1.2000 1.2000 1.2000
+		Ks 0.0000 0.0000 0.0000
+		Ke 0.0000 0.0000 0.0000	
+		
+Entity:
+	Name Wall
+	Path ../src/Casli/Model/wall/wall.obj
+    Translate 0.0 0.0 0.0
+	Rotation 0.0 1.0 0.0 0.0
+	Scale 1.0 1.0 1.0
+	Cullface: back
+	Alphablend: disable
+	Material:
+		Transparency 1.0
+		Ns 0.0000
+		Ka 0.800 0.800 0.800
+		Kd 1.2000 1.2000 1.2000
+		Ks 0.0000 0.0000 0.0000
+		Ke 0.0000 0.0000 0.0000

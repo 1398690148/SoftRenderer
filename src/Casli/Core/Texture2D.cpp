@@ -41,10 +41,6 @@ void Texture2D::GenerateMips()
 	int h = height;
 	for (int k = 1, coe = 1; k <= mipLevels; k++, coe *= 2)
 	{
-		//tbb::parallel_for(tbb::blocked_range<size_t>(0, h), [&](const tbb::blocked_range<size_t> &r)
-		//{
-		//
-		//});
 		for (int j = 0; j < h; j += 2)
 		{
 			for (int i = 0; i < w; i += 2)
@@ -145,16 +141,13 @@ glm::vec4 Texture2D::Sampler(glm::vec2 uv, SamplerState *sampler, float lod)
 	int w = width;
 
 	int index = 0;
-	tbb::parallel_for(tbb::blocked_range<size_t>(0, floor(lod)), [&](const tbb::blocked_range<size_t> &r)
+	for (int i = 0; i < floor(lod); i++)
 	{
-		for (size_t i = r.begin(); i < r.end(); i++)
-		{
-			index += ByteWidth / std::pow(4, i);
-			x >>= 1;
-			y >>= 1;
-			w >>= 1;
-		}
-	});
+		index += ByteWidth / std::pow(4, i);
+		x >>= 1;
+		y >>= 1;
+		w >>= 1;
+	}
 	int maxIndex = index + ByteWidth / std::pow(4, floor(lod));
 	int index0 = index +(x + y * w) * channels;
 

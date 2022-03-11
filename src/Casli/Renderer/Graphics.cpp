@@ -23,7 +23,6 @@ Graphics::Graphics(unsigned int width, unsigned int height, HWND hWnd, HDC ghdcM
 	DEPTH_STENCIL_VIEW_DESC descDSV = {};
 	descDSV.Format = FORMAT_FLOAT;
 	pDevice->CreateDepthStencilView(pDepthStencil, &descDSV, &pDSV);
-
 	pContext->OMSetRenderTargets(&pTarget, &pDSV);
 
 	VIEWPORT pViewports;
@@ -38,6 +37,8 @@ Graphics::Graphics(unsigned int width, unsigned int height, HWND hWnd, HDC ghdcM
 
 Graphics::~Graphics()
 {
+	delete pTarget;
+	delete pDSV;
 }
 
 void Graphics::ClearBuffer(float red, float green, float blue)

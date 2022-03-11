@@ -35,20 +35,23 @@ public:
 	void OMSetRenderTargets(RenderTargetView **RenderTargetView, DepthStencilView **DepthStencilView);
 	void OMSetBlendState(BlendState **blendState, const float *BlendFactor, unsigned int SampleMask);
 	void OMGetBlendState(BlendState **ppBlendState, float *BlendFactor, unsigned int *SampleMask);
+	void SetRenderState(ShaderState state);
 	void GenerateMips(Texture2D *texture);
 	void DrawIndex();
 
 private:
-	void Triangle(std::unordered_map<std::string, glm::vec4> vertex[3]);
+	void Triangle(std::vector<glm::vec4> vertex[3]);
+	//背面剔除
+	bool shouldCulled(const glm::ivec2 &v0, const glm::ivec2 &v1, const glm::ivec2 &v2);
 
 	void ParseVertexBuffer();
-	void ParseShaderOutput(unsigned char *buffer, std::unordered_map<std::string, glm::vec4> &output);
+	void ParseShaderOutput(unsigned char *buffer, std::vector<glm::vec4> &output);
 	
-	void ViewportTransform(std::unordered_map<std::string, glm::vec4> vertex[3]);
+	void ViewportTransform(std::vector<glm::vec4> vertex[3]);
 	unsigned char *Vertex(int idx, unsigned char *vertexBuffer);
-	std::vector<glm::vec2> DDXDDY(std::unordered_map<std::string, glm::vec4> vertex[3], glm::vec3 &t0, glm::vec3 &t1, glm::vec3 &t2, glm::vec2 &P);
-	void prePerspCorrection(std::unordered_map<std::string, glm::vec4> &output);
-	unsigned char * Interpolation(std::unordered_map<std::string, glm::vec4> vertex[3], glm::vec3 &bcScreen);
+	void DDXDDY(std::vector<glm::vec4> vertex[3], glm::vec3 &t0, glm::vec3 &t1, glm::vec3 &t2, glm::vec2 &P);
+	void prePerspCorrection(std::vector<glm::vec4> &output);
+	unsigned char * Interpolation(std::vector<glm::vec4> vertex[3], glm::vec3 &bcScreen);
 
 	void AlphaBlend(int x, int y, glm::vec4 &color);
 	void ParseSrcBlendParam(BLEND blend, glm::vec4 &srcColor, glm::vec4 dstColor);
@@ -56,7 +59,7 @@ private:
 private:
 	IBuffer *pVertexBuffer{};
 	IBuffer *pIndexBuffer{};
-	std::vector<unsigned int> indices;
+	std::vector<std::vector<unsigned int>> indices;
 	InputLayout *pInputLayout{};
 	PRIMITIVE_TOPOLOGY pTopology;
 	IVertexShader *pVertexShader{};
@@ -65,6 +68,7 @@ private:
 	DepthStencilView *pDepthStencilView{};
 	DepthStencilView *pDSV{};
 	VIEWPORT *pViewports{};
+	ShaderState pShaderState;
 	//混合状态
 	BlendState *pBlendState{};
 	float pBlendFactor[4];
@@ -72,11 +76,9 @@ private:
 	glm::mat4 Viewport;
 	//顶点缓存中的数据
 	std::unordered_map<std::string, std::vector<glm::vec4>> m_Data;
-	unsigned char *tempBuffer;
+	std::unordered_map<std::string, int> pixelInMapTable;
+	int posIdx = -1;
 };
-
-
-
 
 class QuadFragments
 {

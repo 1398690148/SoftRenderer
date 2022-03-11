@@ -10,9 +10,9 @@ class IndexBuffer;
 class RENDERER_API AlphaPlane : public Drawable
 {
 public:
-	AlphaPlane(Graphics &gfx, std::string texturePath, int mipLevel);
-	void Draw(Graphics &gfx) override;
-	void Bind(Graphics &gfx, unsigned char *ConstantBuffer, size_t size) override;
+	AlphaPlane(Graphics &gfx, std::string texturePath, int mipLevel, FILTER filter = FILTER_POINT_MIP_POINT);
+	void Draw() override;
+	void Bind(unsigned char *ConstantBuffer, size_t size) override;
 
 private:
 	std::vector<Vertex> vertices;
@@ -21,6 +21,7 @@ private:
 	VertexBuffer *pVertexBuffer{};
 	IndexBuffer *pIndexBuffer{};
 	VertexConstantBuffer *pConstantBuffer{};
+	Sampler *sampler{};
 	glm::mat4 matrix;
 	Blender *pBlender{};
 	BlendState *oldBlender;

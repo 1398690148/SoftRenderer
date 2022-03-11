@@ -11,8 +11,8 @@ class RENDERER_API Plane : public Drawable
 {
 public:
 	Plane(Graphics &gfx, std::string texturePath, int mipLevel, FILTER filter = FILTER_POINT_MIP_POINT);
-	void Draw(Graphics &gfx) override;
-	void Bind(Graphics &gfx, unsigned char *ConstantBuffer,size_t size) override;
+	void Draw() override;
+	void Bind(unsigned char *ConstantBuffer,size_t size) override;
 
 private:
 	std::vector<Vertex> vertices;
