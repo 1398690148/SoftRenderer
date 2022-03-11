@@ -52,6 +52,8 @@ src/Casli/Renderer/Model.h
 src/Casli/Renderer/Model.cpp
 src/Casli/Renderer/Graphics.h 
 src/Casli/Renderer/Graphics.cpp
+src/Casli/Renderer/SceneParse.h
+src/Casli/Renderer/SceneParse.cpp
 )
 
 set(SHADER 
@@ -77,6 +79,13 @@ src/Casli/Test/AlphaPlane.cpp
 set(PLATFORM
 src/Platform/Window.h
 src/Platform/Window.cpp
+src/Platform/Keyboard.h
+src/Platform/Keyboard.cpp
+src/Platform/CasliTimer.h
+src/Platform/CasliTimer.cpp
+src/Platform/Mouse.h
+src/Platform/Mouse.cpp
+src/Platform/CasliMath.h
 src/Platform/CasliWin.h
 )
 
@@ -136,6 +145,12 @@ add_executable(AlphaBlend src/Casli/Scene/AlphaBlend/App.h src/Casli/Scene/Alpha
 TARGET_LINK_LIBRARIES(AlphaBlend Renderer)
 #设置release模式下关闭cmd窗口
 Set_Target_Properties(AlphaBlend PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
+
+# Bilinear
+add_executable(Bilinear src/Casli/Scene/Bilinear/App.h src/Casli/Scene/Bilinear/App.cpp src/Casli/Scene/Bilinear/main.cpp)
+TARGET_LINK_LIBRARIES(Bilinear Renderer)
+#设置release模式下关闭cmd窗口
+Set_Target_Properties(Bilinear PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories(${PROJECT_SOURCE_DIR}/src/Casli/Renderer)
