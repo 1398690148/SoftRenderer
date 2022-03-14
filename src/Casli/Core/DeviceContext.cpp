@@ -8,9 +8,7 @@
 #include "BlendState.h"
 #include "tbb/parallel_for.h"
 #include "tbb/blocked_range.h"
-#include "tbb/blocked_range2d.h"
 #include <iostream>
-#include "tbb/parallel_invoke.h"
 
 DeviceContext::DeviceContext()
 {
@@ -71,8 +69,6 @@ void DeviceContext::PSSetShader(IPixelShader *shader)
 		pixelInMapTable[shader->inDesc[i].Name] = i;
 	}
 	posIdx = pixelInMapTable["SV_Position"];
-	//texCoordIdx = pixelInMapTable["SV_TEXCOORD0"];
-	//normalIdx = pixelInMapTable["SV_Normal"];
 }
 
 void DeviceContext::PSSetShaderResources(int slot, Texture2D **texture)
@@ -155,6 +151,133 @@ void DeviceContext::GenerateMips(Texture2D *texture)
 	texture->GenerateMips();
 }
 
+std::vector<std::vector<glm::vec4>> DeviceContext::ClipSutherlandHodgemanAux(const std::vector<std::vector<glm::vec4>> &polygon, 
+	const int axis, const int side)
+{
+	std::vector<std::vector<glm::vec4>> insidePolygon;
+
+	int numVerts = polygon.size();
+	for (int i = 0; i < numVerts; ++i)
+	{
+		const auto &begVert = polygon[(i - 1 + numVerts) % numVerts];
+		const auto &endVert = polygon[i];
+		char begIsInside = ((side * (begVert[posIdx][axis]) <= begVert[posIdx].w) ? 1 : -1);
+		char endIsInside = ((side * (endVert[posIdx][axis]) <= endVert[posIdx].w) ? 1 : -1);
+		//One of them is outside
+		if (begIsInside * endIsInside < 0)
+		{
+			// t = (w1 - y1)/((w1-y1)-(w2-y2))
+			float t = (begVert[posIdx].w - side * begVert[posIdx][axis])
+				/ ((begVert[posIdx].w - side * begVert[posIdx][axis]) - (endVert[posIdx].w - side * endVert[posIdx][axis]));
+			std::vector<glm::vec4> intersectedVert;
+			for (int j = 0; j < begVert.size(); j++)
+			{
+				intersectedVert.push_back(Utils::lerp(begVert[j], endVert[j], t));
+			}
+			insidePolygon.push_back(intersectedVert);
+		}
+		//If current vertices is inside
+		if (endIsInside > 0)
+		{
+			insidePolygon.push_back(endVert);
+		}
+	}
+	return insidePolygon;
+}
+
+
+std::vector<std::vector<glm::vec4>> DeviceContext::ClipSutherlandHodgeman(
+	const std::vector<glm::vec4> &vertex0,
+	const std::vector<glm::vec4> &vertex1,
+	const std::vector<glm::vec4> &vertex2,
+	const float Near, const float Far)
+{
+	glm::vec4 v0 = vertex0[posIdx];
+	glm::vec4 v1 = vertex1[posIdx];
+	glm::vec4 v2 = vertex2[posIdx];
+	auto isPointInsideInClipingFrustum = [](const glm::vec4 &p, const float &Near, const float &Far) -> bool
+	{
+		return (p.x <= p.w && p.x >= -p.w) && (p.y <= p.w && p.y >= -p.w)
+			&& (p.z <= p.w && p.z >= -p.w) && (p.w <= Far && p.w >= Near);
+	};
+
+	//Totally inside
+	if (isPointInsideInClipingFrustum(v0, Near, Far) &&
+		isPointInsideInClipingFrustum(v1, Near, Far) &&
+		isPointInsideInClipingFrustum(v2, Near, Far))
+	{
+		return { vertex0,vertex1,vertex2 };
+	}
+	//Totally outside
+	if (v0.w < Near && v1.w < Near && v2.w < Near)
+		return{};
+	if (v0.w > Far && v1.w > Far && v2.w > Far)
+		return{};
+	if (v0.x > v0.w && v1.x > v1.w && v2.x > v2.w)
+		return{};
+	if (v0.x < -v0.w && v1.x < -v1.w && v2.x < -v2.w)
+		return{};
+	if (v0.y > v0.w && v1.y > v1.w && v2.y > v2.w)
+		return{};
+	if (v0.y < -v0.w && v1.y < -v1.w && v2.y < -v2.w)
+		return{};
+	if (v0.z > v0.w && v1.z > v1.w && v2.z > v2.w)
+		return{};
+	if (v0.z < -v0.w && v1.z < -v1.w && v2.z < -v2.w)
+		return{};
+	std::vector<std::vector<glm::vec4>> insideVertices;
+	std::vector<std::vector<glm::vec4>> tmp = { vertex0, vertex1, vertex2 };
+	enum Axis { X = 0, Y = 1, Z = 2 };
+
+	//w=x plane & w=-x plane
+	insideVertices = ClipSutherlandHodgemanAux(tmp, Axis::X, +1);
+	tmp = insideVertices;
+	insideVertices = ClipSutherlandHodgemanAux(tmp, Axis::X, -1);
+	tmp = insideVertices;
+
+	//w=y plane & w=-y plane
+	insideVertices = ClipSutherlandHodgemanAux(tmp, Axis::Y, +1);
+	tmp = insideVertices;
+	insideVertices = ClipSutherlandHodgemanAux(tmp, Axis::Y, -1);
+	tmp = insideVertices;
+
+	//w=z plane & w=-z plane
+	insideVertices = ClipSutherlandHodgemanAux(tmp, Axis::Z, +1);
+	tmp = insideVertices;
+	insideVertices = ClipSutherlandHodgemanAux(tmp, Axis::Z, -1);
+	tmp = insideVertices;
+
+	//w=1e-5 plane
+	insideVertices = {};
+	int numVerts = tmp.size();
+	constexpr float wClippingPlane = 1e-5;
+	for (int i = 0; i < numVerts; ++i)
+	{
+		const auto &begVert = tmp[(i - 1 + numVerts) % numVerts];
+		const auto &endVert = tmp[i];
+		float begIsInside = (begVert[posIdx].w < wClippingPlane) ? -1 : 1;
+		float endIsInside = (endVert[posIdx].w < wClippingPlane) ? -1 : 1;
+		//One of them is outside
+		if (begIsInside * endIsInside < 0)
+		{
+			// t = (w_clipping_plane-w1)/((w1-w2)
+			float t = (wClippingPlane - begVert[posIdx].w) / (begVert[posIdx].w - endVert[posIdx].w);
+			std::vector<glm::vec4> intersectedVert(3);
+			for (int j = 0; j < begVert.size(); j++)
+			{
+				intersectedVert[j] = (1 - t) * begVert[j] + endVert[j] * t;
+			}
+			insideVertices.push_back(intersectedVert);
+		}
+		//If current vertices is inside
+		if (endIsInside > 0)
+		{
+			insideVertices.push_back(endVert);
+		}
+	}
+	return insideVertices;
+}
+
 void DeviceContext::DrawIndex()
 {
 	ParseVertexBuffer();
@@ -173,9 +296,22 @@ void DeviceContext::DrawIndex()
 		ParseShaderOutput(o0, vertex[0]);
 		ParseShaderOutput(o1, vertex[1]);
 		ParseShaderOutput(o2, vertex[2]);
-		//视口变换
-		ViewportTransform(vertex);
-		Triangle(vertex);
+
+		std::vector<std::vector<glm::vec4>> v = ClipSutherlandHodgeman(vertex[0], vertex[1], vertex[2], 0.1, 100);
+		if (v.empty()) return;
+		for (int i = 0; i < v.size() - 2; i++)
+		{
+			vertex[0] = v[0];
+			vertex[1] = v[i + 1];
+			vertex[2] = v[i + 2];
+			prePerspCorrection(vertex[0]);
+			prePerspCorrection(vertex[1]);
+			prePerspCorrection(vertex[2]);
+			//视口变换
+			ViewportTransform(vertex);
+			Triangle(vertex);
+		}
+
 		delete o0;
 		delete o1;
 		delete o2;
@@ -192,146 +328,6 @@ bool DeviceContext::shouldCulled(const glm::ivec2 &v0, const glm::ivec2 &v1, con
 	int orient = e1.x * e2.y - e1.y * e2.x;
 	return pShaderState.m_CullFaceMode == CullFaceMode::CULL_FRONT ? orient > 0 : orient < 0;
 }
-
-//std::vector<glm::vec4> clipingSutherlandHodgemanAux(
-//	const std::vector<glm::vec4> &polygon,
-//	const int &axis,
-//	const int &side)
-//{
-//	std::vector<glm::vec4> insidePolygon;
-//
-//	int numVerts = polygon.size();
-//	for (int i = 0; i < numVerts; ++i)
-//	{
-//		const auto &begVert = polygon[(i - 1 + numVerts) % numVerts];
-//		const auto &endVert = polygon[i];
-//		char begIsInside = ((side * (begVert[axis]) <= begVert.w) ? 1 : -1);
-//		char endIsInside = ((side * (endVert[axis]) <= endVert.w) ? 1 : -1);
-//		//One of them is outside
-//		if (begIsInside * endIsInside < 0)
-//		{
-//			// t = (w1 - y1)/((w1-y1)-(w2-y2))
-//			float t = (begVert.w - side * begVert[axis])
-//				/ ((begVert.w - side * begVert[axis]) - (endVert.w - side * endVert[axis]));
-//			auto intersectedVert = glm::lerp(begVert, endVert, t);
-//			insidePolygon.push_back(intersectedVert);
-//		}
-//		//If current vertices is inside
-//		if (endIsInside > 0)
-//		{
-//			insidePolygon.push_back(endVert);
-//		}
-//	}
-//	return insidePolygon;
-//}
-//
-//std::vector<glm::vec4> clipingSutherlandHodgeman(
-//	const glm::vec4 &v0,
-//	const glm::vec4 &v1,
-//	const glm::vec4 &v2,
-//	const float &near,
-//	const float &far)
-//{
-//	//Clipping in the homogeneous clipping space
-//	//Refs:
-//	//https://fabiensanglard.net/polygon_codec/clippingdocument/Clipping.pdf
-//	//https://fabiensanglard.net/polygon_codec/
-//
-//	//Optimization: complete outside or complete inside
-//	//Note: in the following situation, we could return the answer without complicate cliping,
-//	//      and this optimization should be very important.
-//	{
-//		auto isPointInsideInClipingFrustum = [](const glm::vec4 &p, const float &near, const float &far) -> bool
-//		{
-//			return (p.x <= p.w && p.x >= -p.w) && (p.y <= p.w && p.y >= -p.w)
-//				&& (p.z <= p.w && p.z >= -p.w) && (p.w <= far && p.w >= near);
-//		};
-//
-//		//Totally inside
-//		if (isPointInsideInClipingFrustum(v0, near, far) &&
-//			isPointInsideInClipingFrustum(v1, near, far) &&
-//			isPointInsideInClipingFrustum(v2, near, far))
-//		{
-//			return { v0,v1,v2 };
-//		}
-//
-//		//Totally outside
-//		if (v0.w < near && v1.w < near && v2.w < near)
-//			return{};
-//		if (v0.w > far && v1.w > far && v2.w > far)
-//			return{};
-//		if (v0.x > v0.w && v1.x > v1.w && v2.x > v2.w)
-//			return{};
-//		if (v0.x < -v0.w && v1.x < -v1.w && v2.x < -v2.w)
-//			return{};
-//		if (v0.y > v0.w && v1.y > v1.w && v2.y > v2.w)
-//			return{};
-//		if (v0.y < -v0.w && v1.y < -v1.w && v2.y < -v2.w)
-//			return{};
-//		if (v0.z > v0.w && v1.z > v1.w && v2.z > v2.w)
-//			return{};
-//		if (v0.z < -v0.w && v1.z < -v1.w && v2.z < -v2.w)
-//			return{};
-//	}
-//	std::vector<glm::vec4> insideVertices;
-//	std::vector<glm::vec4> tmp = { v0, v1, v2 };
-//	enum Axis { X = 0, Y = 1, Z = 2 };
-//
-//	//w=x plane & w=-x plane
-//	{
-//		insideVertices = clipingSutherlandHodgemanAux(tmp, Axis::X, +1);
-//		tmp = insideVertices;
-//
-//		insideVertices = clipingSutherlandHodgemanAux(tmp, Axis::X, -1);
-//		tmp = insideVertices;
-//	}
-//
-//	//w=y plane & w=-y plane
-//	{
-//		insideVertices = clipingSutherlandHodgemanAux(tmp, Axis::Y, +1);
-//		tmp = insideVertices;
-//
-//		insideVertices = clipingSutherlandHodgemanAux(tmp, Axis::Y, -1);
-//		tmp = insideVertices;
-//	}
-//
-//	//w=z plane & w=-z plane
-//	{
-//		insideVertices = clipingSutherlandHodgemanAux(tmp, Axis::Z, +1);
-//		tmp = insideVertices;
-//
-//		insideVertices = clipingSutherlandHodgemanAux(tmp, Axis::Z, -1);
-//		tmp = insideVertices;
-//	}
-//
-//	//w=1e-5 plane
-//	{
-//		insideVertices = {};
-//		int numVerts = tmp.size();
-//		constexpr float wClippingPlane = 1e-5;
-//		for (int i = 0; i < numVerts; ++i)
-//		{
-//			const auto &begVert = tmp[(i - 1 + numVerts) % numVerts];
-//			const auto &endVert = tmp[i];
-//			float begIsInside = (begVert.w < wClippingPlane) ? -1 : 1;
-//			float endIsInside = (endVert.w < wClippingPlane) ? -1 : 1;
-//			//One of them is outside
-//			if (begIsInside * endIsInside < 0)
-//			{
-//				// t = (w_clipping_plane-w1)/((w1-w2)
-//				float t = (wClippingPlane - begVert.w) / (begVert.w - endVert.w);
-//				auto intersectedVert = glm::lerp(begVert, endVert, t);
-//				insideVertices.push_back(intersectedVert);
-//			}
-//			//If current vertices is inside
-//			if (endIsInside > 0)
-//			{
-//				insideVertices.push_back(endVert);
-//			}
-//		}
-//	}
-//	return insideVertices;
-//}
 
 void DeviceContext::Triangle(std::vector<glm::vec4> vertex[3])
 {
@@ -353,9 +349,9 @@ void DeviceContext::Triangle(std::vector<glm::vec4> vertex[3])
 		tbb::parallel_for(bboxmin.y, bboxmax.y + 1, [&](size_t y)
 		{
 			glm::ivec2 P(x, y);
-			glm::vec3 bcScreen = Barycentric(points[0], points[1], points[2], P);
+			glm::vec3 bcScreen = Utils::Barycentric(points[0], points[1], points[2], P);
 			//插值深度
-			float depth = BarycentricLerp(points[0], points[1], points[2], bcScreen).z;
+			float depth = Utils::BarycentricLerp(points[0], points[1], points[2], bcScreen).z;
 			//Early-Z
 			if (bcScreen[0] < 0 || bcScreen[1] < 0 || bcScreen[2] < 0 ||
 				(!pBlendState->blendDesc.RenderTarget[0].BlendEnable && pDepthStencilView->GetDepth(P.x, P.y) - 0.0001f < depth))
@@ -440,7 +436,6 @@ void DeviceContext::ParseShaderOutput(unsigned char *buffer, std::vector<glm::ve
 		}
 		offset += pVertexShader->outDesc[i].Size;
 	}
-	prePerspCorrection(output);
 }
 
 void DeviceContext::ViewportTransform(std::vector<glm::vec4> vertex[3])
@@ -467,13 +462,13 @@ void DeviceContext::DDXDDY(std::vector<glm::vec4> vertex[3], glm::ivec3 &t0, glm
 	glm::vec3 texCoord0 = vertex[0][texCoordIdx];
 	glm::vec3 texCoord1 = vertex[1][texCoordIdx];
 	glm::vec3 texCoord2 = vertex[2][texCoordIdx];
-	quadFragment.m_fragments[0] = BarycentricLerp(texCoord0, texCoord1, texCoord2, Barycentric(t0, t1, t2, glm::vec3(P.x, P.y, 1.0)));
+	quadFragment.m_fragments[0] = Utils::BarycentricLerp(texCoord0, texCoord1, texCoord2, Utils::Barycentric(t0, t1, t2, glm::vec3(P.x, P.y, 1.0)));
 	quadFragment.m_fragments[0] /= quadFragment.m_fragments[0].z;
-	quadFragment.m_fragments[1] = BarycentricLerp(texCoord0, texCoord1, texCoord2, Barycentric(t0, t1, t2, glm::vec3(P.x + 1, P.y, 1.0)));
+	quadFragment.m_fragments[1] = Utils::BarycentricLerp(texCoord0, texCoord1, texCoord2, Utils::Barycentric(t0, t1, t2, glm::vec3(P.x + 1, P.y, 1.0)));
 	quadFragment.m_fragments[1] /= quadFragment.m_fragments[1].z;
-	quadFragment.m_fragments[2] = BarycentricLerp(texCoord0, texCoord1, texCoord2, Barycentric(t0, t1, t2, glm::vec3(P.x, P.y + 1, 1.0)));
+	quadFragment.m_fragments[2] = Utils::BarycentricLerp(texCoord0, texCoord1, texCoord2, Utils::Barycentric(t0, t1, t2, glm::vec3(P.x, P.y + 1, 1.0)));
 	quadFragment.m_fragments[2] /= quadFragment.m_fragments[2].z;
-	quadFragment.m_fragments[3] = BarycentricLerp(texCoord0, texCoord1, texCoord2, Barycentric(t0, t1, t2, glm::vec3(P.x + 1, P.y + 1, 1.0)));
+	quadFragment.m_fragments[3] = Utils::BarycentricLerp(texCoord0, texCoord1, texCoord2, Utils::Barycentric(t0, t1, t2, glm::vec3(P.x + 1, P.y + 1, 1.0)));
 	quadFragment.m_fragments[3] /= quadFragment.m_fragments[3].z;
 	glm::vec2 ddx(quadFragment.dUdx(), quadFragment.dUdy());
 	glm::vec2 ddy(quadFragment.dVdx(), quadFragment.dVdy());
@@ -483,7 +478,7 @@ void DeviceContext::DDXDDY(std::vector<glm::vec4> vertex[3], glm::ivec3 &t0, glm
 
 void DeviceContext::prePerspCorrection(std::vector<glm::vec4> &output)
 {
-	unsigned int normalIdx = pixelInMapTable["SV_NORMAL"];
+	unsigned int normalIdx = pixelInMapTable["SV_Normal"];
 	unsigned int texCoordIdx = pixelInMapTable["SV_TEXCOORD0"];
 	if (normalIdx)
 		output[normalIdx] /= output[posIdx].w;
@@ -498,8 +493,7 @@ unsigned char *DeviceContext::Interpolation(std::vector<glm::vec4> vertex[3], gl
 	unsigned char *buffer = new unsigned char[100];
 	for (int i = 0; i < pPixelShader->inDesc.size(); i++)
 	{
-		glm::vec4 attribute = vertex[0][i] * bcScreen[0] +
-			vertex[1][i] * bcScreen[1] + vertex[2][i] * bcScreen[2];
+		glm::vec4 attribute = Utils::BarycentricLerp(vertex[0][i], vertex[1][i], vertex[2][i], bcScreen); 
 		if (pPixelShader->inDesc[i].Name == "SV_TEXCOORD0" || pPixelShader->inDesc[i].Name == "SV_Normal")
 		{
 			attribute /= attribute.w;

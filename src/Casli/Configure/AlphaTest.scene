@@ -9,11 +9,11 @@ Frustum:
 	Nar 100.0
 	
 Entity:
-	Name nanosuit
-	Path ../src/Casli/Model/nanosuit/nanosuit.obj
-	Translate 0 -10 0
+	Name diablo3_pose
+	Path ../src/Casli/Model/diablo3_pose/diablo3_pose.obj
+	Translate 0 0 0
 	Rotation 0.0 1.0 0.0 0.0
-	Scale 0.1 0.1 0.1
+	Scale 1 1 1
 	Cullface: back
 	Alphablend: alphablend
 	Material:

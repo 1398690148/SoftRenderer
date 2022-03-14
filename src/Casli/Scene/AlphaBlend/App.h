@@ -18,6 +18,6 @@ private:
 	Window wnd;
 	Camera camera;
 	AlphaPlane plane{ wnd.Gfx(), "", 1 };
-	Model model{ wnd.Gfx(), "../src/Casli/Model/nanosuit/nanosuit.obj" };
+	Model model{ wnd.Gfx(), "../src/Casli/Model/diablo3_pose/diablo3_pose.obj" };
 	std::vector<glm::mat4 > CBuffer;
 };

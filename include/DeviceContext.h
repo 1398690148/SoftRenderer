@@ -49,7 +49,7 @@ private:
 	
 	void ViewportTransform(std::vector<glm::vec4> vertex[3]);
 	unsigned char *Vertex(int idx, unsigned char *vertexBuffer);
-	void DDXDDY(std::vector<glm::vec4> vertex[3], glm::vec3 &t0, glm::vec3 &t1, glm::vec3 &t2, glm::vec2 &P);
+	void DDXDDY(std::vector<glm::vec4> vertex[3], glm::ivec3 &t0, glm::ivec3 &t1, glm::ivec3 &t2, glm::ivec2 &P);
 	void prePerspCorrection(std::vector<glm::vec4> &output);
 	unsigned char * Interpolation(std::vector<glm::vec4> vertex[3], glm::vec3 &bcScreen);
 
@@ -78,6 +78,8 @@ private:
 	std::unordered_map<std::string, std::vector<glm::vec4>> m_Data;
 	std::unordered_map<std::string, int> pixelInMapTable;
 	int posIdx = -1;
+	float *frameBuffer{};
+	float testW = 0;
 };
 
 class QuadFragments

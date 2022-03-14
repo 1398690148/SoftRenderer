@@ -12,8 +12,8 @@ Graphics::Graphics(unsigned int width, unsigned int height, HWND hWnd, HDC ghdcM
 
 	Texture2D *pDepthStencil{};
 	TEXTURE2D_DESC descDepth = {};
-	descDepth.Width = 800u;
-	descDepth.Height = 600u;
+	descDepth.Width = 600u;
+	descDepth.Height = 500u;
 	descDepth.MipLevels = 1u;
 	descDepth.ArraySize = 1u;
 	descDepth.Format = FORMAT_FLOAT;
@@ -26,8 +26,8 @@ Graphics::Graphics(unsigned int width, unsigned int height, HWND hWnd, HDC ghdcM
 	pContext->OMSetRenderTargets(&pTarget, &pDSV);
 
 	VIEWPORT pViewports;
-	pViewports.Width = 800;
-	pViewports.Height = 600;
+	pViewports.Width = 600;
+	pViewports.Height = 500;
 	pViewports.TopLeftX = 0;
 	pViewports.TopLeftY = 0;
 	pViewports.MaxDepth = 10000;

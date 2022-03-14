@@ -8,7 +8,7 @@
 glm::vec3 eye(0, 0, 5);
 
 App::App()
-	: wnd(800, 600, "The Donkey Fart Box") 
+	: wnd(600, 500, "The Donkey Fart Box") 
 {
 	parser.parse("../src/Casli/Configure/AlphaTest.scene", wnd.Gfx(), false);
 	camera = Camera(parser.m_scene.m_CameraPos, parser.m_scene.m_CameraFront, parser.m_scene.m_CameraUp);

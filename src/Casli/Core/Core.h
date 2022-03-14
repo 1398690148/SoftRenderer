@@ -27,12 +27,18 @@ struct BUFFER_DESC
 	unsigned int StructureByteStride;
 };
 
+typedef struct SAMPLE_DESC {
+	unsigned int Count;
+	unsigned int Quality;
+} SAMPLE_DESC;
+
 struct TEXTURE2D_DESC
 {
 	unsigned int Width;
 	unsigned int Height;
 	unsigned int MipLevels;
 	unsigned int ArraySize;
+	SAMPLE_DESC SampleDesc;
 	DataFormat Format;
 	BufferType BindFlags;
 };
