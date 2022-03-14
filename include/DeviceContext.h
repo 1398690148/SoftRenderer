@@ -43,6 +43,11 @@ private:
 	void Triangle(std::vector<glm::vec4> vertex[3]);
 	//±³ÃæÌÞ³ý
 	bool shouldCulled(const glm::ivec2 &v0, const glm::ivec2 &v1, const glm::ivec2 &v2);
+	//Clip in the homogeneous clipping space
+	std::vector<std::vector<glm::vec4>> ClipSutherlandHodgeman(const std::vector<glm::vec4> &vertex0,
+		const std::vector<glm::vec4> &vertex1, const std::vector<glm::vec4> &vertex2, const float Near, const float Far);
+	std::vector<std::vector<glm::vec4>> ClipSutherlandHodgemanAux(const std::vector<std::vector<glm::vec4>> &polygon, const int axis
+		, const int side);
 
 	void ParseVertexBuffer();
 	void ParseShaderOutput(unsigned char *buffer, std::vector<glm::vec4> &output);
@@ -50,9 +55,9 @@ private:
 	void ViewportTransform(std::vector<glm::vec4> vertex[3]);
 	unsigned char *Vertex(int idx, unsigned char *vertexBuffer);
 	void DDXDDY(std::vector<glm::vec4> vertex[3], glm::ivec3 &t0, glm::ivec3 &t1, glm::ivec3 &t2, glm::ivec2 &P);
-	void prePerspCorrection(std::vector<glm::vec4> &output);
+	void prePerspCorrection(std::vector<glm::vec4> output[3]);
 	unsigned char * Interpolation(std::vector<glm::vec4> vertex[3], glm::vec3 &bcScreen);
-
+	//Alpha Blend
 	void AlphaBlend(int x, int y, glm::vec4 &color);
 	void ParseSrcBlendParam(BLEND blend, glm::vec4 &srcColor, glm::vec4 dstColor);
 	void ParseDstBlendParam(BLEND blend, glm::vec4 srcColor, glm::vec4 &dstColor);

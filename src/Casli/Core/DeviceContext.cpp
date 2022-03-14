@@ -262,10 +262,10 @@ std::vector<std::vector<glm::vec4>> DeviceContext::ClipSutherlandHodgeman(
 		{
 			// t = (w_clipping_plane-w1)/((w1-w2)
 			float t = (wClippingPlane - begVert[posIdx].w) / (begVert[posIdx].w - endVert[posIdx].w);
-			std::vector<glm::vec4> intersectedVert(3);
+			std::vector<glm::vec4> intersectedVert;
 			for (int j = 0; j < begVert.size(); j++)
 			{
-				intersectedVert[j] = (1 - t) * begVert[j] + endVert[j] * t;
+				intersectedVert.push_back(Utils::lerp(begVert[j], endVert[j], t));
 			}
 			insideVertices.push_back(intersectedVert);
 		}
@@ -297,16 +297,17 @@ void DeviceContext::DrawIndex()
 		ParseShaderOutput(o1, vertex[1]);
 		ParseShaderOutput(o2, vertex[2]);
 
-		std::vector<std::vector<glm::vec4>> v = ClipSutherlandHodgeman(vertex[0], vertex[1], vertex[2], 0.1, 100);
-		if (v.empty()) return;
-		for (int i = 0; i < v.size() - 2; i++)
+		std::vector<std::vector<glm::vec4>> clipped_vertices = ClipSutherlandHodgeman(vertex[0], vertex[1], vertex[2], 0.1, 100);
+		if (clipped_vertices.empty())
 		{
-			vertex[0] = v[0];
-			vertex[1] = v[i + 1];
-			vertex[2] = v[i + 2];
-			prePerspCorrection(vertex[0]);
-			prePerspCorrection(vertex[1]);
-			prePerspCorrection(vertex[2]);
+			return;
+		}
+		for (int i = 0; i < clipped_vertices.size() - 2; i++)
+		{
+			vertex[0] = clipped_vertices[0];
+			vertex[1] = clipped_vertices[i + 1];
+			vertex[2] = clipped_vertices[i + 2];
+			prePerspCorrection(vertex);
 			//视口变换
 			ViewportTransform(vertex);
 			Triangle(vertex);
@@ -361,6 +362,7 @@ void DeviceContext::Triangle(std::vector<glm::vec4> vertex[3])
 			glm::vec4 color(0, 0, 0, 255);
 			unsigned char *buffer = Interpolation(vertex, bcScreen);
 			bool discard = pPixelShader->fragment(buffer, color);
+
 			delete buffer;
 			if (pBlendState->blendDesc.RenderTarget[0].BlendEnable)
 			{
@@ -440,9 +442,9 @@ void DeviceContext::ParseShaderOutput(unsigned char *buffer, std::vector<glm::ve
 
 void DeviceContext::ViewportTransform(std::vector<glm::vec4> vertex[3])
 {
-	vertex[0][posIdx] = Viewport * vertex[0][posIdx];
-	vertex[1][posIdx] = Viewport * vertex[1][posIdx];
-	vertex[2][posIdx] = Viewport * vertex[2][posIdx];
+	vertex[0][posIdx] = Viewport * vertex[0][posIdx] + glm::vec4(0.5f);
+	vertex[1][posIdx] = Viewport * vertex[1][posIdx] + glm::vec4(0.5f);
+	vertex[2][posIdx] = Viewport * vertex[2][posIdx] + glm::vec4(0.5f);
 }
 
 unsigned char * DeviceContext::Vertex(int idx, unsigned char *vertexBuffer)
@@ -476,15 +478,20 @@ void DeviceContext::DDXDDY(std::vector<glm::vec4> vertex[3], glm::ivec3 &t0, glm
 	memcpy(&pPixelShader->dFdy.local(), &ddy, sizeof(glm::vec2));
 }
 
-void DeviceContext::prePerspCorrection(std::vector<glm::vec4> &output)
+void DeviceContext::prePerspCorrection(std::vector<glm::vec4> output[3])
 {
 	unsigned int normalIdx = pixelInMapTable["SV_Normal"];
 	unsigned int texCoordIdx = pixelInMapTable["SV_TEXCOORD0"];
-	if (normalIdx)
-		output[normalIdx] /= output[posIdx].w;
-	if (texCoordIdx)
-		output[texCoordIdx] /= output[posIdx].w;
-	output[posIdx] /= output[posIdx].w;
+	for (int i = 0; i < 3; i++)
+	{
+		float t = 1.0f / output[i][posIdx].w;
+		if (normalIdx)
+			output[i][normalIdx] *= t;
+		if (texCoordIdx)
+			output[i][texCoordIdx] *= t;
+		output[i][posIdx] *= t;
+	}
+
 }
 
 unsigned char *DeviceContext::Interpolation(std::vector<glm::vec4> vertex[3], glm::vec3 &bcScreen)

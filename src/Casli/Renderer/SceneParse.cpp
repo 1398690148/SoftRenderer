@@ -3,9 +3,13 @@
 #include <fstream>
 #include <sstream>
 #include <Model.h>
+#include <DirectionalLight.h>
+#include <PointLight.h>
+#include <SpotLight.h>
 #include <glm/gtc/matrix_transform.hpp>
 
-void SceneParse::parse(const std::string &path, Graphics & gfx, bool generatedMipmap)
+
+void SceneParse::parse(const std::string &path, Graphics &gfx, bool generatedMipmap)
 {
 	std::ifstream sceneFile;
 	sceneFile.open(path, std::ios::in);
@@ -64,19 +68,108 @@ void SceneParse::parse(const std::string &path, Graphics & gfx, bool generatedMi
 				m_scene.m_FrustumFar = parseFloat(line);
 			}
 		}
-		else if (header == "Entity:")
+		else if (header == "PointLight:")
 		{
-			std::cout << "Entity:=========================================\n";
+			std::cout << "PointLight:=====================================\n";
+			unsigned int offset;
+			{
+				std::getline(sceneFile, line);
+				offset = parseFloat(line);
+			}
+			glm::vec3 pos;
+			{
+				std::getline(sceneFile, line);
+				pos = parseVec3(line);
+			}
+
+			glm::vec3 atten;
+			{
+				std::getline(sceneFile, line);
+				atten = parseVec3(line);
+			}
+
+			glm::vec3 color;
+			{
+				std::getline(sceneFile, line);
+				color = parseVec3(line);
+			}
+			std::shared_ptr<PointLight> point = std::make_shared<PointLight>(gfx, color, pos, atten[0], atten[1], atten[2], offset);
+			m_scene.m_lights.push_back(point);
+		}
+		else if (header == "SpotLight:")
+		{
+			std::cout << "SpotLight:=====================================\n";
 			std::string name;
 			{
 				std::getline(sceneFile, line);
 				name = parseStr(line);
 			}
 
+			glm::vec3 pos;
+			{
+				std::getline(sceneFile, line);
+				pos = parseVec3(line);
+			}
+
+			glm::vec3 atten;
+			{
+				std::getline(sceneFile, line);
+				atten = parseVec3(line);
+			}
+
+			glm::vec3 color;
+			{
+				std::getline(sceneFile, line);
+				color = parseVec3(line);
+			}
+
+			float innerCutoff;
+			{
+				std::getline(sceneFile, line);
+				innerCutoff = parseFloat(line);
+			}
+
+			float outerCutoff;
+			{
+				std::getline(sceneFile, line);
+				outerCutoff = parseFloat(line);
+			}
+
+			glm::vec3 spotDir;
+			{
+				std::getline(sceneFile, line);
+				spotDir = parseVec3(line);
+			}
+
+		}
+		else if (header == "DirectionalLight:")
+		{
+			std::cout << "DirectionalLight:=====================================\n";
+			std::string name;
+			{
+				std::getline(sceneFile, line);
+				name = parseStr(line);
+			}
+
+			glm::vec3 dir;
+			{
+				std::getline(sceneFile, line);
+				dir = parseVec3(line);
+			}
+
+			glm::vec3 color;
+			{
+				std::getline(sceneFile, line);
+				color = parseVec3(line);
+			}
+		}
+		else if (header == "Entity:")
+		{
+			std::cout << "Entity:=========================================\n";
 			std::getline(sceneFile, line);
 			std::string path = parseStr(line);
 			std::shared_ptr<Drawable> drawable = std::make_shared<Model>(gfx, path.c_str(), 8);
-			m_scene.m_entities[name] = drawable;
+			m_scene.m_entities.push_back(drawable);
 			{
 				glm::vec3 translate;
 				{

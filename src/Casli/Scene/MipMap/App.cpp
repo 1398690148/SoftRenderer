@@ -8,7 +8,7 @@
 glm::vec3 eye(0, 0, 3);
 
 App::App()
-	: wnd(600, 500, "The Donkey Fart Box"), camera(eye, glm::vec3(0, 0, -1), glm::vec3(0, 1, 0))
+	: wnd(666, 500, "The Donkey Fart Box"), camera(eye, glm::vec3(0, 0, -1), glm::vec3(0, 1, 0))
 {
 	glm::mat4 Projection = glm::perspective(glm::radians(45.f), 4.0f / 3.0f, 0.1f, 100.f);
 	wnd.Gfx().SetProjection(Projection);

@@ -108,20 +108,26 @@ Mesh Model::processMesh(aiMesh * mesh, const aiScene * scene)
 	if (mesh->mMaterialIndex >= 0)
 	{
 		aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
-		loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse", textures);
-		loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular", textures);
+		loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse", textures, 0);
+		loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular", textures, 1);
+		loadMaterialTextures(material, aiTextureType_NORMALS, "texture_normal", textures, 2);
 	}
 	return Mesh(pGfx, vertices, indices, textures);
 }
 
-void Model::loadMaterialTextures(aiMaterial * mat, aiTextureType type, std::string typeName, std::vector<Texture *> &textures)
+void Model::loadMaterialTextures(aiMaterial * mat, aiTextureType type, std::string typeName, std::vector<Texture *> &textures, int idx)
 {
+	if (!mat->GetTextureCount(type))
+	{
+		textures.push_back(nullptr);
+		return;
+	}
 	for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
 	{
 		aiString str;
 		mat->GetTexture(type, i, &str);
 		std::string path = directory + "/" + str.C_Str();
-		Texture *texture = new Texture(pGfx, path.c_str(), 10, textures.size());
+		Texture *texture = new Texture(pGfx, path.c_str(), 10, idx);
 		textures.push_back(texture);
 	}
 }

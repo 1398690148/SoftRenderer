@@ -7,6 +7,7 @@ class RENDERER_API Camera
 public:
 	Camera();
 	Camera(glm::vec3 e, glm::vec3 c, glm::vec3 up);
+	const glm::vec3 GetPosition() const;
 	glm::mat4x4 GetMatrix();
 	void Translate(float t);
 	void Camera::Rotate(float dx, float dy);

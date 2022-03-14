@@ -4,8 +4,7 @@
 #include "AlphaTestPS.h"
 #include <iostream>
 #include <tbb/tick_count.h>
-
-glm::vec3 eye(0, 0, 5);
+#include <PixelConstantBuffer.h>
 
 App::App()
 	: wnd(600, 500, "The Donkey Fart Box") 
@@ -40,6 +39,16 @@ void App::DoFrame()
 	InitMatrix();
 	wnd.Gfx().BeginFrame(1.f, 1.f, 1.f);
 	auto &drawable = parser.m_scene.m_entities;
+	auto &lights = parser.m_scene.m_lights;
+
+	for (auto iter : lights)
+	{
+		iter.second->Bind(wnd.Gfx());
+	}
+	glm::vec3 viewPos = camera.GetPosition();
+	PixelConstantBuffer *p = new PixelConstantBuffer(wnd.Gfx(), (unsigned char *)&viewPos, 36, sizeof(glm::vec3));
+	p->Bind(wnd.Gfx());
+
 	for (auto iter : drawable)
 	{
 		CBuffer.clear();
@@ -77,7 +86,3 @@ void App::DoFrame()
 	wnd.SetTitle("FPS: " + std::to_string(fps));
 }
 
-void App::InitMatrix()
-{
-
-}

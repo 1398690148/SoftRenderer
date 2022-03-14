@@ -6,14 +6,6 @@
 #include <Model.h>
 #include <SceneParse.h>
 
-struct DrawableInfo
-{
-	DrawableInfo(Drawable *d, int i, int s) : drawable(d), idx(i), size(s) {}
-	Drawable *drawable;
-	int idx;
-	int size;
-};
-
 class App
 {
 public:
@@ -22,16 +14,11 @@ public:
 	int Go();
 private:
 	void DoFrame();
-	void InitMatrix();
 private:
 	Window wnd;
 	Camera camera;
 	CasliTimer timer;
 	float speed_factor = 1.0f;
 	SceneParse parser;
-/*
-	AlphaPlane plane{ wnd.Gfx(), "../src/Casli/Image/vase_plant.png", 1 };
-	Model model{ wnd.Gfx(), "../src/Casli/Model/nanosuit/nanosuit.obj" };*/
-	std::vector<glm::mat4 > CBuffer;
-	std::vector<DrawableInfo> drawable;
+	std::vector<glm::mat4> CBuffer;
 };

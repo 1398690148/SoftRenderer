@@ -20,7 +20,7 @@ SpotLight::SpotLight(Graphics &gfx, glm::vec3 color, glm::vec3 position, glm::ve
 	memcpy(cbuf + 40, &Linear, 4);
 	memcpy(cbuf + 44, &Exp, 4);
 	memcpy(cbuf + 48, &Cutoff, 4);
-	pConstantBuffer = new PixelConstantBuffer(gfx, offset, cbuf, 52);
+	pConstantBuffer = new PixelConstantBuffer(gfx, cbuf, offset, 52);
 }
 
 void SpotLight::Bind(Graphics &gfx)

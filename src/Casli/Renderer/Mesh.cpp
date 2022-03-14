@@ -2,7 +2,7 @@
 #include "Graphics.h"
 #include <Texture.h>
 
-Mesh::Mesh(Graphics &gfx, std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture*> textures)
+Mesh::Mesh(Graphics &gfx, std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture *> textures)
 {
 	this->vertices = vertices;
 	this->indices = indices;
@@ -17,6 +17,7 @@ void Mesh::Draw(Graphics &gfx)
 	pIndexBuffer->Bind(gfx);
 	for (int i = 0; i < textures.size(); i++)
 	{
+		if (!textures[i]) continue;
 		textures[i]->Bind(gfx);
 	}
 	gfx.Draw();

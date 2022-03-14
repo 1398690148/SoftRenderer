@@ -1,5 +1,6 @@
 #include <Graphics.h>
 #include <VertexConstantBuffer.h>
+#include "PixelConstantBuffer.h"
 
 glm::vec3 light_dir(1, 1, 1);
 
@@ -12,7 +13,7 @@ Graphics::Graphics(unsigned int width, unsigned int height, HWND hWnd, HDC ghdcM
 
 	Texture2D *pDepthStencil{};
 	TEXTURE2D_DESC descDepth = {};
-	descDepth.Width = 600u;
+	descDepth.Width = 666u;
 	descDepth.Height = 500u;
 	descDepth.MipLevels = 1u;
 	descDepth.ArraySize = 1u;
@@ -26,7 +27,7 @@ Graphics::Graphics(unsigned int width, unsigned int height, HWND hWnd, HDC ghdcM
 	pContext->OMSetRenderTargets(&pTarget, &pDSV);
 
 	VIEWPORT pViewports;
-	pViewports.Width = 600;
+	pViewports.Width = 666;
 	pViewports.Height = 500;
 	pViewports.TopLeftX = 0;
 	pViewports.TopLeftY = 0;
@@ -82,11 +83,6 @@ void Graphics::SetCamera(glm::mat4x4 cam)
 	camera = cam;
 }
 
-const glm::mat4 &Graphics::GetCamera() const
-{
-	return camera;;
-}
-
 void Graphics::SetProjection(glm::mat4x4 proj)
 {
 	projection = proj;
@@ -97,12 +93,12 @@ const glm::mat4 &Graphics::GetProjection() const
 	return projection;
 }
 
-void Graphics::SetVertexShader(IVertexShader * pVertexShader)
+void Graphics::SetVertexShader(IVertexShader *pVertexShader)
 {
 	pContext->VSSetShader(pVertexShader);
 }
 
-void Graphics::SetPixelShader(IPixelShader * pPixelShader)
+void Graphics::SetPixelShader(IPixelShader *pPixelShader)
 {
 	pContext->PSSetShader(pPixelShader);
 }

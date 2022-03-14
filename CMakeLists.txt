@@ -32,6 +32,7 @@ src/Casli/Renderer/Bindable/VertexConstantBuffer.cpp
 
 set(LIGHT 
 src/Casli/Renderer/Light/Light.h
+src/Casli/Renderer/Light/Light.cpp
 src/Casli/Renderer/Light/DirectionalLight.h
 src/Casli/Renderer/Light/DirectionalLight.cpp
 src/Casli/Renderer/Light/PointLight.h
@@ -65,6 +66,7 @@ src/Casli/Shader/AlphaTestVS.h
 src/Casli/Shader/AlphaTestPS.h
 src/Casli/Shader/AlphaBlendVS.h
 src/Casli/Shader/AlphaBlendPS.h
+src/Casli/Shader/PointLightPS.h
 )
 
 set(TEST 
@@ -100,7 +102,7 @@ source_group( Shader FILES ${SHADER})
 #设置库生成目录
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${PROJECT_SOURCE_DIR}/output/bin_d/)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${PROJECT_SOURCE_DIR}/output/bin_d/)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${PROJECT_SOURCE_DIR}/output/bin_d/)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${PROJECT_SOURCE_DIR}/output/bin/)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${PROJECT_SOURCE_DIR}/output/bin/)
 
 AUX_SOURCE_DIRECTORY(${PROJECT_SOURCE_DIR}/src/Casli/Core CORE_SRCS)
@@ -129,10 +131,10 @@ TARGET_LINK_LIBRARIES(MipMap Renderer)
 Set_Target_Properties(MipMap PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
 
 #三种灯光测试场景
-add_executable(Light src/Casli/Scene/Light/App.h src/Casli/Scene/Light/App.cpp src/Casli/Scene/Light/main.cpp)
-TARGET_LINK_LIBRARIES(Light Renderer)
+add_executable(PointLight src/Casli/Scene/PointLight/App.h src/Casli/Scene/PointLight/App.cpp src/Casli/Scene/PointLight/main.cpp)
+TARGET_LINK_LIBRARIES(PointLight Renderer)
 #设置release模式下关闭cmd窗口
-Set_Target_Properties(Light PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
+Set_Target_Properties(PointLight PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
 
 # Alpha Test
 add_executable(AlphaTest src/Casli/Scene/AlphaTest/App.h src/Casli/Scene/AlphaTest/App.cpp src/Casli/Scene/AlphaTest/main.cpp)

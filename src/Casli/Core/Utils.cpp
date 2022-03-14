@@ -29,6 +29,6 @@ namespace Utils
 
 	glm::vec4 lerp(const glm::vec4 &A, const glm::vec4 &B, float t)
 	{
-		return (1 - t) * A + B * t;
+		return (1.0f - t) * A + B * t;
 	}
 }

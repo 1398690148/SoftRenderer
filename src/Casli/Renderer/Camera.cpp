@@ -14,6 +14,11 @@ Camera::Camera(glm::vec3 e, glm::vec3 c, glm::vec3 up)
 {
 }
 
+const glm::vec3 Camera::GetPosition() const
+{
+	return eye;
+}
+
 glm::mat4 Camera::GetMatrix()
 {
 	return glm::lookAt(eye, center, up);

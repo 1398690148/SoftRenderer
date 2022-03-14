@@ -1,22 +1,22 @@
 #include "PixelConstantBuffer.h"
 
-PixelConstantBuffer::PixelConstantBuffer(Graphics & gfx, unsigned int offset, unsigned char *buffer, int byteWidth) : StartOffset(offset)
+PixelConstantBuffer::PixelConstantBuffer(Graphics &gfx, unsigned char *buffer, unsigned int slot, unsigned int ByteWidth) : offset(slot)
 {
 	BUFFER_DESC constantDesc = {};
 	constantDesc.BindFlags = BIND_CONSTANT_BUFFER;
-	constantDesc.ByteWidth = byteWidth;
+	constantDesc.ByteWidth = ByteWidth;
 	constantDesc.StructureByteStride = 0;
 	SUBRESOURCE_DATA constantSD;
 	constantSD.pSysMem = buffer;
 	GetDevice(gfx)->CreateBuffer(&constantDesc, &constantSD, &pConstantBuffer);
 }
 
-void PixelConstantBuffer::Bind(Graphics &gfx)
+void PixelConstantBuffer::ResetBuffer(unsigned char *buffer)
 {
-	GetContext(gfx)->PSSetConstantBuffers(StartOffset, 1, pConstantBuffer);
+	memcpy(pConstantBuffer->GetBuffer(0), buffer, pConstantBuffer->GetByteWidth());
 }
 
-void PixelConstantBuffer::SetMatrix(glm::mat4 matrix)
+void PixelConstantBuffer::Bind(Graphics &gfx)
 {
-	memcpy(pConstantBuffer->GetBuffer(0), &matrix, sizeof(glm::mat4));
+	GetContext(gfx)->PSSetConstantBuffers(offset, 1, pConstantBuffer);
 }

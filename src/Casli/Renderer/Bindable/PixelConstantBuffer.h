@@ -5,12 +5,10 @@
 class RENDERER_API PixelConstantBuffer : public Bindable
 {
 public:
-	PixelConstantBuffer(Graphics & gfx, unsigned int slot, unsigned char *buffer, int byteWidth);
+	PixelConstantBuffer(Graphics &gfx, unsigned char *buffer, unsigned int slot, unsigned int ByteWidth);
+	void ResetBuffer(unsigned char *buffer);
 	void Bind(Graphics &gfx);
-	void SetMatrix(glm::mat4 matrix);
 private:
 	IBuffer *pConstantBuffer{};
-	glm::mat4 matrix;
-	std::vector<glm::vec3> cbuf;
-	unsigned int StartOffset;
+	unsigned int offset = 0;
 };

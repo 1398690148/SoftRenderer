@@ -23,7 +23,6 @@ public:
 	void Draw();
 
 	void SetCamera(glm::mat4x4 cam);
-	const glm::mat4 &GetCamera() const;
 	void SetProjection(glm::mat4x4 proj);
 	const glm::mat4 &GetProjection() const;
 
@@ -39,9 +38,13 @@ private:
 	std::unique_ptr<DeviceContext> pContext;
 	RenderTargetView *pTarget{};
 	DepthStencilView *pDSV{};
+
+	unsigned char *pPixelConstantBuffer{};
+	unsigned int pPixelOffset;
+	
 	int width;
 	int height;
-	float *shadowbuffer;
+	
 
 	HWND hWnd;
 	HDC ghdcMainWnd;
