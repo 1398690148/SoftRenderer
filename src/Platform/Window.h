@@ -36,7 +36,6 @@ private:
 	bool cursorEnabled = true;
 	int width;
 	int height;
-	HWND hWnd;
 	Graphics *pGfx;
 	
 	HWND ghMainWnd = NULL;

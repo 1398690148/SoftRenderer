@@ -3,7 +3,7 @@
 Window::Window(int width, int height, const char *windowName) : width(width), height(height)
 {
 	WNDCLASS wc = { 0 };
-	wc.style = CS_HREDRAW | CS_VREDRAW;
+	wc.style = CS_OWNDC;
 	wc.lpfnWndProc = HandleMsgSetup;
 	wc.cbClsExtra = 0;
 	wc.cbWndExtra = 0;
@@ -14,6 +14,10 @@ Window::Window(int width, int height, const char *windowName) : width(width), he
 	wc.lpszMenuName = nullptr;
 	wc.lpszClassName = "WindowClassName";
 	RegisterClass(&wc);
+
+	// 调整窗口大小和位置
+	RECT rect = { 0, 0, width, height };
+	AdjustWindowRect(&rect, GetWindowLong(ghMainWnd, GWL_STYLE), 0);
 
 	ghMainWnd = CreateWindow("WindowClassName", windowName,
 		WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU,
@@ -44,9 +48,6 @@ Window::Window(int width, int height, const char *windowName) : width(width), he
 	memset(ptr, 0, width * height * 4);
 	memset(gInputKeys, 0, sizeof(int) * 512);
 
-	// 调整窗口大小和位置
-	RECT rect = { 0, 0, width, height };
-	AdjustWindowRect(&rect, GetWindowLong(ghMainWnd, GWL_STYLE), 0);
 	int wx = rect.right - rect.left;
 	int wy = rect.bottom - rect.top;
 	int sx = (GetSystemMetrics(SM_CXSCREEN) - wx) / 2;
@@ -126,8 +127,8 @@ void Window::DisableCursor()
 void Window::ConfineCursor()
 {
 	RECT rect;
-	GetClientRect(hWnd, &rect);
-	MapWindowPoints(hWnd, nullptr, reinterpret_cast<POINT*>(&rect), 2);
+	GetClientRect(ghMainWnd, &rect);
+	MapWindowPoints(ghMainWnd, nullptr, reinterpret_cast<POINT*>(&rect), 2);
 	ClipCursor(&rect);
 }
 
@@ -189,12 +190,32 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
 	case WM_CLOSE:
 		PostQuitMessage(0);
 		return 0;
+	// clear keystate when window loses focus to prevent input getting "stuck"
+	case WM_KILLFOCUS:
+		kbd.ClearState();
+		break;
+	case WM_ACTIVATE:
+		// confine/free cursor on window to foreground/background if cursor disabled
+		if (!cursorEnabled)
+		{
+			if (wParam & WA_ACTIVE)
+			{
+				ConfineCursor();
+				HideCursor();
+			}
+			else
+			{
+				FreeCursor();
+				ShowCursor();
+			}
+		}
+		break;
 	case WM_INPUT:
 	{
-		//if (!mouse.RawEnabled())
-		//{
-		//	break;
-		//}
+		if (!mouse.RawEnabled())
+		{
+			break;
+		}
 		UINT size;
 		// first get the size of the input data
 		if (GetRawInputData(
@@ -253,17 +274,27 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
 		{
 			SetCapture(hWnd);
 			mouse.OnMouseEnter();
-			//HideCursor();
+			HideCursor();
 		}
 		// cursorless exclusive gets first dibs
-		// in client region -> log move, and log enter + capture mouse (if not previously in window)
-		if (pt.x >= 0 && pt.x < width && pt.y >= 0 && pt.y < height)
+		if (!cursorEnabled)
 		{
-			//mouse.OnMouseMove(pt.x, pt.y);
 			if (!mouse.IsInWindow())
 			{
 				SetCapture(hWnd);
-				//mouse.OnMouseEnter();
+				mouse.OnMouseEnter();
+				HideCursor();
+			}
+			break;
+		}
+		// in client region -> log move, and log enter + capture mouse (if not previously in window)
+		if (pt.x >= 0 && pt.x < width && pt.y >= 0 && pt.y < height)
+		{
+			mouse.OnMouseMove(pt.x, pt.y);
+			if (!mouse.IsInWindow())
+			{
+				SetCapture(hWnd);
+				mouse.OnMouseEnter();
 			}
 			mouse.OnMouseMove(pt.x, pt.y);
 		}
@@ -286,6 +317,11 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
 	case WM_LBUTTONDOWN:
 	{
 		SetForegroundWindow(hWnd);
+		if (!cursorEnabled)
+		{
+			ConfineCursor();
+			HideCursor();
+		}
 		const POINTS pt = MAKEPOINTS(lParam);
 		mouse.OnLeftPressed(pt.x, pt.y);
 		break;
@@ -301,11 +337,11 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
 		const POINTS pt = MAKEPOINTS(lParam);
 		mouse.OnLeftReleased(pt.x, pt.y);
 		// release mouse if outside of window
-		//if (pt.x < 0 || pt.x >= width || pt.y < 0 || pt.y >= height)
-		//{
-		//	ReleaseCapture();
-		//	mouse.OnMouseLeave();
-		//}
+		if (pt.x < 0 || pt.x >= width || pt.y < 0 || pt.y >= height)
+		{
+			ReleaseCapture();
+			mouse.OnMouseLeave();
+		}
 		break;
 	}
 	//case WM_RBUTTONUP:
