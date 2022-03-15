@@ -39,7 +39,7 @@ void DeviceContext::ClearDepthStencilView(DepthStencilView * DepthStencilView)
 	DepthStencilView->ClearBuffer(FLT_MAX);
 }
 
-void DeviceContext::IASetVertexBuffers(IBuffer * buf, const unsigned int *pStrides, const unsigned int *pOffsets)
+void DeviceContext::IASetVertexBuffers(IBuffer *buf, const unsigned int *pStrides, const unsigned int *pOffsets)
 {
 	pVertexBuffer = buf;
 }
@@ -298,11 +298,8 @@ void DeviceContext::DrawIndex()
 		ParseShaderOutput(o2, vertex[2]);
 
 		std::vector<std::vector<glm::vec4>> clipped_vertices = ClipSutherlandHodgeman(vertex[0], vertex[1], vertex[2], 0.1, 100);
-		if (clipped_vertices.empty())
-		{
-			return;
-		}
-		for (int i = 0; i < clipped_vertices.size() - 2; i++)
+		int len = (int)clipped_vertices.size() - 2;
+		for (int i = 0; i < len; i++)
 		{
 			vertex[0] = clipped_vertices[0];
 			vertex[1] = clipped_vertices[i + 1];
@@ -390,6 +387,7 @@ void DeviceContext::ParseVertexBuffer()
 	{
 		const INPUT_ELEMENT_DESC *desc = pInputLayout->getData(i);
 		std::vector<glm::vec4> attr;
+		attr.resize(bufferSize);
 		int num = pInputLayout->getData(i)->Size / pInputLayout->getData(i)->typeSize;
 		int inOffset = pInputLayout->getData(i)->Offset;
 		for (int j = 0; j < bufferSize; j++)
@@ -405,7 +403,7 @@ void DeviceContext::ParseVertexBuffer()
 					v[3] = *((float *)pVertexBuffer->GetBuffer(pVertexBuffer->GetStructureByteStride() * j + inOffset + 3 * desc->typeSize));
 				}
 			}
-			attr.emplace_back(v);
+			attr[j] = v;
 		}
 		m_Data[desc->SemanticName] = attr;
 	}

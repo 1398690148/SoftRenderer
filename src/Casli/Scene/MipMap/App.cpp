@@ -37,7 +37,7 @@ void App::DoFrame()
 	const auto dt = timer.Mark() * speed_factor;
 	wnd.Gfx().SetCamera(camera.GetMatrix());
 	InitMatrix();
-	wnd.Gfx().BeginFrame(1.f, 1.f, 1.f);
+	wnd.Gfx().BeginFrame(0.5f, 0.5f, 0.5f);
 	plane.Bind((unsigned char *)(&planesCBuffer[0][0]), sizeof(glm::mat4));
 	plane.Draw();
 	mipPlane.Bind((unsigned char *)(&planesCBuffer[1][0]), sizeof(glm::mat4));
