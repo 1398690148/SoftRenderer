@@ -52,6 +52,7 @@ struct PointPixelShader : public IPixelShader
 		attenuation = 1.0 / (point[2].Constant + point[2].Linear * distance + (distance * distance) * point[2].Exp);
 		color += glm::vec4(point[2].color, 1.0) * attenuation;
 
+
 		color = textures[0]->Sampler(input->uv, samplers[0], dFdx.local(), dFdy.local()) * color;
 		return false;
 	}

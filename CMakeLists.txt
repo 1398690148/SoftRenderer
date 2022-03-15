@@ -60,6 +60,7 @@ src/Casli/Renderer/SceneParse.cpp
 set(SHADER 
 src/Casli/Shader/LambertPixelShader.h
 src/Casli/Shader/LambertVertexShader.h
+src/Casli/Shader/BlinnPhongPS.h
 src/Casli/Shader/SampleTextureVS.h
 src/Casli/Shader/SampleTexturePS.h
 src/Casli/Shader/AlphaTestVS.h
@@ -130,7 +131,7 @@ TARGET_LINK_LIBRARIES(MipMap Renderer)
 #设置release模式下关闭cmd窗口
 Set_Target_Properties(MipMap PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
 
-#三种灯光测试场景
+#点光源测试场景
 add_executable(PointLight src/Casli/Scene/PointLight/App.h src/Casli/Scene/PointLight/App.cpp src/Casli/Scene/PointLight/main.cpp)
 TARGET_LINK_LIBRARIES(PointLight Renderer)
 #设置release模式下关闭cmd窗口
@@ -153,6 +154,12 @@ add_executable(Bilinear src/Casli/Scene/Bilinear/App.h src/Casli/Scene/Bilinear/
 TARGET_LINK_LIBRARIES(Bilinear Renderer)
 #设置release模式下关闭cmd窗口
 Set_Target_Properties(Bilinear PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
+
+#点光源测试场景
+add_executable(BlinnPhong src/Casli/Scene/BlinnPhong/App.h src/Casli/Scene/BlinnPhong/App.cpp src/Casli/Scene/BlinnPhong/main.cpp)
+TARGET_LINK_LIBRARIES(BlinnPhong Renderer)
+#设置release模式下关闭cmd窗口
+Set_Target_Properties(BlinnPhong PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories(${PROJECT_SOURCE_DIR}/src/Casli/Renderer)

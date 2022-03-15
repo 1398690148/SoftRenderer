@@ -93,8 +93,8 @@ void SceneParse::parse(const std::string &path, Graphics &gfx, bool generatedMip
 				std::getline(sceneFile, line);
 				color = parseVec3(line);
 			}
-			std::shared_ptr<PointLight> point = std::make_shared<PointLight>(gfx, color, pos, atten[0], atten[1], atten[2], offset);
-			m_scene.m_lights.push_back(point);
+			std::shared_ptr<PointLight> light = std::make_shared<PointLight>(gfx, color, pos, atten[0], atten[1], atten[2], offset);
+			m_scene.m_lights.push_back(light);
 		}
 		else if (header == "SpotLight:")
 		{
@@ -139,6 +139,11 @@ void SceneParse::parse(const std::string &path, Graphics &gfx, bool generatedMip
 		else if (header == "DirectionalLight:")
 		{
 			std::cout << "DirectionalLight:=====================================\n";
+			int offset = 0;
+			{
+				std::getline(sceneFile, line);
+				offset = parseFloat(line);
+			}
 			glm::vec3 dir;
 			{
 				std::getline(sceneFile, line);
@@ -150,6 +155,8 @@ void SceneParse::parse(const std::string &path, Graphics &gfx, bool generatedMip
 				std::getline(sceneFile, line);
 				color = parseVec3(line);
 			}
+			std::shared_ptr<DirectionalLight> light = std::make_shared<DirectionalLight>(gfx, color, dir, offset);
+			m_scene.m_lights.push_back(light);
 		}
 		else if (header == "Entity:")
 		{
