@@ -21,4 +21,5 @@ private:
 	float speed_factor = 1.0f;
 	SceneParse parser;
 	std::vector<glm::mat4> CBuffer;
+	AlphaPlane plane{ wnd.Gfx(), "../src/Casli/Image/vase_plant.png", 1 };
 };

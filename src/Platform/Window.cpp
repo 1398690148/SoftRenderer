@@ -59,6 +59,17 @@ Window::Window(int width, int height, const char *windowName) : width(width), he
 
 	ShowWindow(ghMainWnd, SW_SHOW);
 	pGfx = new Graphics(width, height, ghMainWnd, ghdcMainWnd, ptr);
+
+	// register mouse raw input device
+	RAWINPUTDEVICE rid;
+	rid.usUsagePage = 0x01; // mouse page
+	rid.usUsage = 0x02; // mouse usage
+	rid.dwFlags = 0;
+	rid.hwndTarget = nullptr;
+	if (RegisterRawInputDevices(&rid, 1, sizeof(rid)) == FALSE)
+	{
+		throw ;
+	}
 }
 
 Window::~Window()
@@ -83,19 +94,46 @@ void Window::SetTitle(const std::string& title)
 	}
 }
 
-void Window::FreeCursor() noexcept
+void Window::FreeCursor()
 {
 	ClipCursor(nullptr);
 }
 
-void Window::HideCursor() noexcept
+void Window::HideCursor()
 {
 	while (::ShowCursor(FALSE) >= 0);
 }
 
-void Window::ShowCursor() noexcept
+void Window::ShowCursor()
 {
 	while (::ShowCursor(TRUE) < 0);
+}
+
+void Window::EnableCursor()
+{
+	cursorEnabled = true;
+	ShowCursor();
+	FreeCursor();
+}
+
+void Window::DisableCursor()
+{
+	cursorEnabled = false;
+	HideCursor();
+	ConfineCursor();
+}
+
+void Window::ConfineCursor()
+{
+	RECT rect;
+	GetClientRect(hWnd, &rect);
+	MapWindowPoints(hWnd, nullptr, reinterpret_cast<POINT*>(&rect), 2);
+	ClipCursor(&rect);
+}
+
+bool Window::CursorEnabled() const
+{
+	return cursorEnabled;
 }
 
 std::optional<int> Window::ProcessMessages()
@@ -151,6 +189,45 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
 	case WM_CLOSE:
 		PostQuitMessage(0);
 		return 0;
+	case WM_INPUT:
+	{
+		//if (!mouse.RawEnabled())
+		//{
+		//	break;
+		//}
+		UINT size;
+		// first get the size of the input data
+		if (GetRawInputData(
+			reinterpret_cast<HRAWINPUT>(lParam),
+			RID_INPUT,
+			nullptr,
+			&size,
+			sizeof(RAWINPUTHEADER)) == -1)
+		{
+			// bail msg processing if error
+			break;
+		}
+		rawBuffer.resize(size);
+		// read in the input data
+		if (GetRawInputData(
+			reinterpret_cast<HRAWINPUT>(lParam),
+			RID_INPUT,
+			rawBuffer.data(),
+			&size,
+			sizeof(RAWINPUTHEADER)) != size)
+		{
+			// bail msg processing if error
+			break;
+		}
+		// process the raw input data
+		auto& ri = reinterpret_cast<const RAWINPUT&>(*rawBuffer.data());
+		if (ri.header.dwType == RIM_TYPEMOUSE &&
+			(ri.data.mouse.lLastX != 0 || ri.data.mouse.lLastY != 0))
+		{
+			mouse.OnRawDelta(ri.data.mouse.lLastX, ri.data.mouse.lLastY);
+		}
+		break;
+	}
 	/*********** KEYBOARD MESSAGES ***********/
 	case WM_KEYDOWN:
 	// syskey commands need to be handled to track ALT key (VK_MENU) and F10

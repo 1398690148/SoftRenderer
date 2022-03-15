@@ -332,7 +332,7 @@ bool DeviceContext::shouldCulled(const glm::ivec2 &v0, const glm::ivec2 &v1, con
 
 void DeviceContext::Triangle(std::vector<glm::vec4> vertex[3])
 {
-	std::vector<glm::ivec3> points = { vertex[0][posIdx], vertex[1][posIdx], vertex[2][posIdx] };
+	std::vector<glm::vec3> points = { vertex[0][posIdx], vertex[1][posIdx], vertex[2][posIdx] };
 	if (shouldCulled(points[0], points[1], points[2])) return;
 
 	glm::ivec2 bboxmin(pViewports->Width - 1, pViewports->Height - 1);
@@ -346,37 +346,39 @@ void DeviceContext::Triangle(std::vector<glm::vec4> vertex[3])
 		bboxmax.x = min(clamp.x, max(bboxmax.x, points[i].x));
 		bboxmax.y = min(clamp.y, max(bboxmax.y, points[i].y));
 	}
-	tbb::parallel_for(bboxmin.x, bboxmax.x + 1, [&](size_t x) {
-		tbb::parallel_for(bboxmin.y, bboxmax.y + 1, [&](size_t y)
+	tbb::parallel_for(bboxmin.y, bboxmax.y + 1, 1, [&](size_t y)
+	{
+		tbb::parallel_for(bboxmin.x, bboxmax.x + 1, 1, [&](size_t x)
 		{
 			glm::ivec2 P(x, y);
-			glm::vec3 bcScreen = Utils::Barycentric(points[0], points[1], points[2], P);
 			//插值深度
+			glm::vec3 bcScreen = Utils::Barycentric(points[0], points[1], points[2], P);
 			float depth = Utils::BarycentricLerp(points[0], points[1], points[2], bcScreen).z;
 			//Early-Z
-			if (bcScreen[0] < 0 || bcScreen[1] < 0 || bcScreen[2] < 0 ||
+			if (bcScreen[0] < 0 || bcScreen[1] < 0 || bcScreen[2] < 0 || 
 				(!pBlendState->blendDesc.RenderTarget[0].BlendEnable && pDepthStencilView->GetDepth(P.x, P.y) - 0.0001f < depth))
 				return;
-			if (pixelInMapTable.count("SV_TEXCOORD0"))
-				DDXDDY(vertex, points[0], points[1], points[2], P);
-			glm::vec4 color(0, 0, 0, 255);
-			unsigned char *buffer = Interpolation(vertex, bcScreen);
-			bool discard = pPixelShader->fragment(buffer, color);
-
-			delete buffer;
-			if (pBlendState->blendDesc.RenderTarget[0].BlendEnable)
 			{
-				if (discard) return;
-				AlphaBlend(P.x, P.y, color);
+				if (pixelInMapTable.count("SV_TEXCOORD0"))
+					DDXDDY(vertex, points[0], points[1], points[2], P);
+				glm::vec4 color(0, 0, 0, 255);
+				unsigned char *buffer = Interpolation(vertex, bcScreen);
+				bool discard = pPixelShader->fragment(buffer, color);
+				delete buffer;
+				if (pBlendState->blendDesc.RenderTarget[0].BlendEnable)
+				{
+					if (discard) return;
+					AlphaBlend(P.x, P.y, color);
+					pRenderTargetView->SetPixel(P.x, P.y, color[0], color[1], color[2], color[3]);
+					return;
+				}
+				if (pDepthStencilView->GetDepth(P.x, P.y) - 0.0001f < depth)
+				{
+					return;
+				}
 				pRenderTargetView->SetPixel(P.x, P.y, color[0], color[1], color[2], color[3]);
-				return;
+				pDepthStencilView->SetDepth(P.x, P.y, depth);
 			}
-			if (pDepthStencilView->GetDepth(P.x, P.y) - 0.0001f < depth)
-			{
-				return;
-			}
-			pRenderTargetView->SetPixel(P.x, P.y, color[0], color[1], color[2], color[3]);
-			pDepthStencilView->SetDepth(P.x, P.y, depth);
 		});
 	});
 }
@@ -457,7 +459,7 @@ unsigned char * DeviceContext::Vertex(int idx, unsigned char *vertexBuffer)
 	return pVertexShader->vertex(vertexBuffer);
 }
 
-void DeviceContext::DDXDDY(std::vector<glm::vec4> vertex[3], glm::ivec3 &t0, glm::ivec3 &t1, glm::ivec3 &t2, glm::ivec2 &P)
+void DeviceContext::DDXDDY(std::vector<glm::vec4> vertex[3], glm::vec3 &t0, glm::vec3 &t1, glm::vec3 &t2, glm::ivec2 &P)
 {
 	unsigned int texCoordIdx = pixelInMapTable["SV_TEXCOORD0"];
 	QuadFragments quadFragment;
@@ -513,7 +515,10 @@ unsigned char *DeviceContext::Interpolation(std::vector<glm::vec4> vertex[3], gl
 void DeviceContext::AlphaBlend(int x, int y, glm::vec4 &color)
 {
 	glm::vec4 dstColor = pRenderTargetView->GetPixel(x, y);
-		
+	if (dstColor != glm::vec4(127, 127, 127, 255))
+	{
+		int k = 0;
+	}
 	glm::vec4 srcColor = color;
 	ParseSrcBlendParam(pBlendState->blendDesc.RenderTarget[0].SrcBlend, color, dstColor);
 	ParseDstBlendParam(pBlendState->blendDesc.RenderTarget[0].DestBlend, srcColor, dstColor);
@@ -548,16 +553,16 @@ void DeviceContext::ParseSrcBlendParam(BLEND blend, glm::vec4 &srcColor, glm::ve
 		srcColor = glm::vec4(255, 255, 255, 255) - srcColor;
 		break;
 	case BLEND_SRC_ALPHA:
-		srcColor *= (srcColor[3] / 255.f);
+		srcColor = glm::vec4(glm::vec3(srcColor) * srcColor[3] / 255.f, srcColor[3]);
 		break;
 	case BLEND_INV_SRC_ALPHA:
-		srcColor *= (1 - srcColor[3] / 255.f);
+		srcColor *= (255.f - srcColor[3] / 255.f);
 		break;
 	case BLEND_DEST_ALPHA:
 		srcColor *= dstColor[3] / 255.f;
 		break;
 	case BLEND_INV_DEST_ALPHA:
-		srcColor *= (1 - dstColor[3] / 255.f);
+		srcColor *= (255.f - dstColor[3] / 255.f);
 		break;
 	case BLEND_DEST_COLOR:
 		srcColor = dstColor;
@@ -596,13 +601,16 @@ void DeviceContext::ParseDstBlendParam(BLEND blend, glm::vec4 srcColor, glm::vec
 		dstColor *= srcColor[3] / 255.f;
 		break;
 	case BLEND_INV_SRC_ALPHA:
-		dstColor *= (1 - srcColor[3] / 255.f);
-		break;
+	{
+		float alpha = (255.f - srcColor[3]) / 255.f;
+		dstColor = glm::vec4(glm::vec3(dstColor) * alpha, dstColor[3]);
+	}
+	break;
 	case BLEND_DEST_ALPHA:
 		dstColor *= dstColor[3] / 255.f;
 		break;
 	case BLEND_INV_DEST_ALPHA:
-		dstColor *= (1 - dstColor[3] / 255.f);
+		dstColor *= (255.f - dstColor[3] / 255.f);
 		break;
 	case BLEND_INV_DEST_COLOR:
 		dstColor = glm::vec4(255, 255, 255, 255) - dstColor;

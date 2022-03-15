@@ -3,7 +3,8 @@
 #include <Camera.h>
 #include <AlphaPlane.h>
 #include <Model.h>
-#include <Box.h>
+#include "Platform/CasliTimer.h"
+
 class App
 {
 public:
@@ -17,6 +18,8 @@ private:
 private:
 	Window wnd;
 	Camera camera;
+	CasliTimer timer;
+	float speed_factor = 1.0f;
 	AlphaPlane plane{ wnd.Gfx(), "", 1 };
 	Model model{ wnd.Gfx(), "../src/Casli/Model/diablo3_pose/diablo3_pose.obj" };
 	std::vector<glm::mat4 > CBuffer;

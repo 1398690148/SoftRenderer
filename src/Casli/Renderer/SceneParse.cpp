@@ -99,12 +99,6 @@ void SceneParse::parse(const std::string &path, Graphics &gfx, bool generatedMip
 		else if (header == "SpotLight:")
 		{
 			std::cout << "SpotLight:=====================================\n";
-			std::string name;
-			{
-				std::getline(sceneFile, line);
-				name = parseStr(line);
-			}
-
 			glm::vec3 pos;
 			{
 				std::getline(sceneFile, line);
@@ -145,12 +139,6 @@ void SceneParse::parse(const std::string &path, Graphics &gfx, bool generatedMip
 		else if (header == "DirectionalLight:")
 		{
 			std::cout << "DirectionalLight:=====================================\n";
-			std::string name;
-			{
-				std::getline(sceneFile, line);
-				name = parseStr(line);
-			}
-
 			glm::vec3 dir;
 			{
 				std::getline(sceneFile, line);
@@ -203,6 +191,22 @@ void SceneParse::parse(const std::string &path, Graphics &gfx, bool generatedMip
 					drawable->SetCullFaceMode(CullFaceMode::CULL_FRONT);
 				else
 					drawable->SetCullFaceMode(CullFaceMode::CULL_DISABLE);
+			}
+			{
+				std::getline(sceneFile, line);
+				std::string alphablend = parseStr(line);
+				if (alphablend == "true")
+				{
+					drawable->SetBlendState(true);
+				}
+				else
+				{
+					drawable->SetBlendState(false);
+				}
+			}
+			{
+				for (int i = 0; i < 7; i++)
+					std::getline(sceneFile, line);
 			}
 		}
 	}

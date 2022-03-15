@@ -42,24 +42,66 @@ void App::DoFrame()
 	plane.Draw();
 	mipPlane.Bind((unsigned char *)(&planesCBuffer[1][0]), sizeof(glm::mat4));
 	mipPlane.Draw();
-	lamp.Bind((unsigned char *)(&planesCBuffer[2][0]), sizeof(glm::mat4));
-	lamp.Draw();
-	lamp1.Bind((unsigned char *)(&planesCBuffer[3][0]), sizeof(glm::mat4));
-	lamp1.Draw();
-	lamp2.Bind((unsigned char *)(&planesCBuffer[4][0]), sizeof(glm::mat4));
-	lamp2.Draw();
-	while (const auto delta = wnd.mouse.Read())
+	//lamp.Bind((unsigned char *)(&planesCBuffer[2][0]), sizeof(glm::mat4));
+	//lamp.Draw();
+	//lamp1.Bind((unsigned char *)(&planesCBuffer[3][0]), sizeof(glm::mat4));
+	//lamp1.Draw();
+	//lamp2.Bind((unsigned char *)(&planesCBuffer[4][0]), sizeof(glm::mat4));
+	//lamp2.Draw();
+	while (const auto e = wnd.kbd.ReadKey())
 	{
-		switch (delta->GetType())
+		if (!e->IsPress())
 		{
-		case Mouse::Event::Type::Move:
-			camera.Rotate((float)delta->GetPosX(), (float)delta->GetPosY());
+			continue;
+		}
+		switch (e->GetCode())
+		{
+		case VK_ESCAPE:
+			if (wnd.CursorEnabled())
+			{
+				wnd.DisableCursor();
+				wnd.mouse.EnableRaw();
+			}
+			else
+			{
+				wnd.EnableCursor();
+				wnd.mouse.DisableRaw();
+			}
 			break;
-		case Mouse::Event::Type::WheelUp:
-			camera.Translate((float)-delta->GetPosX());
-		case Mouse::Event::Type::WheelDown:
-			camera.Translate((float)delta->GetPosX());
-			break;
+		}
+	}
+	if (!wnd.CursorEnabled())
+	{
+		if (wnd.kbd.KeyIsPressed('W'))
+		{
+			camera.Translate({ 0.0f,0.0f,-dt });
+		}
+		if (wnd.kbd.KeyIsPressed('A'))
+		{
+			camera.Translate({ -dt,0.0f,0.0f });
+		}
+		if (wnd.kbd.KeyIsPressed('S'))
+		{
+			camera.Translate({ 0.0f,0.0f,dt });
+		}
+		if (wnd.kbd.KeyIsPressed('D'))
+		{
+			camera.Translate({ dt,0.0f,0.0f });
+		}
+		if (wnd.kbd.KeyIsPressed('R'))
+		{
+			camera.Translate({ 0.0f,dt,0.0f });
+		}
+		if (wnd.kbd.KeyIsPressed('F'))
+		{
+			camera.Translate({ 0.0f,-dt,0.0f });
+		}
+	}
+	while (const auto delta = wnd.mouse.ReadRawDelta())
+	{
+		if (!wnd.CursorEnabled())
+		{
+			camera.Rotate((float)delta->x, (float)delta->y);
 		}
 	}
 	wnd.Gfx().EndFrame();

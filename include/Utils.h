@@ -13,6 +13,6 @@ namespace Utils
 
 	extern glm::vec3 Barycentric(glm::vec2 A, glm::vec2 B, glm::vec2 C, glm::vec2 P);
 
-	extern glm::vec4 lerp(const glm::vec4 &A, const glm::vec4 &B, double t);
+	extern glm::vec4 lerp(const glm::vec4 &A, const glm::vec4 &B, float t);
 }
 

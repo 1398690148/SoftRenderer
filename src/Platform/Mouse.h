@@ -38,8 +38,8 @@ public:
 			type( type ),
 			leftIsPressed( parent.leftIsPressed ),
 			rightIsPressed( parent.rightIsPressed ),
-			x( parent.deltax ),
-			y( parent.deltay )
+			x( parent.x ),
+			y( parent.y )
 		{}
 		Type GetType() const noexcept
 		{
@@ -104,8 +104,6 @@ private:
 	static constexpr unsigned int bufferSize = 16u;
 	int x;
 	int y;
-	int deltax;
-	int deltay;
 	bool leftIsPressed = false;
 	bool rightIsPressed = false;
 	bool isInWindow = false;

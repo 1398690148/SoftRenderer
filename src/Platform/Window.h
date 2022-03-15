@@ -14,20 +14,26 @@ public:
 	Window(const Window&) = delete;
 	Window& operator=(const Window&) = delete;
 	void SetTitle(const std::string& title);
+	void EnableCursor();
+	void DisableCursor();
+	bool CursorEnabled() const;
 	static std::optional<int> ProcessMessages();
 	Graphics& Gfx();
 public:
 	Keyboard kbd;
 	Mouse mouse;
 private:
+	void ConfineCursor();
+
 	static LRESULT CALLBACK HandleMsgSetup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept;
 	static LRESULT CALLBACK HandleMsgThunk(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept;
 	LRESULT HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept;
 
-	void FreeCursor() noexcept;
-	void ShowCursor() noexcept;
-	void HideCursor() noexcept;
+	void FreeCursor();
+	void ShowCursor();
+	void HideCursor();
 private:
+	bool cursorEnabled = true;
 	int width;
 	int height;
 	HWND hWnd;

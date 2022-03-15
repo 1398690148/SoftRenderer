@@ -16,6 +16,11 @@ void Drawable::SetCullFaceMode(CullFaceMode cullFaceMode)
 	state.m_CullFaceMode = cullFaceMode;
 }
 
+void Drawable::SetBlendState(bool flag)
+{
+	pBlender = new Blender(pGfx, flag, {});
+}
+
 Device *Drawable::GetDevice(Graphics & gfx)
 {
 	return gfx.pDevice.get();

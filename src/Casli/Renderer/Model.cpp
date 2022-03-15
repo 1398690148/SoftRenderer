@@ -3,8 +3,6 @@
 #include <Sampler.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <VertexConstantBuffer.h>
-#include <tbb/blocked_range.h>
-#include <tbb/parallel_for.h>
 
 Model::Model(Graphics &gfx, const char *path, int mipLevel, FILTER filter) : Drawable(gfx)
 {

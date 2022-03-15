@@ -74,11 +74,8 @@ bool Mouse::RawEnabled() const noexcept
 	return rawEnabled;
 }
 
-void Mouse::OnMouseMove( int newx,int newy ) noexcept
+void Mouse::OnMouseMove(int newx, int newy) noexcept
 {
-	if (!leftIsPressed) return;
-	deltax = newx - x;
-	deltay = newy - y;
 	x = newx;
 	y = newy;
 
@@ -89,15 +86,15 @@ void Mouse::OnMouseMove( int newx,int newy ) noexcept
 void Mouse::OnMouseLeave() noexcept
 {
 	isInWindow = false;
-	//buffer.push( Mouse::Event( Mouse::Event::Type::Leave,*this ) );
-	//TrimBuffer();
+	buffer.push( Mouse::Event( Mouse::Event::Type::Leave,*this ) );
+	TrimBuffer();
 }
 
 void Mouse::OnMouseEnter() noexcept
 {
 	isInWindow = true;
-	//buffer.push( Mouse::Event( Mouse::Event::Type::Enter,*this ) );
-	//TrimBuffer();
+	buffer.push( Mouse::Event( Mouse::Event::Type::Enter,*this ) );
+	TrimBuffer();
 }
 
 void Mouse::OnRawDelta( int dx,int dy ) noexcept
@@ -112,15 +109,15 @@ void Mouse::OnLeftPressed( int x,int y ) noexcept
 	this->x = x;
 	this->y = y;
 
-	//buffer.push( Mouse::Event( Mouse::Event::Type::LPress,*this ) );
-	//TrimBuffer();
+	buffer.push( Mouse::Event( Mouse::Event::Type::LPress,*this ) );
+	TrimBuffer();
 }
 
 void Mouse::OnLeftReleased( int x,int y ) noexcept
 {
 	leftIsPressed = false;
-	//buffer.push( Mouse::Event( Mouse::Event::Type::LRelease,*this ) );
-	//TrimBuffer();
+	buffer.push( Mouse::Event( Mouse::Event::Type::LRelease,*this ) );
+	TrimBuffer();
 }
 
 void Mouse::OnRightPressed( int x,int y ) noexcept
@@ -139,19 +136,15 @@ void Mouse::OnRightReleased( int x,int y ) noexcept
 	TrimBuffer();
 }
 
-void Mouse::OnWheelUp( int x,int y ) noexcept
+void Mouse::OnWheelUp(int x, int y) noexcept
 {
-	deltax = x;
-	deltay = y;
-	buffer.push( Mouse::Event( Mouse::Event::Type::WheelUp,*this ) );
+	buffer.push(Mouse::Event(Mouse::Event::Type::WheelUp, *this));
 	TrimBuffer();
 }
 
-void Mouse::OnWheelDown( int x,int y ) noexcept
+void Mouse::OnWheelDown(int x, int y) noexcept
 {
-	deltax = x;
-	deltay = y;
-	buffer.push( Mouse::Event( Mouse::Event::Type::WheelDown,*this ) );
+	buffer.push(Mouse::Event(Mouse::Event::Type::WheelDown, *this));
 	TrimBuffer();
 }
 

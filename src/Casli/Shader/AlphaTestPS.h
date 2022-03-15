@@ -58,22 +58,18 @@ struct RENDERER_API AlphaTestPS : public IPixelShader
 	virtual bool fragment(unsigned char *in, glm::vec4 &color)
 	{
 		PixelInput *input = (PixelInput *)in;
-		Point *point = (Point *)cbuffer;
-		glm::vec3 viewDir = *(glm::vec3 *)(cbuffer + sizeof(Point));
-		glm::vec4 diffuseColor = textures[0]->Sampler(input->uv, samplers[0], dFdx.local(), dFdy.local());
-		
-		glm::vec3 lightDir = glm::vec4(point->pos, 1.0) - input->WorldPos;
-		glm::vec3 halfwayDir = glm::normalize(viewDir + lightDir);
+		//Point *point = (Point *)cbuffer;
+		//glm::vec3 viewDir = *(glm::vec3 *)(cbuffer + sizeof(Point));
+		//glm::vec4 diffuseColor = textures[0]->Sampler(input->uv, samplers[0], dFdx.local(), dFdy.local());
+		//
+		//glm::vec3 lightDir = glm::vec4(point->pos, 1.0) - input->WorldPos;
+		//glm::vec3 halfwayDir = glm::normalize(viewDir + lightDir);
 
-		float diff = glm::max(glm::dot(halfwayDir, input->normal), 0.0f);
-		float spec = glm::pow(glm::max(glm::dot(halfwayDir, input->normal), 0.0f), 1.0);
-		
-		color = diffuseColor * glm::vec4(1, 1, 1, 1.0) * diff;
+		//float diff = glm::max(glm::dot(halfwayDir, input->normal), 0.0f);
+		//float spec = glm::pow(glm::max(glm::dot(halfwayDir, input->normal), 0.0f), 1.0);
+		color = textures[0]->Sampler(input->uv, samplers[0], dFdx.local(), dFdy.local());
+		if (color.w == 0) return true;
 
-		if (textures[1])
-		{
-			color += textures[1]->Sampler(input->uv, samplers[0]);
-		}
 		return false;
 	}
 };

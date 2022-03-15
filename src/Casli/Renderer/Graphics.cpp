@@ -51,7 +51,7 @@ void Graphics::ClearBuffer(float red, float green, float blue)
 
 void Graphics::BeginFrame(float red, float green, float blue)
 {
-	ClearBuffer(0.5f, 0.5f, 0.5f);
+	ClearBuffer(red, green, blue);
 
 	//允许四种语义Position、Color、Normal、UV
 	const INPUT_ELEMENT_DESC ied[] =

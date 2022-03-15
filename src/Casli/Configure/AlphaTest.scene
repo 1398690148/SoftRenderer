@@ -9,20 +9,18 @@ Frustum:
 	Nar 100.0
 	
 PointLight:
-	Name readLight
 	Offset 0
 	Lightpos 0.0 -0.05 1.2
 	Attenuation 1.0 0.7 1.8
 	Lightcolor 1.9 0.0 0.0
 	
 Entity:
-	Name diablo3_pose
 	Path ../src/Casli/Model/diablo3_pose/diablo3_pose.obj
 	Translate 0 0 0
 	Rotation 0.0 1.0 0.0 0.0
 	Scale 1 1 1
 	Cullface: back
-	Alphablend: alphablend
+	Alphablend: false
 	Material:
 		Transparency 1.0
 		Ns 0.0000
@@ -30,19 +28,3 @@ Entity:
 		Kd 1.2000 1.2000 1.2000
 		Ks 0.0000 0.0000 0.0000
 		Ke 0.0000 0.0000 0.0000	
-		
-Entity:
-	Name Wall
-	Path ../src/Casli/Model/wall/wall.obj
-    Translate 0.0 0.0 0.0
-	Rotation 0.0 1.0 0.0 0.0
-	Scale 1.0 1.0 1.0
-	Cullface: back
-	Alphablend: disable
-	Material:
-		Transparency 1.0
-		Ns 0.0000
-		Ka 0.800 0.800 0.800
-		Kd 1.2000 1.2000 1.2000
-		Ks 0.0000 0.0000 0.0000
-		Ke 0.0000 0.0000 0.0000
