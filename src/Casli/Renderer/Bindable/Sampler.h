@@ -7,6 +7,6 @@ public:
 	Sampler(Graphics &gfx, int idx, FILTER filter);
 	void Bind(Graphics &gfx);
 private:
-	SamplerState *pSampler{};
+	SRSamplerState *pSampler{};
 	int index;
 };

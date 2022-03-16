@@ -9,6 +9,6 @@ public:
 	void ResetBuffer(unsigned char *buffer);
 	void Bind(Graphics &gfx);
 private:
-	IBuffer *pConstantBuffer{};
+	SRIBuffer *pConstantBuffer{};
 	unsigned int offset = 0;
 };

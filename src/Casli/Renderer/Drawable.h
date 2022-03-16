@@ -1,11 +1,11 @@
 #pragma once
 #include <glm/mat4x4.hpp>
 #include <RendererAPI.h>
-#include <Core.h>
+#include <SRCore.h>
 #include <Blender.h>
 
-class Device;
-class DeviceContext;
+class SRDevice;
+class SRDeviceContext;
 class Graphics;
 
 //所有绘制对象的基类
@@ -20,8 +20,8 @@ public:
 	void SetCullFaceMode(CullFaceMode cullFaceMode);
 	void SetBlendState(bool flag);
 protected:
-	static Device *GetDevice(Graphics &gfx);
-	static DeviceContext* GetContext(Graphics &gfx);
+	static SRDevice *GetDevice(Graphics &gfx);
+	static SRDeviceContext* GetContext(Graphics &gfx);
 	Graphics &pGfx;
 	glm::mat4 ModelMatrix;
 	ShaderState state;

@@ -1,8 +1,9 @@
 #pragma once
-#include <Device.h>
+#include <SRDevice.h>
 #include <RendererAPI.h>
-#include <DeviceContext.h>
-#include <RenderTargetView.h>
+#include <SRDeviceContext.h>
+#include <SRRenderTargetView.h>
+#include <SRDepthStencilView.h>
 #include "Platform/CasliWin.h"
 
 class VertexConstantBuffer;
@@ -26,18 +27,18 @@ public:
 	void SetProjection(glm::mat4x4 proj);
 	const glm::mat4 &GetProjection() const;
 
-	void SetVertexShader(IVertexShader *pVertexShader);
-	void SetPixelShader(IPixelShader *pPixelShader);
+	void SetVertexShader(SRIVertexShader *pVertexShader);
+	void SetPixelShader(SRIPixelShader *pPixelShader);
 private:
 	void ClearBuffer(float red, float green, float blue);
 
 private:
 	glm::mat4x4 camera;
 	glm::mat4x4 projection;
-	std::unique_ptr<Device> pDevice;
-	std::unique_ptr<DeviceContext> pContext;
-	RenderTargetView *pTarget{};
-	DepthStencilView *pDSV{};
+	std::unique_ptr<SRDevice> pDevice;
+	std::unique_ptr<SRDeviceContext> pContext;
+	SRRenderTargetView *pTarget{};
+	SRDepthStencilView *pDSV{};
 
 	unsigned char *pPixelConstantBuffer{};
 	unsigned int pPixelOffset;
@@ -48,5 +49,5 @@ private:
 
 	HWND hWnd;
 	HDC ghdcMainWnd;
-	InputLayout *pInputLayout;
+	SRInputLayout *pInputLayout;
 };

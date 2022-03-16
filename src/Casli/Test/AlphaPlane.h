@@ -24,7 +24,7 @@ private:
 	Sampler *sampler{};
 	glm::mat4 matrix;
 	Blender *pBlender{};
-	BlendState *oldBlender;
+	SRBlendState *oldBlender;
 	float oldBlendFactor;
 	unsigned int oldSampleMask;
 };

@@ -7,11 +7,11 @@ glm::vec3 light_dir(1, 1, 1);
 Graphics::Graphics(unsigned int width, unsigned int height, HWND hWnd, HDC ghdcMainWnd, void *gFbo)
 	: width(width), height(height), hWnd(hWnd), ghdcMainWnd(ghdcMainWnd)
 {
-	pDevice = std::make_unique<Device>();
-	pContext = std::make_unique<DeviceContext>();
+	pDevice = std::make_unique<SRDevice>();
+	pContext = std::make_unique<SRDeviceContext>();
 	pDevice->CreateRenderTargetView(gFbo, width, height, &pTarget);
 
-	Texture2D *pDepthStencil{};
+	SRTexture2D *pDepthStencil{};
 	TEXTURE2D_DESC descDepth = {};
 	descDepth.Width = 666u;
 	descDepth.Height = 500u;
@@ -93,12 +93,12 @@ const glm::mat4 &Graphics::GetProjection() const
 	return projection;
 }
 
-void Graphics::SetVertexShader(IVertexShader *pVertexShader)
+void Graphics::SetVertexShader(SRIVertexShader *pVertexShader)
 {
 	pContext->VSSetShader(pVertexShader);
 }
 
-void Graphics::SetPixelShader(IPixelShader *pPixelShader)
+void Graphics::SetPixelShader(SRIPixelShader *pPixelShader)
 {
 	pContext->PSSetShader(pPixelShader);
 }

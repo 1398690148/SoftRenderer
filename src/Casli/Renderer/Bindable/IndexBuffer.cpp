@@ -7,7 +7,7 @@ IndexBuffer::IndexBuffer(Graphics &gfx, std::vector<unsigned int> &indices)
 	ibd.ByteWidth = sizeof(unsigned int) * indices.size();
 	ibd.StructureByteStride = sizeof(unsigned int);
 	SUBRESOURCE_DATA isd = {};
-	isd.pSysMem = &indices[0];
+	isd.pSysMem = indices.data();
 	GetDevice(gfx)->CreateBuffer(&ibd, &isd, &pIndexBuffer);
 }
 

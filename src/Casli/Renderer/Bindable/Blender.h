@@ -12,7 +12,7 @@ public:
 	void Bind(Graphics &gfx) override;
 	//static Blender Resolve(Graphics &gfx, bool blending);
 private:
-	BlendState *pBlendState{};
+	SRBlendState *pBlendState{};
 	bool blending;
 	std::optional<std::array<float, 4>> factors;
 };

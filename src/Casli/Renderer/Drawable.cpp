@@ -21,12 +21,12 @@ void Drawable::SetBlendState(bool flag)
 	pBlender = new Blender(pGfx, flag, {});
 }
 
-Device *Drawable::GetDevice(Graphics & gfx)
+SRDevice *Drawable::GetDevice(Graphics & gfx)
 {
 	return gfx.pDevice.get();
 }
 
-DeviceContext *Drawable::GetContext(Graphics & gfx)
+SRDeviceContext *Drawable::GetContext(Graphics & gfx)
 {
 	return gfx.pContext.get();
 }

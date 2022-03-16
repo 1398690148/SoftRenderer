@@ -11,5 +11,5 @@ private:
 	int height;
 	int channels;
 	int index;
-	Texture2D *pTexture;
+	SRTexture2D *pTexture;
 };

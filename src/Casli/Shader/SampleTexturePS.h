@@ -1,6 +1,6 @@
 #pragma once
 #include <algorithm>
-#include "IPixelShader.h"
+#include "SRIPixelShader.h"
 
 struct PixelInput
 {
@@ -9,7 +9,7 @@ struct PixelInput
 	glm::vec2 uv;
 };
 
-struct RENDERER_API SampleTexturePS : public IPixelShader
+struct RENDERER_API SampleTexturePS : public SRIPixelShader
 {
 	SampleTexturePS()
 	{

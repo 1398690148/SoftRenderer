@@ -1,6 +1,6 @@
 #pragma once
 #include <algorithm>
-#include "IVertexShader.h"
+#include "SRIVertexShader.h"
 
 struct VertexInput
 {
@@ -23,7 +23,7 @@ struct CBuffer
 	glm::mat4 ModelT;
 };
 
-class RENDERER_API SampleTextureVS : public IVertexShader
+class RENDERER_API SampleTextureVS : public SRIVertexShader
 {
 public:
 	SampleTextureVS()

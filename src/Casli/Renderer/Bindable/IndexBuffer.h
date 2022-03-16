@@ -7,5 +7,5 @@ public:
 	IndexBuffer(Graphics &gfx, std::vector<unsigned int> &indices);
 	void Bind(Graphics &gfx);
 private:
-	IBuffer *pIndexBuffer{};
+	SRIBuffer *pIndexBuffer{};
 };

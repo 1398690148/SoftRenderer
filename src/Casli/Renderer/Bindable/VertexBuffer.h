@@ -14,5 +14,5 @@ public:
 	VertexBuffer(Graphics &gfx, std::vector<Vertex> &vertex);
 	void Bind(Graphics &gfx);
 private:
-	IBuffer *pVertexBuffer{};
+	SRIBuffer *pVertexBuffer{};
 };

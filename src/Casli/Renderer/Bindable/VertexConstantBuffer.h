@@ -9,7 +9,7 @@ public:
 	void Bind(Graphics &gfx);
 	void SetConstantBuffer(unsigned char *ppConstantBuffer, unsigned int size);
 private:
-	IBuffer *pConstantBuffer{};
+	SRIBuffer *pConstantBuffer{};
 	std::vector<glm::mat4> matrix;
 	unsigned char *cbuf{};
 };
