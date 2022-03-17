@@ -1,123 +1,89 @@
 #include "Model.h"
 #include <Texture.h>
-#include <Sampler.h>
-#include <glm/gtc/matrix_transform.hpp>
-#include <VertexConstantBuffer.h>
+#include <IndexBuffer.h>
+#include <VertexBuffer.h>
+#include <Vertex.h>
+#include <InputLayout.h>
 
-Model::Model(Graphics &gfx, const char *path, int mipLevel, FILTER filter) : Drawable(gfx)
+Model::Model(Graphics &gfx, std::vector<std::shared_ptr<Bindable>> bindVec, const std::string fileName, glm::mat4 transform)
+	: pGfx(gfx), binds(bindVec)
 {
-	loadModel(path);
-	std::vector<glm::mat4> matrix;
-	matrix.push_back(glm::mat4(1.0));
-	matrix.push_back(glm::mat4(1.0));
-	matrix.push_back(glm::mat4(1.0));
-	pConstantBuffer = new VertexConstantBuffer(gfx, 0, (unsigned char*)&matrix[0], sizeof(glm::mat4) * matrix.size());
-	sampler = new Sampler(gfx, 0, filter);
-}
-
-void Model::Draw()
-{
-	for (auto &mesh : meshes)
-	{
-		mesh.Draw(pGfx);
-	}
-}
-
-void Model::Bind(unsigned char *ConstantBuffer, size_t size)
-{
-	GetContext(pGfx)->SetRenderState(state);
-	pConstantBuffer->SetConstantBuffer(ConstantBuffer, size);
-	pConstantBuffer->Bind(pGfx);
-	sampler->Bind(pGfx);
-}
-
-void Model::loadModel(std::string path)
-{
-	Assimp::Importer importer;
-	const aiScene *scene = importer.ReadFile(path, aiProcess_CalcTangentSpace |
+	Assimp::Importer imp;
+	const auto pScene = imp.ReadFile(fileName.c_str(),
 		aiProcess_Triangulate |
 		aiProcess_JoinIdenticalVertices |
-		aiProcess_SortByPType);
+		aiProcess_ConvertToLeftHanded |
+		aiProcess_GenNormals
+	);
 
-	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
+	if (pScene == nullptr)
 	{
-		return;
+		throw ;
 	}
-	directory = path.substr(0, path.find_last_of('/'));
-	processNode(scene->mRootNode, scene);
+	directory = fileName.substr(0, fileName.find_last_of('/'));
+	for (size_t i = 0; i < pScene->mNumMeshes; i++)
+	{
+		meshPtrs.push_back(ParseMesh(gfx, *pScene, *pScene->mMeshes[i]));
+	}
+
+	pRoot = ParseNode(*pScene->mRootNode);
+	pRoot->SetAppliedTransform(transform);
 }
 
-void Model::processNode(aiNode * node, const aiScene * scene)
+
+void Model::Draw(Graphics& gfx, glm::mat4 transform) const
 {
-	for (int i = 0; i < node->mNumMeshes; i++)
-	{
-		aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-		meshes.push_back(processMesh(mesh, scene));
-	}
-	for (int i = 0; i < node->mNumChildren; i++)
-	{
-		processNode(node->mChildren[i], scene);
-	}
+	pRoot->Draw(gfx, transform);
 }
 
-Mesh Model::processMesh(aiMesh * mesh, const aiScene * scene)
+std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiScene &pScene, const aiMesh& mesh)
 {
-	std::vector<Vertex> vertices;
+	using Dvtx::VertexLayout;
+
+	Dvtx::VertexBuffer vbuf(std::move(
+		VertexLayout{}
+		.Append(VertexLayout::Position3D)
+		.Append(VertexLayout::Normal)
+		.Append(VertexLayout::Texture2D)
+	));
+
+	for (unsigned int i = 0; i < mesh.mNumVertices; i++)
+	{
+		vbuf.EmplaceBack(
+			*reinterpret_cast<glm::vec3*>(&mesh.mVertices[i]),
+			*reinterpret_cast<glm::vec3*>(&mesh.mNormals[i]),
+			*reinterpret_cast<glm::vec2*>(&mesh.mTextureCoords[0][i])
+		);
+	}
+
 	std::vector<unsigned int> indices;
-	std::vector<Texture *> textures;
+	indices.reserve(mesh.mNumFaces * 3);
+	for (unsigned int i = 0; i < mesh.mNumFaces; i++)
+	{
+		const auto& face = mesh.mFaces[i];
+		assert(face.mNumIndices == 3);
+		indices.push_back(face.mIndices[0]);
+		indices.push_back(face.mIndices[1]);
+		indices.push_back(face.mIndices[2]);
+	}
+	if (mesh.mMaterialIndex >= 0)
+	{
+		aiMaterial *material = pScene.mMaterials[mesh.mMaterialIndex];
+		loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse", 0);
+		loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular", 1);
+		loadMaterialTextures(material, aiTextureType_NORMALS, "texture_normal", 2);
+	}
+	binds.push_back(std::make_shared<VertexBuffer>(gfx, vbuf));
+	binds.push_back(std::make_shared<IndexBuffer>(gfx, indices));
+	binds.push_back(std::make_shared<InputLayout>(gfx, vbuf.GetLayout().GetD3DLayout()));
 
-	for (unsigned int i = 0; i < mesh->mNumVertices; i++)
-	{
-		Vertex vertex;
-		glm::vec3 vector;
-		//顶点
-		vector.x = mesh->mVertices[i].x;
-		vector.y = mesh->mVertices[i].y;
-		vector.z = mesh->mVertices[i].z;
-		vertex.Position = vector;
-		//法线
-		if (mesh->mNormals)
-		{
-			vector.x = mesh->mNormals[i].x;
-			vector.y = mesh->mNormals[i].y;
-			vector.z = mesh->mNormals[i].z;
-			vertex.Normal = vector;
-		}
-		else
-			vertex.Normal = glm::vec3(0.0f, 0.0f, 0.0f);
-		//纹理坐标
-		if (mesh->mTextureCoords[0]) // 网格是否有纹理坐标？
-		{
-			glm::vec2 vec;
-			vec.x = mesh->mTextureCoords[0][i].x;
-			vec.y = mesh->mTextureCoords[0][i].y;
-			vertex.TexCoords = vec;
-		}
-		else
-			vertex.TexCoords = glm::vec2(0.0f, 0.0f);
-		vertices.push_back(vertex);
-	}
-	for (unsigned int i = 0; i < mesh->mNumFaces; i++)
-	{
-		aiFace face = mesh->mFaces[i];
-		for (unsigned int j = 0; j < face.mNumIndices; j++)
-			indices.push_back(face.mIndices[j]);
-	}
-	if (mesh->mMaterialIndex >= 0)
-	{
-		aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
-		loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse", textures, 0);
-		loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular", textures, 1);
-		loadMaterialTextures(material, aiTextureType_NORMALS, "texture_normal", textures, 2);
-	}
-	return Mesh(pGfx, vertices, indices, textures);
+	return std::make_unique<Mesh>(gfx, std::move(binds));
 }
 
-void Model::loadMaterialTextures(aiMaterial * mat, aiTextureType type, std::string typeName, std::vector<Texture *> &textures, int idx)
+void Model::loadMaterialTextures(aiMaterial *mat, aiTextureType type, std::string typeName, int idx)
 {
 	if (!mat->GetTextureCount(type))
 	{
-		textures.push_back(nullptr);
 		return;
 	}
 	for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
@@ -125,7 +91,28 @@ void Model::loadMaterialTextures(aiMaterial * mat, aiTextureType type, std::stri
 		aiString str;
 		mat->GetTexture(type, i, &str);
 		std::string path = directory + "/" + str.C_Str();
-		Texture *texture = new Texture(pGfx, path.c_str(), 10, idx);
-		textures.push_back(texture);
+		binds.push_back(std::make_shared<Texture>(pGfx, path.c_str(), 10, idx));
 	}
+}
+
+std::unique_ptr<Node> Model::ParseNode(const aiNode& node)
+{
+	glm::mat4 transform = glm::mat4(1.0);
+	Tools::CopyaiMat(&node.mTransformation, transform);
+
+	std::vector<Mesh*> curMeshPtrs;
+	curMeshPtrs.reserve(node.mNumMeshes);
+	for (size_t i = 0; i < node.mNumMeshes; i++)
+	{
+		const auto meshIdx = node.mMeshes[i];
+		curMeshPtrs.push_back(meshPtrs.at(meshIdx).get());
+	}
+
+	auto pNode = std::make_unique<Node>(node.mName.C_Str(), std::move(curMeshPtrs), transform);
+	for (size_t i = 0; i < node.mNumChildren; i++)
+	{
+		pNode->AddChild(ParseNode(*node.mChildren[i]));
+	}
+
+	return pNode;
 }

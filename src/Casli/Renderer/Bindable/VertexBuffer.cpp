@@ -1,20 +1,19 @@
 #include "VertexBuffer.h"
 
-VertexBuffer::VertexBuffer(Graphics & gfx, std::vector<Vertex> &vertex)
+VertexBuffer::VertexBuffer(Graphics& gfx, const Dvtx::VertexBuffer& vbuf)
+	: stride((UINT)vbuf.GetLayout().Size())
 {
 	BUFFER_DESC bd = {};
-	bd.BindFlags = BufferType::BIND_VERTEX_BUFFER;
-	bd.StructureByteStride = sizeof(Vertex);
-	bd.ByteWidth = vertex.size() * sizeof(Vertex);
+	bd.BindFlags = BIND_VERTEX_BUFFER;
+	bd.ByteWidth = UINT(vbuf.SizeBytes());
+	bd.StructureByteStride = stride;
 	SUBRESOURCE_DATA sd = {};
-	sd.pSysMem = &vertex[0];
+	sd.pSysMem = vbuf.GetData();
 	GetDevice(gfx)->CreateBuffer(&bd, &sd, &pVertexBuffer);
 }
 
 void VertexBuffer::Bind(Graphics & gfx)
 {
-	const UINT stride = sizeof(Vertex);
 	const UINT offset = 0u;
-	float p = *(float *)pVertexBuffer->GetBuffer(0);
 	GetContext(gfx)->IASetVertexBuffers(pVertexBuffer, &stride, &offset);
 }

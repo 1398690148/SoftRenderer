@@ -1,7 +1,7 @@
 #pragma once
 #include "Bindable.h"
 
-class RENDERER_API Texture : public Bindable
+class Texture : public Bindable
 {
 public:
 	Texture(Graphics& gfx, const char *path, int mipMapLevel, int idx);

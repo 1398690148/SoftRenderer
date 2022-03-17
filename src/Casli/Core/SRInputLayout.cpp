@@ -9,7 +9,8 @@ SRInputLayout::SRInputLayout(const INPUT_ELEMENT_DESC *SRInputLayout, unsigned i
 
 SRInputLayout::~SRInputLayout()
 {
-	delete pInputLayout;
+	if (pInputLayout)
+		delete []pInputLayout;
 }
 
 unsigned int SRInputLayout::getSize() const

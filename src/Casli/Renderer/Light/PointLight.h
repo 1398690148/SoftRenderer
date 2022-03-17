@@ -1,7 +1,7 @@
 #pragma once
 #include <Light.h>
 
-class RENDERER_API PointLight : public Light
+class PointLight : public Light
 {
 public:
 	PointLight();

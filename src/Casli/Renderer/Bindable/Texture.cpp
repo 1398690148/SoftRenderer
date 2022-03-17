@@ -6,7 +6,7 @@
 
 Texture::Texture(Graphics& gfx, const char *path, int mipMapLevel, int idx) : index(idx)
 {
-	stbi_set_flip_vertically_on_load(true);
+	stbi_set_flip_vertically_on_load(false);
 	unsigned char* data = stbi_load(path, &width, &height, &channels, 0);
 	if (data != nullptr)
 	{

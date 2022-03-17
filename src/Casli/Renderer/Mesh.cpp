@@ -1,24 +1,56 @@
 #include "Mesh.h"
-#include "Graphics.h"
-#include <Texture.h>
+#include "TransformCbuf.h"
+#include <VertexBuffer.h>
+#include <IndexBuffer.h>
 
-Mesh::Mesh(Graphics &gfx, std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture *> textures)
+// Mesh
+Mesh::Mesh(Graphics& gfx, std::vector<std::shared_ptr<Bindable>> bindPtrs)
 {
-	this->vertices = vertices;
-	this->indices = indices;
-	this->textures = textures;
-	pVertexBuffer = new VertexBuffer(gfx, this->vertices);
-	pIndexBuffer = new IndexBuffer(gfx, this->indices);
+	transform = glm::mat4(1.0);
+	for (auto& pb : bindPtrs)
+	{
+		AddBind(std::move(pb));
+	}
+	AddBind(std::make_unique<TransformCbuf>(gfx, *this));
+}
+void Mesh::Draw(Graphics& gfx, glm::mat4 accumulatedTransform) const
+{
+	transform = accumulatedTransform;
+	Drawable::Draw(gfx);
+}
+glm::mat4 Mesh::GetTransformXM() const
+{
+	return transform;
 }
 
-void Mesh::Draw(Graphics &gfx)
+// Node
+Node::Node(const std::string& name, std::vector<Mesh*> meshPtrs, const glm::mat4& transform_in)
+	: meshPtrs(std::move(meshPtrs)), name(name)
 {
-	pVertexBuffer->Bind(gfx);
-	pIndexBuffer->Bind(gfx);
-	for (int i = 0; i < textures.size(); i++)
+	transform = transform_in;
+	appliedTransform = glm::mat4(1.0);
+}
+
+void Node::Draw(Graphics& gfx, glm::mat4 accumulatedTransform) const
+{
+	const auto built = appliedTransform  * transform * accumulatedTransform;
+	for (const auto pm : meshPtrs)
 	{
-		if (!textures[i]) continue;
-		textures[i]->Bind(gfx);
+		pm->Draw(gfx, built);
 	}
-	gfx.Draw();
+	for (const auto& pc : childPtrs)
+	{
+		pc->Draw(gfx, built);
+	}
+}
+
+void Node::AddChild(std::unique_ptr<Node> pChild)
+{
+	assert(pChild);
+	childPtrs.push_back(std::move(pChild));
+}
+
+void Node::SetAppliedTransform(glm::mat4 transform)
+{
+	appliedTransform = transform;
 }

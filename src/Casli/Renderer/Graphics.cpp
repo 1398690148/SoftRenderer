@@ -1,6 +1,4 @@
 #include <Graphics.h>
-#include <VertexConstantBuffer.h>
-#include "PixelConstantBuffer.h"
 
 glm::vec3 light_dir(1, 1, 1);
 
@@ -52,18 +50,6 @@ void Graphics::ClearBuffer(float red, float green, float blue)
 void Graphics::BeginFrame(float red, float green, float blue)
 {
 	ClearBuffer(red, green, blue);
-
-	//允许四种语义Position、Color、Normal、UV
-	const INPUT_ELEMENT_DESC ied[] =
-	{
-		{"Position", sizeof(float), 12, 0},
-		{"Normal", sizeof(float), 12, 12},
-		{"TEXCOORD0", sizeof(float), 8, 24},
-	};
-	pDevice->CreateInputLayout(ied, (unsigned int)std::size(ied), &pInputLayout);
-	pContext->IASetInputLayout(pInputLayout);
-
-	pContext->IASetPrimitiveTopology(PRIMITIVE_TOPOLOGY::PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
 
 void Graphics::EndFrame()
@@ -73,7 +59,7 @@ void Graphics::EndFrame()
 	ReleaseDC(hWnd, hDC);
 }
 
-void Graphics::Draw()
+void Graphics::DrawIndexed()
 {
 	pContext->DrawIndex();
 }
@@ -81,6 +67,11 @@ void Graphics::Draw()
 void Graphics::SetCamera(glm::mat4x4 cam)
 {
 	camera = cam;
+}
+
+const glm::mat4 Graphics::GetCamera()
+{
+	return camera;
 }
 
 void Graphics::SetProjection(glm::mat4x4 proj)

@@ -1,8 +1,8 @@
 #pragma once
 #include <algorithm>
-#include "IPixelShader.h"
+#include "SRIPixelShader.h"
 
-struct PixelInput
+struct LambertPixelInput
 {
 	glm::vec4 position;
 	glm::vec3 normal;
@@ -10,7 +10,7 @@ struct PixelInput
 	glm::vec4 WorldPos;
 };
 
-struct LambertOutput
+struct LambertPSCBuffer
 {
 	glm::vec3 viewPos;
 };
@@ -21,9 +21,9 @@ struct Directional
 	glm::vec3 dir;
 };
 
-struct LambertPixelShader : public IPixelShader
+struct LambertPS : public SRIPixelShader
 {
-	LambertPixelShader()
+	LambertPS()
 	{
 		Description sv_position = { "SV_Position", 4, 16, 0 };
 		Description sv_normal = { "SV_Normal", 4, 12, 16 };
@@ -36,13 +36,13 @@ struct LambertPixelShader : public IPixelShader
 	}
 	virtual bool fragment(unsigned char *in, glm::vec4 &color)
 	{
-		PixelInput *input = (PixelInput *)in;
-		Directional *directional = (Directional *)cbuffer;
-		glm::vec3 normal = glm::normalize(input->normal);
+		//PixelInput *input = (PixelInput *)in;
+		//Directional *directional = (Directional *)cbuffer;
+		//glm::vec3 normal = glm::normalize(input->normal);
 
 		//Directional Light
-		glm::vec4 directionalLight = std::max(glm::dot(normal, directional->dir), 0.0f) * glm::vec4(directional->color, 1.0);
-		color += directionalLight;
+		//glm::vec4 directionalLight = std::max(glm::dot(normal, directional->dir), 0.0f) * glm::vec4(directional->color, 1.0);
+		//color += directionalLight;
 
 		////Point Light
 		//float distance = glm::length(point->pos - glm::vec3(input->WorldPos));
@@ -61,7 +61,7 @@ struct LambertPixelShader : public IPixelShader
 		//glm::vec3 halfwayDir = glm::normalize(viewDir + lightDir);
 		//float spec = glm::pow(glm::max(glm::dot(halfwayDir, normal), 0.0f), m_shininess);
 		
-		color = textures[0]->Sampler(input->uv, samplers[0], dFdx.local(), dFdy.local()) * color;
+		//color = textures[0]->Sampler(input->uv, samplers[0], dFdx.local(), dFdy.local()) * color;
 		return false;
 	}
 };

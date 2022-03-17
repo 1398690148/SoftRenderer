@@ -1,9 +1,8 @@
 #pragma once
 #include <queue>
 #include <optional>
-#include <RendererAPI.h>
 
-class RENDERER_API Mouse
+class Mouse
 {
 	friend class Window;
 public:

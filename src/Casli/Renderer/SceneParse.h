@@ -1,13 +1,12 @@
 #include <glm/vec3.hpp>
 #include <vector>
-#include <Drawable.h>
-#include <RendererAPI.h>
 #include <memory>
 
 class Light;
 class Graphics;
+class Model;
 
-class RENDERER_API SceneParse
+class SceneParse
 {
 public:
 	struct Config
@@ -21,14 +20,7 @@ public:
 		float m_FrustumFar;
 
 		std::vector<std::shared_ptr<Light>> m_lights;
-		std::vector<std::shared_ptr<Drawable>> m_entities;
+		std::vector<std::shared_ptr<Model>> m_entities;
 	} m_scene;
 	void parse(const std::string &path, Graphics &gfx, bool generatedMipmap);
-
-private:
-	float parseFloat(std::string str) const;
-	glm::vec3 parseVec3(std::string str) const;
-	glm::vec4 parseVec4(std::string str) const;
-	bool parseBool(std::string str) const;
-	std::string parseStr(std::string str) const;
 };

@@ -1,7 +1,6 @@
 #pragma once
 #include <algorithm>
-#include "IVertexShader.h"
-#include "../Renderer/RendererAPI.h"
+#include "SRIVertexShader.h"
 
 struct VertexInput
 {
@@ -25,7 +24,7 @@ struct CBuffer
 	glm::mat4 ModelT;
 };
 
-class RENDERER_API AlphaTestVS : public IVertexShader
+class RENDERER_API AlphaTestVS : public SRIVertexShader
 {
 public:
 	AlphaTestVS()

@@ -1,6 +1,5 @@
 #include "SpotLight.h"
 #include <Graphics.h>
-#include <PixelConstantBuffer.h>
 
 SpotLight::SpotLight(Graphics &gfx, glm::vec3 color, glm::vec3 position, glm::vec3 direction, 
 	float constant, float linear, float exp, float cutoff, unsigned int offset)
@@ -20,10 +19,10 @@ SpotLight::SpotLight(Graphics &gfx, glm::vec3 color, glm::vec3 position, glm::ve
 	memcpy(cbuf + 40, &Linear, 4);
 	memcpy(cbuf + 44, &Exp, 4);
 	memcpy(cbuf + 48, &Cutoff, 4);
-	pConstantBuffer = new PixelConstantBuffer(gfx, cbuf, offset, 52);
+	//pConstantBuffer = new PixelConstantBuffer(gfx, cbuf, offset, 52);
 }
 
 void SpotLight::Bind(Graphics &gfx)
 {
-	pConstantBuffer->Bind(gfx);
+	//pConstantBuffer->Bind(gfx);
 }

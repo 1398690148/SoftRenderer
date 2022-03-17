@@ -23,7 +23,7 @@ struct CBuffer
 	glm::mat4 ModelT;
 };
 
-class RENDERER_API SampleTextureVS : public SRIVertexShader
+class SampleTextureVS : public SRIVertexShader
 {
 public:
 	SampleTextureVS()
@@ -49,7 +49,7 @@ public:
 		CBuffer *cbuf = (CBuffer *)cbuffer;
 		Output *o = new Output();
 		o->pos = cbuf->ModelViewProjection * glm::vec4(in->pos, 1.0f);
-		o->normal = cbuf->ModelT * glm::vec4(in->normal, 1.0);
+		o->normal = /*cbuf->ModelT * */glm::vec4(in->normal, 1.0);
 		o->uv = in->uv;
 		return (unsigned char *)o;
 	}

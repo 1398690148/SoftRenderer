@@ -3,9 +3,9 @@
 #include <optional>
 #include <array>
 
-class BlendState;
+class SRBlendState;
 
-class RENDERER_API Blender : public Bindable
+class Blender : public Bindable
 {
 public:
 	Blender(Graphics &gfx, bool blending, std::optional<float> factors_in);

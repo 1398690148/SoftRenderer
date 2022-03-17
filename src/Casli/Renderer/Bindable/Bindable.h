@@ -1,6 +1,5 @@
 #pragma once
 #include <Graphics.h>
-#include <RendererAPI.h>
 
 class Bindable
 {

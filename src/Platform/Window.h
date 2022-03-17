@@ -6,7 +6,7 @@
 #include <Platform/Keyboard.h>
 #include <Platform/Mouse.h>
 
-class RENDERER_API Window
+class Window
 {
 public:
 	Window(int width, int height, const char* name);

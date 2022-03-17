@@ -79,7 +79,7 @@ private:
 	glm::mat4 Viewport;
 	//顶点缓存中的数据
 	std::unordered_map<std::string, std::vector<glm::vec4>> m_Data;
-	std::unordered_map<std::string, int> pixelInMapTable;
+	std::unordered_map<std::string, int> vertexOutMapTable;
 	int posIdx = -1;
 	float *frameBuffer{};
 	float testW = 0;

@@ -1,7 +1,7 @@
 #pragma once
 #include "Bindable.h"
 
-class RENDERER_API IndexBuffer : public Bindable
+class IndexBuffer : public Bindable
 {
 public:
 	IndexBuffer(Graphics &gfx, std::vector<unsigned int> &indices);

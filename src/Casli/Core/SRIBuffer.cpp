@@ -4,6 +4,8 @@
 SRIBuffer::SRIBuffer(unsigned int byteWidth, unsigned int structureByteStride)
 	: ByteWidth(byteWidth), StructureByteStride(structureByteStride)
 {
+	m_Buffer = new unsigned char[byteWidth];
+	memset(m_Buffer, 0, byteWidth);
 }
 
 SRIBuffer::SRIBuffer(unsigned int byteWidth, unsigned int structureByteStride, const void *buffer)

@@ -1,32 +1,33 @@
 #include "Drawable.h"
 #include <Graphics.h>
+#include <IndexBuffer.h>
 
-void Drawable::SetModelMatrix(glm::mat4 &matrix)
+void Drawable::Draw(Graphics& gfx) const
 {
-	ModelMatrix = matrix;
-}
-
-glm::mat4 Drawable::GetModelMatrix()
-{
-	return ModelMatrix;
+	for (auto& b : binds)
+	{
+		b->Bind(gfx);
+	}
+	gfx.DrawIndexed();
 }
 
 void Drawable::SetCullFaceMode(CullFaceMode cullFaceMode)
 {
-	state.m_CullFaceMode = cullFaceMode;
+	//state.m_CullFaceMode = cullFaceMode;
 }
 
 void Drawable::SetBlendState(bool flag)
 {
-	pBlender = new Blender(pGfx, flag, {});
+	//pBlender = new Blender(pGfx, flag, {});
 }
 
-SRDevice *Drawable::GetDevice(Graphics & gfx)
+void Drawable::AddBind(std::shared_ptr<Bindable> bind)
 {
-	return gfx.pDevice.get();
-}
-
-SRDeviceContext *Drawable::GetContext(Graphics & gfx)
-{
-	return gfx.pContext.get();
+	// special case for index buffer
+	if (typeid(*bind) == typeid(IndexBuffer))
+	{
+		assert("Binding multiple index buffers not allowed" && pIndexBuffer == nullptr);
+		pIndexBuffer = &static_cast<IndexBuffer&>(*bind);
+	}
+	binds.push_back(std::move(bind));
 }

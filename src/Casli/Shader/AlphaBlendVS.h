@@ -1,7 +1,6 @@
 #pragma once
 #include <algorithm>
-#include "IVertexShader.h"
-#include "../Renderer/RendererAPI.h"
+#include "SRIVertexShader.h"
 
 struct AlphaVertexInput
 {
@@ -24,7 +23,7 @@ struct AlphaCBuffer
 	glm::mat4 ModelT;
 };
 
-class RENDERER_API AlphaBlendVS : public IVertexShader
+class AlphaBlendVS : public SRIVertexShader
 {
 public:
 	AlphaBlendVS()

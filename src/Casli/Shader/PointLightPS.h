@@ -1,6 +1,6 @@
 #pragma once
 #include <algorithm>
-#include "IPixelShader.h"
+#include "SRIPixelShader.h"
 
 struct PixelInput
 {
@@ -19,9 +19,9 @@ struct Point
 	float Exp;
 };
 
-struct PointPixelShader : public IPixelShader
+struct PointPS : public SRIPixelShader
 {
-	PointPixelShader()
+	PointPS()
 	{
 		Description sv_position = { "SV_Position", 4, 16, 0 };
 		Description sv_normal = { "SV_Normal", 4, 12, 16 };
@@ -51,7 +51,6 @@ struct PointPixelShader : public IPixelShader
 		distance = glm::length(point[2].pos - glm::vec3(input->WorldPos));
 		attenuation = 1.0 / (point[2].Constant + point[2].Linear * distance + (distance * distance) * point[2].Exp);
 		color += glm::vec4(point[2].color, 1.0) * attenuation;
-
 
 		color = textures[0]->Sampler(input->uv, samplers[0], dFdx.local(), dFdy.local()) * color;
 		return false;

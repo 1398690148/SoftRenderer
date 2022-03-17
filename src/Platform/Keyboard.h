@@ -21,9 +21,8 @@
 #include <queue>
 #include <bitset>
 #include <optional>
-#include <RendererAPI.h>
 
-class RENDERER_API Keyboard
+class Keyboard
 {
 	friend class Window;
 public:

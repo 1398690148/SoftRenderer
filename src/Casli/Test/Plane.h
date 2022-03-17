@@ -2,29 +2,17 @@
 #include <VertexBuffer.h>
 #include <IndexBuffer.h>
 #include <Drawable.h>
+#include <ConstantBuffers.h>
 
 class Graphics;
-class VertexConstantBuffer;
 class Blender;
 
-class RENDERER_API Plane : public Drawable
+class Plane : public Drawable
 {
 public:
-	Plane(Graphics &gfx, std::string texturePath, int mipLevel, FILTER filter = FILTER_POINT_MIP_POINT);
-	void Draw() override;
-	void Bind(unsigned char *ConstantBuffer,size_t size) override;
-
+	Plane(Graphics &gfx, std::string texturePath, int mipLevel, glm::vec3 trans, glm::vec4 rotate, FILTER filter = FILTER_POINT_MIP_POINT);
+	glm::mat4 GetTransformXM() const;
 private:
-	std::vector<Vertex> vertices;
-	std::vector<unsigned int> indices;
-	Texture *textures;
-	VertexBuffer *pVertexBuffer{};
-	IndexBuffer *pIndexBuffer{};
-	VertexConstantBuffer *pConstantBuffer{};
-	Sampler *sampler{};
-	glm::mat4 matrix;
-	//Blender *pBlender{};
-	//BlendState *oldBlender;
-	//float oldBlendFactor;
-	//unsigned int oldSampleMask;
+	glm::vec3 m_Translate;
+	glm::vec4 m_Rotate;
 };

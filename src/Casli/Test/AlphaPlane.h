@@ -7,7 +7,7 @@ class VertexConstantBuffer;
 class Blender;
 class IndexBuffer;
 
-class RENDERER_API AlphaPlane : public Drawable
+class AlphaPlane : public Drawable
 {
 public:
 	AlphaPlane(Graphics &gfx, std::string texturePath, int mipLevel, FILTER filter = FILTER_POINT_MIP_POINT);

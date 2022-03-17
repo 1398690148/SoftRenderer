@@ -5,10 +5,10 @@
 #include <SampleTexturePS.h>
 #include <tbb/tick_count.h>
 
-glm::vec3 eye(0, 0, 3);
+glm::vec3 eye(0, 0, -2);
 
 App::App()
-	: wnd(666, 500, "The Donkey Fart Box"), camera(eye, glm::vec3(0, 0, -1), glm::vec3(0, 1, 0))
+	: wnd(666, 500, "The Donkey Fart Box"), camera(eye, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0))
 {
 	glm::mat4 Projection = glm::perspective(glm::radians(45.f), 4.0f / 3.0f, 0.1f, 100.f);
 	wnd.Gfx().SetProjection(Projection);
@@ -36,12 +36,9 @@ void App::DoFrame()
 	tbb::tick_count t0 = tbb::tick_count().now();
 	const auto dt = timer.Mark() * speed_factor;
 	wnd.Gfx().SetCamera(camera.GetMatrix());
-	InitMatrix();
 	wnd.Gfx().BeginFrame(0.5f, 0.5f, 0.5f);
-	plane.Bind((unsigned char *)(&planesCBuffer[0][0]), sizeof(glm::mat4));
-	plane.Draw();
-	mipPlane.Bind((unsigned char *)(&planesCBuffer[1][0]), sizeof(glm::mat4));
-	mipPlane.Draw();
+	plane.Draw(wnd.Gfx());
+	mipPlane.Draw(wnd.Gfx());
 	//lamp.Bind((unsigned char *)(&planesCBuffer[2][0]), sizeof(glm::mat4));
 	//lamp.Draw();
 	//lamp1.Bind((unsigned char *)(&planesCBuffer[3][0]), sizeof(glm::mat4));
@@ -74,19 +71,19 @@ void App::DoFrame()
 	{
 		if (wnd.kbd.KeyIsPressed('W'))
 		{
-			camera.Translate({ 0.0f,0.0f,-dt });
+			camera.Translate({ 0.0f,0.0f,dt });
 		}
 		if (wnd.kbd.KeyIsPressed('A'))
 		{
-			camera.Translate({ -dt,0.0f,0.0f });
+			camera.Translate({ dt,0.0f,0.0f });
 		}
 		if (wnd.kbd.KeyIsPressed('S'))
 		{
-			camera.Translate({ 0.0f,0.0f,dt });
+			camera.Translate({ 0.0f,0.0f,-dt });
 		}
 		if (wnd.kbd.KeyIsPressed('D'))
 		{
-			camera.Translate({ dt,0.0f,0.0f });
+			camera.Translate({ -dt,0.0f,0.0f });
 		}
 		if (wnd.kbd.KeyIsPressed('R'))
 		{

@@ -12,22 +12,31 @@ IF(NOT CMAKE_BUILD_TYPE)
 ENDIF()
 
 set(BINDABLE 
+src/Casli/Renderer/Bindable/BindableFactory.h
+src/Casli/Renderer/Bindable/BindableFactory.cpp
 src/Casli/Renderer/Bindable/Bindable.h
 src/Casli/Renderer/Bindable/Bindable.cpp
 src/Casli/Renderer/Bindable/Blender.h
 src/Casli/Renderer/Bindable/Blender.cpp
 src/Casli/Renderer/Bindable/IndexBuffer.h
 src/Casli/Renderer/Bindable/IndexBuffer.cpp
-src/Casli/Renderer/Bindable/PixelConstantBuffer.h 
-src/Casli/Renderer/Bindable/PixelConstantBuffer.cpp
+src/Casli/Renderer/Bindable/TransformCbuf.h 
+src/Casli/Renderer/Bindable/TransformCbuf.cpp
 src/Casli/Renderer/Bindable/Sampler.h
 src/Casli/Renderer/Bindable/Sampler.cpp
 src/Casli/Renderer/Bindable/Texture.h
 src/Casli/Renderer/Bindable/Texture.cpp
 src/Casli/Renderer/Bindable/VertexBuffer.h
 src/Casli/Renderer/Bindable/VertexBuffer.cpp
-src/Casli/Renderer/Bindable/VertexConstantBuffer.h
-src/Casli/Renderer/Bindable/VertexConstantBuffer.cpp
+src/Casli/Renderer/Bindable/InputLayout.h
+src/Casli/Renderer/Bindable/InputLayout.cpp
+src/Casli/Renderer/Bindable/Topology.h
+src/Casli/Renderer/Bindable/Topology.cpp
+src/Casli/Renderer/Bindable/ConstantBuffers.h
+src/Casli/Renderer/Bindable/VertexShader.h
+src/Casli/Renderer/Bindable/VertexShader.cpp
+src/Casli/Renderer/Bindable/PixelShader.h
+src/Casli/Renderer/Bindable/PixelShader.cpp
 )
 
 set(LIGHT 
@@ -42,7 +51,6 @@ src/Casli/Renderer/Light/SpotLight.cpp
 )
 
 set(RENDERER
-src/Casli/Renderer/RendererAPI.h
 src/Casli/Renderer/Drawable.h
 src/Casli/Renderer/Drawable.cpp
 src/Casli/Renderer/Camera.h
@@ -55,11 +63,15 @@ src/Casli/Renderer/Graphics.h
 src/Casli/Renderer/Graphics.cpp
 src/Casli/Renderer/SceneParse.h
 src/Casli/Renderer/SceneParse.cpp
+src/Casli/Renderer/Vertex.h
+src/Casli/Renderer/Vertex.cpp
+src/Casli/Renderer/Tools.h
+src/Casli/Renderer/Tools.cpp
 )
 
 set(SHADER 
-src/Casli/Shader/LambertPixelShader.h
-src/Casli/Shader/LambertVertexShader.h
+src/Casli/Shader/LambertPS.h
+src/Casli/Shader/LambertVS.h
 src/Casli/Shader/BlinnPhongPS.h
 src/Casli/Shader/SampleTextureVS.h
 src/Casli/Shader/SampleTexturePS.h
@@ -71,12 +83,10 @@ src/Casli/Shader/PointLightPS.h
 )
 
 set(TEST 
-src/Casli/Test/Box.h 
-src/Casli/Test/Box.cpp 
 src/Casli/Test/Plane.h 
 src/Casli/Test/Plane.cpp
-src/Casli/Test/AlphaPlane.h 
-src/Casli/Test/AlphaPlane.cpp
+#src/Casli/Test/AlphaPlane.h 
+#src/Casli/Test/AlphaPlane.cpp
 )
 
 set(PLATFORM
@@ -119,7 +129,7 @@ else ()
 	LINK_DIRECTORIES(${PROJECT_SOURCE_DIR}/output/bin)
 endif()
 
-ADD_LIBRARY(Renderer SHARED ${PLATFORM} ${RENDERER} ${BINDABLE} ${LIGHT} ${TEST} ${SHADER})
+ADD_LIBRARY(Renderer STATIC ${PLATFORM} ${BINDABLE} ${LIGHT} ${RENDERER}  ${TEST} ${SHADER})
 
 target_link_libraries(Core ../lib/TBBlib/ia32/tbb12 ../lib/TBBlib/ia32/tbb12_debug)
 TARGET_LINK_LIBRARIES(Renderer Core)

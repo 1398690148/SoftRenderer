@@ -10,7 +10,10 @@ SRDevice::~SRDevice()
 
 bool SRDevice::CreateBuffer(BUFFER_DESC *bd, SUBRESOURCE_DATA *sd, SRIBuffer **buffer)
 {
-	*buffer = new SRIBuffer(bd->ByteWidth, bd->StructureByteStride, sd->pSysMem);
+	if (sd)
+		*buffer = new SRIBuffer(bd->ByteWidth, bd->StructureByteStride, sd->pSysMem);
+	else
+		*buffer = new SRIBuffer(bd->ByteWidth, bd->StructureByteStride);
 	return (*buffer != nullptr);
 }
 
@@ -26,7 +29,7 @@ bool SRDevice::CreateDepthStencilView(SRTexture2D *pDepthBuffer, DEPTH_STENCIL_V
 	return (*ppDepthStencilView != nullptr);
 }
 
-bool SRDevice::CreateInputLayout(const INPUT_ELEMENT_DESC * pInputElementDescs, unsigned int NumElements, SRInputLayout **ppInputLayout)
+bool SRDevice::CreateInputLayout(const INPUT_ELEMENT_DESC *pInputElementDescs, unsigned int NumElements, SRInputLayout **ppInputLayout)
 {
 	*ppInputLayout = new SRInputLayout(pInputElementDescs, NumElements);
 	return (*ppInputLayout != nullptr);

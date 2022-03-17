@@ -1,7 +1,6 @@
 #pragma once
 #include <algorithm>
-#include "IPixelShader.h"
-#include "../Renderer/RendererAPI.h"
+#include "SRIPixelShader.h"
 
 struct AlphaPixelInput
 {
@@ -10,7 +9,7 @@ struct AlphaPixelInput
 	glm::vec2 uv;
 };
 
-struct RENDERER_API AlphaBlendPS : public IPixelShader
+struct AlphaBlendPS : public SRIPixelShader
 {
 	AlphaBlendPS()
 	{

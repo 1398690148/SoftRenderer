@@ -52,16 +52,16 @@ void SRDeviceContext::IASetIndexBuffer(SRIBuffer * buf, unsigned int Offset)
 void SRDeviceContext::VSSetShader(SRIVertexShader *shader)
 {
 	pVertexShader = shader;
+	for (int i = 0; i < shader->outDesc.size(); i++)
+	{
+		vertexOutMapTable[shader->outDesc[i].Name] = i;
+	}
+	posIdx = vertexOutMapTable["SV_Position"];
 }
 
 void SRDeviceContext::PSSetShader(SRIPixelShader *shader)
 {
 	pPixelShader = shader;
-	for (int i = 0; i < shader->inDesc.size(); i++)
-	{
-		pixelInMapTable[shader->inDesc[i].Name] = i;
-	}
-	posIdx = pixelInMapTable["SV_Position"];
 }
 
 void SRDeviceContext::PSSetShaderResources(int slot, SRTexture2D **texture)
@@ -284,7 +284,7 @@ void SRDeviceContext::DrawIndex()
 		std::vector<glm::vec4> vertex[3];
 		for (int i = 0; i < 3; i++)
 		{
-			vertex[i].resize(pixelInMapTable.size());
+			vertex[i].resize(vertexOutMapTable.size());
 		}
 		ParseShaderOutput(o0, vertex[0]);
 		ParseShaderOutput(o1, vertex[1]);
@@ -349,7 +349,7 @@ void SRDeviceContext::Triangle(std::vector<glm::vec4> vertex[3])
 				(!pBlendState->blendDesc.RenderTarget[0].BlendEnable && pDepthStencilView->GetDepth(P.x, P.y) - 0.0001f < depth))
 				return;
 			{
-				if (pixelInMapTable.count("SV_TEXCOORD0"))
+				if (vertexOutMapTable.count("SV_TEXCOORD0"))
 					DDXDDY(vertex, points[0], points[1], points[2], P);
 				glm::vec4 color(0, 0, 0, 255);
 				unsigned char *buffer = Interpolation(vertex, bcScreen);
@@ -413,19 +413,16 @@ void SRDeviceContext::ParseShaderOutput(unsigned char *buffer, std::vector<glm::
 		case 2:
 		{
 			output[i] = glm::vec4((*start), *(start + 1), 1, 1);
-			start += 2;
 		}
 		break;
 		case 3:
 		{
 			output[i] = glm::vec4(*start, *(start + 1), *(start + 2), 1);
-			start += 3;
 		}
 		break;
 		case 4:
 		{
 			output[i] = glm::vec4(*start, *(start + 1), *(start + 2), *(start + 3));
-			start += 4;
 		}
 		break;
 		}
@@ -452,7 +449,7 @@ unsigned char * SRDeviceContext::Vertex(int idx, unsigned char *vertexBuffer)
 
 void SRDeviceContext::DDXDDY(std::vector<glm::vec4> vertex[3], glm::vec3 &t0, glm::vec3 &t1, glm::vec3 &t2, glm::ivec2 &P)
 {
-	unsigned int texCoordIdx = pixelInMapTable["SV_TEXCOORD0"];
+	unsigned int texCoordIdx = vertexOutMapTable["SV_TEXCOORD0"];
 	QuadFragments quadFragment;
 	glm::vec3 texCoord0 = vertex[0][texCoordIdx];
 	glm::vec3 texCoord1 = vertex[1][texCoordIdx];
@@ -473,8 +470,8 @@ void SRDeviceContext::DDXDDY(std::vector<glm::vec4> vertex[3], glm::vec3 &t0, gl
 
 void SRDeviceContext::prePerspCorrection(std::vector<glm::vec4> output[3])
 {
-	unsigned int normalIdx = pixelInMapTable["SV_Normal"];
-	unsigned int texCoordIdx = pixelInMapTable["SV_TEXCOORD0"];
+	unsigned int normalIdx = vertexOutMapTable["SV_Normal"];
+	unsigned int texCoordIdx = vertexOutMapTable["SV_TEXCOORD0"];
 	for (int i = 0; i < 3; i++)
 	{
 		float t = 1.0f / output[i][posIdx].w;

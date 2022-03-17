@@ -1,7 +1,6 @@
 #pragma once
 #include <algorithm>
-#include "IPixelShader.h"
-#include "../Renderer/RendererAPI.h"
+#include "SRIPixelShader.h"
 
 struct PixelInput
 {
@@ -42,7 +41,7 @@ struct Spot
 	float Cutoff;
 };
 
-struct RENDERER_API AlphaTestPS : public IPixelShader
+struct RENDERER_API AlphaTestPS : public SRIPixelShader
 {
 	AlphaTestPS()
 	{

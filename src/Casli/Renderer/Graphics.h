@@ -1,29 +1,23 @@
 #pragma once
 #include <SRDevice.h>
-#include <RendererAPI.h>
 #include <SRDeviceContext.h>
 #include <SRRenderTargetView.h>
 #include <SRDepthStencilView.h>
 #include "Platform/CasliWin.h"
 
-class VertexConstantBuffer;
-class InputLayout;
-class Texture;
-class Sampler;
-
-class RENDERER_API Graphics
+class Graphics
 {
 	friend class Bindable;
-	friend class Drawable;
 public:
 	Graphics(unsigned int width, unsigned int height, HWND hWnd, HDC ghdcMainWnd, void *gFbo);
 	~Graphics();
 	void BeginFrame(float red, float green, float blue);
 	void EndFrame();
 
-	void Draw();
+	void DrawIndexed();
 
 	void SetCamera(glm::mat4x4 cam);
+	const glm::mat4 GetCamera();
 	void SetProjection(glm::mat4x4 proj);
 	const glm::mat4 &GetProjection() const;
 
@@ -40,12 +34,8 @@ private:
 	SRRenderTargetView *pTarget{};
 	SRDepthStencilView *pDSV{};
 
-	unsigned char *pPixelConstantBuffer{};
-	unsigned int pPixelOffset;
-	
 	int width;
 	int height;
-	
 
 	HWND hWnd;
 	HDC ghdcMainWnd;

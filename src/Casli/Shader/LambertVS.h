@@ -1,15 +1,15 @@
 #pragma once
 #include <algorithm>
-#include "IVertexShader.h"
+#include "SRIVertexShader.h"
 
-struct VertexInput
+struct LambertVertexInput
 {
 	glm::vec3 pos;
 	glm::vec3 normal;
 	glm::vec2 uv;
 };
 
-struct Output
+struct LambertOutput
 {
 	glm::vec4 pos;
 	glm::vec3 normal;
@@ -17,17 +17,17 @@ struct Output
 	glm::vec4 WorldPos;
 };
 
-struct CBuffer
+struct LambertCBuffer
 {
 	glm::mat4 ModelViewProjection;
 	glm::mat4 Model;
 	glm::mat4 ModelT;
 };
 
-class LambertVertexShader : public IVertexShader
+class LambertVS : public SRIVertexShader
 {
 public:
-	LambertVertexShader()
+	LambertVS()
 	{
 		Description position = { "Position", 4, 12, 0 };
 		Description normal = { "Normal", 4, 12, 12 };
@@ -48,12 +48,12 @@ public:
 
 	unsigned char *vertex(unsigned char *input)
 	{
-		VertexInput *in = (VertexInput *)input;
-		CBuffer *cbuf = (CBuffer *)cbuffer;
-		Output *o = new Output();
-		o->WorldPos = cbuf->Model * glm::vec4(in->pos, 1.0f);
+		LambertVertexInput *in = (LambertVertexInput *)input;
+		LambertCBuffer *cbuf = (LambertCBuffer *)cbuffer;
+		LambertOutput *o = new LambertOutput();
+		o->WorldPos = glm::vec4(0, 0, 0, 0);// cbuf->Model * glm::vec4(in->pos, 1.0f);
 		o->pos = cbuf->ModelViewProjection * glm::vec4(in->pos, 1.0f);
-		o->normal = cbuf->ModelT * glm::vec4(in->normal, 1.0);
+		o->normal = glm::vec3(0, 0, 0);// cbuf->ModelT * glm::vec4(in->normal, 1.0);
 		o->uv = in->uv;
 		return (unsigned char *)o;
 	}

@@ -1,8 +1,7 @@
 #pragma once
 #include <chrono>
-#include <RendererAPI.h>
 
-class RENDERER_API CasliTimer
+class CasliTimer
 {
 public:
 	CasliTimer() noexcept;

@@ -1,8 +1,7 @@
 #pragma once
-#include <RendererAPI.h>
 #include "Graphics.h"
 
-class RENDERER_API Camera
+class Camera
 {
 public:
 	Camera();

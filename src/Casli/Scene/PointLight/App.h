@@ -1,8 +1,6 @@
 #pragma once
 #include "Platform/Window.h"
 #include <Camera.h>
-#include <Model.h>
-#include <Plane.h>
 #include <SceneParse.h>
 #include "Platform/CasliTimer.h"
 

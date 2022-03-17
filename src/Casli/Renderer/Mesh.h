@@ -1,24 +1,33 @@
 #pragma once
 #include <vector>
-#include <glm/vec2.hpp>
-#include <glm/vec3.hpp>
-#include <VertexBuffer.h>
-#include <IndexBuffer.h>
-#include <RendererAPI.h>
+#include <Drawable.h>
 
-class Texture;
 class Graphics;
 
-class RENDERER_API Mesh
+class Mesh : public Drawable
 {
 public:
-	Mesh(Graphics &gfx, std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture *> textures);
-	void Draw(Graphics &gfx);
-
+	Mesh(Graphics& gfx, std::vector<std::shared_ptr<Bindable>> bindPtrs);
+	void Draw(Graphics& gfx, glm::mat4 accumulatedTransform) const;
+	glm::mat4 GetTransformXM() const override;
 private:
-	std::vector<Vertex> vertices;
-	std::vector<unsigned int> indices;
-	std::vector<Texture *> textures;
-	VertexBuffer *pVertexBuffer{};
-	IndexBuffer *pIndexBuffer{};
+	mutable glm::mat4 transform;
+};
+
+class Node
+{
+	friend class Model;
+	friend class ModelWindow;
+public:
+	Node(const std::string& name, std::vector<Mesh*> meshPtrs, const glm::mat4& transform);
+	void Draw(Graphics& gfx, glm::mat4 accumulatedTransform) const;
+	void SetAppliedTransform(glm::mat4 transform);
+private:
+	void AddChild(std::unique_ptr<Node> pChild);
+private:
+	std::string name;
+	std::vector<std::unique_ptr<Node>> childPtrs;
+	std::vector<Mesh*> meshPtrs;
+	glm::mat4 transform;
+	glm::mat4 appliedTransform;
 };

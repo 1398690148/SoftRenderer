@@ -270,12 +270,6 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
 	case WM_MOUSEMOVE:
 	{
 		const POINTS pt = MAKEPOINTS(lParam);
-		if (!mouse.IsInWindow())
-		{
-			SetCapture(hWnd);
-			mouse.OnMouseEnter();
-			HideCursor();
-		}
 		// cursorless exclusive gets first dibs
 		if (!cursorEnabled)
 		{
@@ -312,8 +306,8 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
 				mouse.OnMouseLeave();
 			}
 		}
-		break;
-		}	
+	}	
+	break;
 	case WM_LBUTTONDOWN:
 	{
 		SetForegroundWindow(hWnd);
