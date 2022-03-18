@@ -12,7 +12,7 @@ private:
 	};
 public:
 	TransformCbuf(Graphics& gfx, const Drawable& parent);
-	void Bind(Graphics& gfx) noexcept override;
+	void Bind(Graphics& gfx) override;
 private:
 	VertexConstantBuffer<Transforms> vcbuf;
 	const Drawable& parent;
