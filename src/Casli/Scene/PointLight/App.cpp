@@ -4,8 +4,7 @@
 #include <Model.h>
 
 App::App()
-	: wnd(666, 500, "The Donkey Fart Box"), 
-	light1(wnd.Gfx(), glm::vec3(1, 1, 1), glm::vec3(0.5f, 0, 0), 1.0f, 0.0014f, 0.000007f)
+	: wnd(666, 500, "The Donkey Fart Box")
 {
 	parser.parse("../src/Casli/Configure/PointLight.scene", wnd.Gfx(), false);
 	camera = Camera(parser.m_scene.m_CameraPos, parser.m_scene.m_CameraFront, parser.m_scene.m_CameraUp);
@@ -34,14 +33,21 @@ void App::DoFrame()
 	wnd.Gfx().SetCamera(camera.GetMatrix());
 	wnd.Gfx().BeginFrame(0.5f, 0.5f, 0.5f);
 	auto &drawable = parser.m_scene.m_entities;
+	auto &lights = parser.m_scene.m_lights;
 	glm::mat4 rotate = glm::mat4(1.0);
 	rotate = glm::rotate(rotate, glm::radians(3.f), glm::vec3(0, 1, 0));
-	light1.Bind(wnd.Gfx(), rotate);
+	for (auto light : lights)
+	{
+		light->Bind(wnd.Gfx(), rotate);
+	}
 	for (auto iter : drawable)
 	{
 		iter->Draw(wnd.Gfx(), glm::mat4(1.0));
 	}
-	light1.Draw(wnd.Gfx());
+	for (auto light : lights)
+	{
+		light->Draw(wnd.Gfx());
+	}
 	while (const auto e = wnd.kbd.ReadKey())
 	{
 		if (!e->IsPress())

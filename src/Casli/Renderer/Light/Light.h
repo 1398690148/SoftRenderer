@@ -10,7 +10,6 @@ class Light
 {
 public:
 	virtual void Bind(Graphics &gfx, glm::mat4 view) = 0;
-	void Draw(Graphics& gfx) const {}
-protected:
-	glm::vec3 color;
+	virtual void Draw(Graphics& gfx) const = 0;
+	
 };

@@ -19,6 +19,5 @@ private:
 	CasliTimer timer;
 	float speed_factor = 1.0f;
 	SceneParse parser;
-	PointLight light1;
 	float z = 0;
 };

@@ -9,24 +9,10 @@ Frustum:
 	Nar 100.0
 	
 PointLight:
-	Offset 0
-	Lightpos 0.0 -0.05 1.2
-	Attenuation 2.0 0.7 1.8
-	Lightcolor 1.9 0.0 0.0
-	
-PointLight:
-	Offset 36
-	Lightpos 0.83 -0.05 -0.83
-	Attenuation 1.0 0.7 1.8
-	Lightcolor 0.0 1.0 0.0
-	
-PointLight:
-	Offset 72
-	Lightpos -0.83 -0.05 -0.83
-	Attenuation 1.0 0.7 1.8
-	Lightcolor 0 0.0 1.0
-	
-	
+	Lightpos 0.5 0 0
+	Lightcolor 1 1 1
+	Attenuation 1.0 0.0014 0.000007
+		
 Entity:
 	Path ../src/Casli/Model/diablo3_pose/diablo3_pose.obj
 	VertexShader LambertVS
