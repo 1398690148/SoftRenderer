@@ -2,6 +2,7 @@
 #include "Platform/Window.h"
 #include <Camera.h>
 #include <SceneParse.h>
+#include <PointLight.h>
 #include "Platform/CasliTimer.h"
 
 class App
@@ -18,5 +19,6 @@ private:
 	CasliTimer timer;
 	float speed_factor = 1.0f;
 	SceneParse parser;
-	std::vector<glm::mat4 > CBuffer;
+	PointLight light1;
+	float z = 0;
 };

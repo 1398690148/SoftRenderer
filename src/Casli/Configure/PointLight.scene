@@ -8,10 +8,29 @@ Frustum:
 	Near 0.1
 	Nar 100.0
 	
+PointLight:
+	Offset 0
+	Lightpos 0.0 -0.05 1.2
+	Attenuation 2.0 0.7 1.8
+	Lightcolor 1.9 0.0 0.0
+	
+PointLight:
+	Offset 36
+	Lightpos 0.83 -0.05 -0.83
+	Attenuation 1.0 0.7 1.8
+	Lightcolor 0.0 1.0 0.0
+	
+PointLight:
+	Offset 72
+	Lightpos -0.83 -0.05 -0.83
+	Attenuation 1.0 0.7 1.8
+	Lightcolor 0 0.0 1.0
+	
+	
 Entity:
 	Path ../src/Casli/Model/diablo3_pose/diablo3_pose.obj
 	VertexShader LambertVS
-	PixelShader SampleTexturePS
+	PixelShader PointLightPS
 	Sampler 0 0
 	translate 0.0 0.0 0.0
 	rotate 0.0 1.0 0.0 0.0
@@ -22,7 +41,7 @@ Entity:
 Entity:
 	Path ../src/Casli/Model/wall/wall.obj
 	VertexShader LambertVS
-	PixelShader SampleTexturePS
+	PixelShader PointLightPS
 	Sampler 0 0
 	translate 0.0 0.0 0.0
 	rotate 0.0 1.0 0.0 0.0

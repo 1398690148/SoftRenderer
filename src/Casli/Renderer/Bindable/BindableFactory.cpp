@@ -5,6 +5,7 @@
 #include <LambertVS.h>
 #include <PixelShader.h>
 #include <SampleTexturePS.h>
+#include <PointLightPS.h>
 #include <LambertPS.h>
 #include <Sampler.h>
 #include <InputLayout.h>
@@ -40,6 +41,10 @@ std::shared_ptr<Bindable> BindableFactory::CreateBindable(Graphics &gfx, BindTyp
 		else if (content[0] == "LambertPS")
 		{
 			return std::make_shared<PixelShader>(gfx, new LambertPS());
+		}
+		else if (content[0] == "PointLightPS")
+		{
+			return std::make_shared<PixelShader>(gfx, new PointLightPS());
 		}
 	}
 	break;

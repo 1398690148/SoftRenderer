@@ -60,6 +60,8 @@ private:
 	void AlphaBlend(int x, int y, glm::vec4 &color);
 	void ParseSrcBlendParam(BLEND blend, glm::vec4 &srcColor, glm::vec4 dstColor);
 	void ParseDstBlendParam(BLEND blend, glm::vec4 srcColor, glm::vec4 &dstColor);
+
+	void BindPSConstanBuffer();
 private:
 	SRIBuffer *pVertexBuffer{};
 	SRIBuffer *pIndexBuffer{};
@@ -68,6 +70,7 @@ private:
 	PRIMITIVE_TOPOLOGY pTopology;
 	SRIVertexShader *pVertexShader{};
 	SRIPixelShader *pPixelShader{};
+	SRIBuffer *pPixelConstantBuffer{};
 	SRRenderTargetView *pRenderTargetView{};
 	SRDepthStencilView *pDepthStencilView{};
 	VIEWPORT *pViewports{};

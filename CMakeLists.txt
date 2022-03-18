@@ -51,14 +51,8 @@ src/Casli/Renderer/Light/SpotLight.cpp
 )
 
 set(RENDERER
-src/Casli/Renderer/Drawable.h
-src/Casli/Renderer/Drawable.cpp
 src/Casli/Renderer/Camera.h
 src/Casli/Renderer/Camera.cpp
-src/Casli/Renderer/Mesh.h
-src/Casli/Renderer/Mesh.cpp
-src/Casli/Renderer/Model.h
-src/Casli/Renderer/Model.cpp
 src/Casli/Renderer/Graphics.h 
 src/Casli/Renderer/Graphics.cpp
 src/Casli/Renderer/SceneParse.h
@@ -70,6 +64,8 @@ src/Casli/Renderer/Tools.cpp
 )
 
 set(SHADER 
+src/Casli/Shader/SolidVS.h
+src/Casli/Shader/SolidPS.h
 src/Casli/Shader/LambertPS.h
 src/Casli/Shader/LambertVS.h
 src/Casli/Shader/BlinnPhongPS.h
@@ -82,9 +78,19 @@ src/Casli/Shader/AlphaBlendPS.h
 src/Casli/Shader/PointLightPS.h
 )
 
-set(TEST 
-src/Casli/Test/Plane.h 
-src/Casli/Test/Plane.cpp
+set(DRAWANLE 
+src/Casli/Drawable/Drawable.h
+src/Casli/Drawable/Drawable.cpp
+src/Casli/Drawable/Plane.h 
+src/Casli/Drawable/Plane.cpp
+src/Casli/Drawable/Sphere.h 
+src/Casli/Drawable/Sphere.cpp
+src/Casli/Drawable/SolidSphere.h 
+src/Casli/Drawable/SolidSphere.cpp
+src/Casli/Drawable/Mesh.h
+src/Casli/Drawable/Mesh.cpp
+src/Casli/Drawable/Model.h
+src/Casli/Drawable/Model.cpp
 #src/Casli/Test/AlphaPlane.h 
 #src/Casli/Test/AlphaPlane.cpp
 )
@@ -105,7 +111,7 @@ src/Platform/CasliWin.h
 source_group( Bindable FILES ${BINDABLE})
 source_group( Light FILES ${LIGHT})
 source_group( Renderer FILES ${RENDERER})
-source_group( Test FILES ${TEST})
+source_group( Drawable FILES ${DRAWANLE})
 source_group( Scene FILES ${SCENE})
 source_group( Platform FILES ${PLATFORM})
 source_group( Shader FILES ${SHADER})
@@ -129,7 +135,7 @@ else ()
 	LINK_DIRECTORIES(${PROJECT_SOURCE_DIR}/output/bin)
 endif()
 
-ADD_LIBRARY(Renderer STATIC ${PLATFORM} ${BINDABLE} ${LIGHT} ${RENDERER}  ${TEST} ${SHADER})
+ADD_LIBRARY(Renderer STATIC ${PLATFORM} ${BINDABLE} ${LIGHT} ${RENDERER} ${DRAWANLE} ${SHADER})
 
 target_link_libraries(Core ../lib/TBBlib/ia32/tbb12 ../lib/TBBlib/ia32/tbb12_debug)
 TARGET_LINK_LIBRARIES(Renderer Core)
@@ -176,7 +182,7 @@ include_directories(${PROJECT_SOURCE_DIR}/src/Casli/Renderer)
 include_directories(${PROJECT_SOURCE_DIR}/src/Casli/Renderer/Bindable)
 include_directories(${PROJECT_SOURCE_DIR}/src/Casli/Renderer/Light)
 include_directories(${PROJECT_SOURCE_DIR}/src/Casli/Shader)
-include_directories(${PROJECT_SOURCE_DIR}/src/Casli/Test)
+include_directories(${PROJECT_SOURCE_DIR}/src/Casli/Drawable)
 include_directories(${PROJECT_SOURCE_DIR}/src)
 include_directories(${PROJECT_SOURCE_DIR}/thirdparty)
 include_directories(${PROJECT_SOURCE_DIR}/thirdparty/oneapi-tbb-2021.5.0/include)

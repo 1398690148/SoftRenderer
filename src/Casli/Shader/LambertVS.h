@@ -9,7 +9,7 @@ struct LambertVertexInput
 	glm::vec2 uv;
 };
 
-struct LambertOutput
+struct LambertVertexOutput
 {
 	glm::vec4 pos;
 	glm::vec3 normal;
@@ -50,8 +50,8 @@ public:
 	{
 		LambertVertexInput *in = (LambertVertexInput *)input;
 		LambertCBuffer *cbuf = (LambertCBuffer *)cbuffer;
-		LambertOutput *o = new LambertOutput();
-		o->WorldPos = glm::vec4(0, 0, 0, 0);// cbuf->Model * glm::vec4(in->pos, 1.0f);
+		LambertVertexOutput *o = new LambertVertexOutput();
+		o->WorldPos = cbuf->Model * glm::vec4(in->pos, 1.0f);
 		o->pos = cbuf->ModelViewProjection * glm::vec4(in->pos, 1.0f);
 		o->normal = glm::vec3(0, 0, 0);// cbuf->ModelT * glm::vec4(in->normal, 1.0);
 		o->uv = in->uv;

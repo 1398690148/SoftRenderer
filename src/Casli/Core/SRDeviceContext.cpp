@@ -104,9 +104,7 @@ void SRDeviceContext::VSSetConstantBuffers(unsigned int StartOffset, unsigned in
 
 void SRDeviceContext::PSSetConstantBuffers(unsigned int StartOffset, unsigned int NumBuffers, SRIBuffer *constantBuffer)
 {
-	if (!constantBuffer) return;
-	pPixelShader->cbuffer = (unsigned char *)realloc(pPixelShader->cbuffer, StartOffset + constantBuffer->GetByteWidth());
-	memcpy(pPixelShader->cbuffer + StartOffset, constantBuffer->GetBuffer(0), constantBuffer->GetByteWidth());
+	pPixelConstantBuffer = constantBuffer;
 }
 
 void SRDeviceContext::IASetInputLayout(SRInputLayout *InputLayout)
@@ -274,6 +272,7 @@ std::vector<std::vector<glm::vec4>> SRDeviceContext::ClipSutherlandHodgeman(
 void SRDeviceContext::DrawIndex()
 {
 	ParseVertexBuffer();
+	BindPSConstanBuffer();
 	tbb::parallel_for(0, (int)indices.size(), [&](size_t i)
 	{
 		unsigned char *buffer = new unsigned char[160];
@@ -612,4 +611,10 @@ void SRDeviceContext::ParseDstBlendParam(BLEND blend, glm::vec4 srcColor, glm::v
 	default:
 		break;
 	}
+}
+
+void SRDeviceContext::BindPSConstanBuffer()
+{
+	pPixelShader->cbuffer = (unsigned char *)realloc(pPixelShader->cbuffer, pPixelConstantBuffer->GetByteWidth());
+	memcpy(pPixelShader->cbuffer, pPixelConstantBuffer->GetBuffer(0), pPixelConstantBuffer->GetByteWidth());
 }

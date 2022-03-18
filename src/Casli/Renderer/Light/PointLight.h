@@ -1,16 +1,26 @@
 #pragma once
 #include <Light.h>
+#include <SolidSphere.h>
+#include <ConstantBuffers.h>
 
 class PointLight : public Light
 {
 public:
-	PointLight();
-	PointLight(Graphics &gfx, glm::vec3 color, glm::vec3 position, float constant, float linear, float exp, unsigned int offset);
-	void Bind(Graphics &gfx);
-	void rotate(float angle, glm::vec3 axis) override;
+	PointLight(Graphics &gfx, glm::vec3 color, glm::vec3 position, float constant, float linear, float exp);
+	void Draw(Graphics& gfx) const;
+	void Bind(Graphics& gfx, glm::mat4 view);
+
+private:
+	struct PointLightCBuf
+	{
+		glm::vec3 pos;
+		glm::vec3 color;
+		float Constant;
+		float Linear;
+		float Exp;
+	};
 protected:
-	glm::vec3 position;
-	float Constant;
-	float Linear;
-	float Exp;
+	PointLightCBuf cbData;
+	mutable SolidSphere mesh;
+	mutable PixelConstantBuffer<PointLightCBuf> cbuf;
 };

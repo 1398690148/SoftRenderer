@@ -7,6 +7,14 @@ TransformCbuf::TransformCbuf(Graphics& gfx, const Drawable& parent)
 void TransformCbuf::Bind(Graphics& gfx) noexcept
 {
 	glm::mat4 Model = parent.GetTransformXM();
-	vcbuf.Update(gfx, gfx.GetProjection() * gfx.GetCamera() * Model);
+
+	const auto modelView = gfx.GetCamera() * parent.GetTransformXM();
+	const Transforms tf =
+	{
+		gfx.GetProjection() * modelView,
+		Model,
+	};
+
+	vcbuf.Update(gfx, tf);
 	vcbuf.Bind(gfx);
 }

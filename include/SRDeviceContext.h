@@ -60,6 +60,7 @@ private:
 	void AlphaBlend(int x, int y, glm::vec4 &color);
 	void ParseSrcBlendParam(BLEND blend, glm::vec4 &srcColor, glm::vec4 dstColor);
 	void ParseDstBlendParam(BLEND blend, glm::vec4 srcColor, glm::vec4 &dstColor);
+
 private:
 	SRIBuffer *pVertexBuffer{};
 	SRIBuffer *pIndexBuffer{};
@@ -68,6 +69,7 @@ private:
 	PRIMITIVE_TOPOLOGY pTopology;
 	SRIVertexShader *pVertexShader{};
 	SRIPixelShader *pPixelShader{};
+	SRIBuffer *pPixelConstantBuffer{};
 	SRRenderTargetView *pRenderTargetView{};
 	SRDepthStencilView *pDepthStencilView{};
 	VIEWPORT *pViewports{};
@@ -79,7 +81,7 @@ private:
 	glm::mat4 Viewport;
 	//顶点缓存中的数据
 	std::unordered_map<std::string, std::vector<glm::vec4>> m_Data;
-	std::unordered_map<std::string, int> pixelInMapTable;
+	std::unordered_map<std::string, int> vertexOutMapTable;
 	int posIdx = -1;
 	float *frameBuffer{};
 	float testW = 0;
