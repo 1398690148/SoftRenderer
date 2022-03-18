@@ -3,6 +3,7 @@
 #include <fstream>
 #include <sstream>
 #include <Model.h>
+#include <Plane.h>
 #include <DirectionalLight.h>
 #include <PointLight.h>
 #include <SpotLight.h>
@@ -82,7 +83,7 @@ void SceneParse::parse(const std::string &path, Graphics &gfx, bool generatedMip
 				atten = Tools::parseVec3(line);
 			}
 			std::shared_ptr<PointLight> light = std::make_shared<PointLight>(gfx, color, pos, atten[0], atten[1], atten[2]);
-			m_scene.m_lights.push_back(light);
+			m_scene.m_Lights.push_back(light);
 		}
 		else if (header == "SpotLight:")
 		{
@@ -181,7 +182,6 @@ void SceneParse::parse(const std::string &path, Graphics &gfx, bool generatedMip
 			std::getline(sceneFile, line);
 			binds.push_back(BindableFactory::CreateBindable(gfx, BTopology, { line }));
 
-			m_scene.m_entities.push_back(std::make_shared<Model>(gfx, binds, path.c_str(), transform));
 			{
 				std::getline(sceneFile, line);
 				std::string cullface = Tools::parseStr(line);
@@ -198,6 +198,57 @@ void SceneParse::parse(const std::string &path, Graphics &gfx, bool generatedMip
 
 				}
 			}
+
+			std::getline(sceneFile, line);
+			binds.push_back(BindableFactory::CreateBindable(gfx, BBlendState, { line }));
+			m_scene.m_Models.push_back(std::make_shared<Model>(gfx, binds, path.c_str(), transform));
+		}
+		else if (header == "Plane:")
+		{
+			std::vector<std::shared_ptr<Bindable>> binds;
+			std::cout << "Plane:=========================================\n";
+
+
+			//VertexShader
+			std::getline(sceneFile, line);
+			binds.push_back(BindableFactory::CreateBindable(gfx, BVertexShader, { line }));
+
+			//PixelShader
+			std::getline(sceneFile, line);
+			binds.push_back(BindableFactory::CreateBindable(gfx, BPixelShader, { line }));
+
+			//Texture
+			std::vector<std::string> content;
+			std::getline(sceneFile, line);
+			content.push_back(line);
+			std::getline(sceneFile, line);
+			content.push_back(line);
+			std::getline(sceneFile, line);
+			content.push_back(line);
+			binds.push_back(BindableFactory::CreateBindable(gfx, BTexture2D, content));
+
+			//Sampler
+			std::getline(sceneFile, line);
+			binds.push_back(BindableFactory::CreateBindable(gfx, BSampler, { line }));
+
+			//VSConstantBuffer
+			glm::mat4 transform = glm::mat4(1.0);
+			std::getline(sceneFile, line);
+			glm::vec3 translate = Tools::parseVec3(line);
+			std::getline(sceneFile, line);
+			glm::vec4 rotate = Tools::parseVec4(line);
+			std::getline(sceneFile, line);
+			glm::vec3 scale = Tools::parseVec3(line);
+			transform = glm::scale(transform, scale);
+			transform = glm::rotate(transform, glm::radians(rotate.x), glm::vec3(rotate.y, rotate.z, rotate.w));
+			transform = glm::translate(transform, translate);
+
+			std::getline(sceneFile, line);
+
+			std::getline(sceneFile, line);
+			binds.push_back(BindableFactory::CreateBindable(gfx, BBlendState, { line }));
+
+			m_scene.m_Entities.push_back(std::make_shared<Plane>(gfx, binds, transform));
 		}
 	}
 }

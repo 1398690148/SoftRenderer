@@ -3,10 +3,13 @@
 #include <VertexShader.h>
 #include <SampleTextureVS.h>
 #include <LambertVS.h>
+#include <AlphaTestVS.h>
 #include <PixelShader.h>
 #include <SampleTexturePS.h>
+#include <AlphaTestPS.h>
 #include <PointLightPS.h>
 #include <LambertPS.h>
+#include <Texture.h>
 #include <Sampler.h>
 #include <InputLayout.h>
 #include <ConstantBuffers.h>
@@ -29,6 +32,10 @@ std::shared_ptr<Bindable> BindableFactory::CreateBindable(Graphics &gfx, BindTyp
 		{
 			return std::make_shared<VertexShader>(gfx, new LambertVS());
 		}
+		else if (content[0] == "AlphaTestVS")
+		{
+			return std::make_shared<VertexShader>(gfx, new AlphaTestVS());
+		}
 	}
 	break;
 	case BPixelShader:
@@ -46,6 +53,18 @@ std::shared_ptr<Bindable> BindableFactory::CreateBindable(Graphics &gfx, BindTyp
 		{
 			return std::make_shared<PixelShader>(gfx, new PointLightPS());
 		}
+		else if (content[0] == "AlphaTestPS")
+		{
+			return std::make_shared<PixelShader>(gfx, new AlphaTestPS());
+		}
+	}
+	break;
+	case BTexture2D:
+	{
+		std::string path = Tools::parseStr(content[0]);
+		int mipLevel = Tools::parseInt(content[1]);
+		int idx = Tools::parseInt(content[2]);
+		return std::make_shared<Texture>(gfx, path.c_str(), mipLevel, idx);
 	}
 	break;
 	case BSampler:
@@ -76,7 +95,8 @@ std::shared_ptr<Bindable> BindableFactory::CreateBindable(Graphics &gfx, BindTyp
 	break;
 	case BBlendState:
 	{
-
+		bool blending = Tools::parseBool(content[0]);
+		return std::make_shared<Blender>(gfx, blending, std::nullopt);
 	}
 	break;
 	case BCullBack:

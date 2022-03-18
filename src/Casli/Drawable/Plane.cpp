@@ -8,11 +8,15 @@
 #include <VertexShader.h>
 #include <PixelShader.h>
 #include <TransformCbuf.h>
+#include <Blender.h>
 #include <glm/gtx/transform.hpp>
 
-Plane::Plane(Graphics &gfx, std::string texturePath, int mipLevel, glm::vec3 translate, glm::vec4 rotate, FILTER filter) 
-	: m_Translate(translate), m_Rotate(rotate)
+Plane::Plane(Graphics &gfx, std::vector<std::shared_ptr<Bindable>> binds, glm::mat4 transform) : m_Transform(transform)
 {
+	for (auto b : binds)
+	{
+		AddBind(b);
+	}
 	struct Vertex
 	{
 		glm::vec3 Position;
@@ -44,12 +48,6 @@ Plane::Plane(Graphics &gfx, std::string texturePath, int mipLevel, glm::vec3 tra
 	}
 	AddBind(std::make_unique<VertexBuffer>(gfx, vertices));
 	AddBind(std::make_unique<IndexBuffer>(gfx, indices));
-	AddBind(std::make_unique<VertexShader>(gfx, new SampleTextureVS()));
-	AddBind(std::make_unique<PixelShader>(gfx, new SampleTexturePS()));
-	AddBind(std::make_unique<Texture>(gfx, texturePath.c_str(), mipLevel, 0));
-	AddBind(std::make_unique<Sampler>(gfx, 0, filter));
-	const glm::mat4 ConstantBuffer = glm::mat4(1.0);
-	AddBind(std::make_unique<VertexConstantBuffer<glm::mat4>>(gfx, ConstantBuffer));
 
 	//允许四种语义Position、Color、Normal、UV
 	const std::vector<INPUT_ELEMENT_DESC> ied =
@@ -65,5 +63,5 @@ Plane::Plane(Graphics &gfx, std::string texturePath, int mipLevel, glm::vec3 tra
 
 glm::mat4 Plane::GetTransformXM() const
 {
-	return glm::translate(m_Translate) * glm::rotate(glm::radians(m_Rotate.x), glm::vec3(m_Rotate.y, m_Rotate.z, m_Rotate.w));
+	return m_Transform;
 }

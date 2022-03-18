@@ -1,6 +1,7 @@
 #include <glm/vec3.hpp>
 #include <vector>
 #include <memory>
+#include <Drawable.h>
 
 class Light;
 class Graphics;
@@ -19,8 +20,9 @@ public:
 		float m_FrustumNear;
 		float m_FrustumFar;
 
-		std::vector<std::shared_ptr<Light>> m_lights;
-		std::vector<std::shared_ptr<Model>> m_entities;
+		std::vector<std::shared_ptr<Light>> m_Lights;
+		std::vector<std::shared_ptr<Drawable>> m_Entities;
+		std::vector<std::shared_ptr<Model>> m_Models;
 	} m_scene;
 	void parse(const std::string &path, Graphics &gfx, bool generatedMipmap);
 };

@@ -82,7 +82,7 @@ namespace Tools
 		if (tag == "false")
 			ret = false;
 		std::cout << token << " " << (ret ? "true" : "false") << std::endl;
-		return true;
+		return ret;
 	}
 
 	std::string parseStr(std::string str)

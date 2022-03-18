@@ -10,7 +10,7 @@ Blender::Blender(Graphics & gfx, bool blending, std::optional<float> factors_in)
 
 	BLEND_DESC desc = { 0 };
 	desc.AlphaToCoverageEnable = false;
-	desc.RenderTarget[0].BlendEnable = true;
+	desc.RenderTarget[0].BlendEnable = blending;
 	auto &brt = desc.RenderTarget[0];
 	if (blending)
 	{
@@ -26,10 +26,10 @@ Blender::Blender(Graphics & gfx, bool blending, std::optional<float> factors_in)
 			brt.BlendOp = BLEND_OP_ADD;
 		}
 	}
-	//brt.SrcBlendAlpha = BLEND_INV_SRC_ALPHA;
-	//brt.DestBlendAlpha = BLEND_ZERO;
-	//brt.BlendOpAlpha = BLEND_OP_ADD;
-	//brt.RenderTargetWriteMask = 0;
+	brt.SrcBlendAlpha = BLEND_INV_SRC_ALPHA;
+	brt.DestBlendAlpha = BLEND_ZERO;
+	brt.BlendOpAlpha = BLEND_OP_ADD;
+	brt.RenderTargetWriteMask = 0;
 	GetDevice(gfx)->CreateBlendState(&desc, &pBlendState);
 }
 

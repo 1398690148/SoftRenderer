@@ -13,6 +13,7 @@ typedef enum BindType
 {
 	BVertexShader,
 	BPixelShader,
+	BTexture2D,
 	BSampler,
 	BVSConstantBuffer,
 	BPSConstantBuffer,

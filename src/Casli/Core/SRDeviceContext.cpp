@@ -478,7 +478,6 @@ void SRDeviceContext::prePerspCorrection(std::vector<glm::vec4> output[3])
 			output[i][texCoordIdx] *= t;
 		output[i][posIdx] *= t;
 	}
-
 }
 
 unsigned char *SRDeviceContext::Interpolation(std::vector<glm::vec4> vertex[3], glm::vec3 &bcScreen)

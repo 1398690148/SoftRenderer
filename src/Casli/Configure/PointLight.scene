@@ -9,7 +9,7 @@ Frustum:
 	Nar 100.0
 	
 PointLight:
-	Lightpos 0.5 0 0
+	Lightpos 0.7 0 0
 	Lightcolor 1 1 1
 	Attenuation 1.0 0.0014 0.000007
 		
@@ -23,6 +23,7 @@ Entity:
 	scale 1.0 1.0 1.0
 	Topology 1
 	Cullface: back
+	AlphaBlend false
 	
 Entity:
 	Path ../src/Casli/Model/wall/wall.obj
@@ -34,3 +35,4 @@ Entity:
 	scale 1.0 1.0 1.0
 	Topology 1
 	Cullface: back
+	AlphaBlend false

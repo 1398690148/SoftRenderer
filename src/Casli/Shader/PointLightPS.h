@@ -41,7 +41,7 @@ struct PointLightPS : public SRIPixelShader
 		glm::vec3 normal = glm::normalize(input->normal);
 
 		//Point Light
-		float distance = glm::length(point[0].pos - glm::vec3(input->WorldPos)) * 200;
+		float distance = glm::length(point[0].pos - glm::vec3(input->WorldPos)) * 400;
 		float attenuation = 1.0 / (point[0].Constant + point[0].Linear * distance + (distance * distance) * point[0].Exp);
 		color = glm::vec4(point[0].color, 1.0) * attenuation;
 

@@ -10,17 +10,6 @@ struct LambertPixelInput
 	glm::vec4 WorldPos;
 };
 
-struct LambertPSCBuffer
-{
-	glm::vec3 viewPos;
-};
-
-struct Directional
-{
-	glm::vec3 color;
-	glm::vec3 dir;
-};
-
 struct LambertPS : public SRIPixelShader
 {
 	LambertPS()
@@ -36,7 +25,7 @@ struct LambertPS : public SRIPixelShader
 	}
 	virtual bool fragment(unsigned char *in, glm::vec4 &color)
 	{
-		//PixelInput *input = (PixelInput *)in;
+		PixelInput *input = (PixelInput *)in;
 		//Directional *directional = (Directional *)cbuffer;
 		//glm::vec3 normal = glm::normalize(input->normal);
 
@@ -61,7 +50,7 @@ struct LambertPS : public SRIPixelShader
 		//glm::vec3 halfwayDir = glm::normalize(viewDir + lightDir);
 		//float spec = glm::pow(glm::max(glm::dot(halfwayDir, normal), 0.0f), m_shininess);
 		
-		//color = textures[0]->Sampler(input->uv, samplers[0], dFdx.local(), dFdy.local()) * color;
+		color = textures[0]->Sampler(input->uv, samplers[0], dFdx.local(), dFdy.local());
 		return false;
 	}
 };

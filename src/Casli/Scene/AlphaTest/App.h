@@ -2,8 +2,8 @@
 #include "Platform/Window.h"
 #include "Platform/CasliTimer.h"
 #include <Camera.h>
-#include <AlphaPlane.h>
 #include <Model.h>
+#include <Plane.h>
 #include <SceneParse.h>
 
 class App
@@ -20,6 +20,4 @@ private:
 	CasliTimer timer;
 	float speed_factor = 1.0f;
 	SceneParse parser;
-	std::vector<glm::mat4> CBuffer;
-	AlphaPlane plane{ wnd.Gfx(), "../src/Casli/Image/vase_plant.png", 1 };
 };

@@ -5,16 +5,14 @@
 #include <SampleTexturePS.h>
 #include <tbb/tick_count.h>
 
-glm::vec3 eye(0, 0, 3);
+glm::vec3 eye(0, 0, -2);
 
 App::App()
-	: wnd(666, 500, "The Donkey Fart Box"), camera(eye, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0))
+	: wnd(666, 500, "The Donkey Fart Box")
 {
-	glm::mat4 Projection = glm::perspective(glm::radians(30.f), 4.0f / 3.0f, 0.1f, 100.f);
-	wnd.Gfx().SetProjection(Projection);
-
-	wnd.Gfx().SetVertexShader(new SampleTextureVS());
-	wnd.Gfx().SetPixelShader(new SampleTexturePS());
+	parser.parse("../src/Casli/Configure/Bilinear.scene", wnd.Gfx(), false);
+	camera = Camera(parser.m_scene.m_CameraPos, parser.m_scene.m_CameraFront, parser.m_scene.m_CameraUp);
+	wnd.Gfx().SetProjection(glm::perspective(glm::radians(parser.m_scene.m_FrustumFovy), 4.0f / 3.0f, parser.m_scene.m_FrustumNear, parser.m_scene.m_FrustumFar));
 }
 
 int App::Go()
@@ -37,8 +35,11 @@ void App::DoFrame()
 	const auto dt = timer.Mark() * speed_factor;
 	wnd.Gfx().SetCamera(camera.GetMatrix());
 	wnd.Gfx().BeginFrame(0.5f, 0.5f, 0.5f);
-	plane.Draw(wnd.Gfx());
-	billinearPlane.Draw(wnd.Gfx());
+	auto &drawable = parser.m_scene.m_Entities;
+	for (auto iter : drawable)
+	{
+		iter->Draw(wnd.Gfx());
+	}
 	while (const auto e = wnd.kbd.ReadKey())
 	{
 		if (!e->IsPress())

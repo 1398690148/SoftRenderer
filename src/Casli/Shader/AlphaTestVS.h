@@ -2,14 +2,14 @@
 #include <algorithm>
 #include "SRIVertexShader.h"
 
-struct VertexInput
+struct AlphaTestVertexInput
 {
 	glm::vec3 pos;
 	glm::vec3 normal;
 	glm::vec2 uv;
 };
 
-struct Output
+struct AlphaTestOutput
 {
 	glm::vec4 pos;
 	glm::vec3 normal;
@@ -17,14 +17,14 @@ struct Output
 	glm::vec4 WorldPos;
 };
 
-struct CBuffer
+struct AlphaTestVertexCBuffer
 {
 	glm::mat4 ModelViewProjection;
 	glm::mat4 Model;
 	glm::mat4 ModelT;
 };
 
-class RENDERER_API AlphaTestVS : public SRIVertexShader
+class AlphaTestVS : public SRIVertexShader
 {
 public:
 	AlphaTestVS()
@@ -49,9 +49,9 @@ public:
 
 	unsigned char *vertex(unsigned char *input)
 	{
-		VertexInput *in = (VertexInput *)input;
-		CBuffer *cbuf = (CBuffer *)cbuffer;
-		Output *o = new Output();
+		AlphaTestVertexInput *in = (AlphaTestVertexInput *)input;
+		AlphaTestVertexCBuffer *cbuf = (AlphaTestVertexCBuffer *)cbuffer;
+		AlphaTestOutput *o = new AlphaTestOutput();
 		o->pos = cbuf->ModelViewProjection * glm::vec4(in->pos, 1.0f);
 		o->normal = cbuf->ModelT * glm::vec4(in->normal, 1.0);
 		o->uv = in->uv;
