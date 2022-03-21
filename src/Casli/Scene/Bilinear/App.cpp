@@ -66,19 +66,19 @@ void App::DoFrame()
 	{
 		if (wnd.kbd.KeyIsPressed('W'))
 		{
-			camera.Translate({ 0.0f,0.0f,-dt });
+			camera.Translate({ 0.0f,0.0f,dt });
 		}
 		if (wnd.kbd.KeyIsPressed('A'))
 		{
-			camera.Translate({ -dt,0.0f,0.0f });
+			camera.Translate({ dt,0.0f,0.0f });
 		}
 		if (wnd.kbd.KeyIsPressed('S'))
 		{
-			camera.Translate({ 0.0f,0.0f,dt });
+			camera.Translate({ 0.0f,0.0f,-dt });
 		}
 		if (wnd.kbd.KeyIsPressed('D'))
 		{
-			camera.Translate({ dt,0.0f,0.0f });
+			camera.Translate({ -dt,0.0f,0.0f });
 		}
 		if (wnd.kbd.KeyIsPressed('R'))
 		{

@@ -23,7 +23,7 @@ Model::Model(Graphics &gfx, std::vector<std::shared_ptr<Bindable>> bindVec, cons
 	directory = fileName.substr(0, fileName.find_last_of('/'));
 	for (size_t i = 0; i < pScene->mNumMeshes; i++)
 	{
-		meshPtrs.push_back(ParseMesh(gfx, *pScene, *pScene->mMeshes[i]));
+		meshPtrs.push_back(ParseMesh(gfx, *pScene->mMeshes[i], pScene->mMaterials));
 	}
 
 	pRoot = ParseNode(*pScene->mRootNode);
@@ -36,7 +36,7 @@ void Model::Draw(Graphics& gfx, glm::mat4 transform) const
 	pRoot->Draw(gfx, transform);
 }
 
-std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiScene &pScene, const aiMesh& mesh)
+std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const aiMaterial* const* pMaterials)
 {
 	using Dvtx::VertexLayout;
 
@@ -68,31 +68,22 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiScene &pScene, con
 	}
 	if (mesh.mMaterialIndex >= 0)
 	{
-		aiMaterial *material = pScene.mMaterials[mesh.mMaterialIndex];
-		loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse", 0);
-		loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular", 1);
-		loadMaterialTextures(material, aiTextureType_NORMALS, "texture_normal", 2);
+		auto &material = *pMaterials[mesh.mMaterialIndex];
+		aiString texFileName;
+		material.GetTexture(aiTextureType_DIFFUSE, 0, &texFileName);
+		std::string path = directory + "/" + texFileName.C_Str();
+		binds.push_back(std::make_shared<Texture>(pGfx, path.c_str(), 10, 0));
+		if (material.GetTexture(aiTextureType_SPECULAR, 0, &texFileName))
+		{
+			path = directory + "/" + texFileName.C_Str();
+			binds.push_back(std::make_shared<Texture>(pGfx, path.c_str(), 10, 1));
+		}
 	}
 	binds.push_back(std::make_shared<VertexBuffer>(gfx, vbuf));
 	binds.push_back(std::make_shared<IndexBuffer>(gfx, indices));
 	binds.push_back(std::make_shared<InputLayout>(gfx, vbuf.GetLayout().GetD3DLayout()));
 
 	return std::make_unique<Mesh>(gfx, std::move(binds));
-}
-
-void Model::loadMaterialTextures(aiMaterial *mat, aiTextureType type, std::string typeName, int idx)
-{
-	if (!mat->GetTextureCount(type))
-	{
-		return;
-	}
-	for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
-	{
-		aiString str;
-		mat->GetTexture(type, i, &str);
-		std::string path = directory + "/" + str.C_Str();
-		binds.push_back(std::make_shared<Texture>(pGfx, path.c_str(), 10, idx));
-	}
 }
 
 std::unique_ptr<Node> Model::ParseNode(const aiNode& node)

@@ -62,6 +62,7 @@ private:
 	void ParseDstBlendParam(BLEND blend, glm::vec4 srcColor, glm::vec4 &dstColor);
 
 	void BindConstanBuffer();
+	void Resolve();
 private:
 	SRIBuffer *pVertexBuffer{};
 	SRIBuffer *pIndexBuffer{};
@@ -85,8 +86,7 @@ private:
 	std::unordered_map<std::string, std::vector<glm::vec4>> m_Data;
 	std::unordered_map<std::string, int> vertexOutMapTable;
 	int posIdx = -1;
-	float *frameBuffer{};
-	float testW = 0;
+	SRIBuffer *msaaDpethBuffer;
 };
 
 class QuadFragments
