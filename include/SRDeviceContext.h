@@ -13,10 +13,17 @@
 #include <vector>
 #include <unordered_map>
 
+struct MSAAData
+{
+	bool coverage;
+	float depth;
+	glm::vec4 color;
+};
+
 class CORE_API SRDeviceContext
 {
 public:
-	SRDeviceContext();
+	SRDeviceContext(void *gFbo, int width, int height);
 	~SRDeviceContext();
 	void ClearRenderTargetView(SRRenderTargetView *RenderTargetView, const float ColorRGBA[4]);
 	void ClearDepthStencilView(SRDepthStencilView *DepthStencilView);
@@ -35,6 +42,7 @@ public:
 	void OMSetBlendState(SRBlendState **blendState, const float *BlendFactor, unsigned int SampleMask);
 	void OMGetBlendState(SRBlendState **ppBlendState, float *BlendFactor, unsigned int *SampleMask);
 	void SetRenderState(ShaderState state);
+	void SwapBuffer();
 	void GenerateMips(SRTexture2D *texture);
 	void DrawIndex();
 
@@ -62,6 +70,8 @@ private:
 	void ParseDstBlendParam(BLEND blend, glm::vec4 srcColor, glm::vec4 &dstColor);
 
 	void BindConstanBuffer();
+	void Resolve();
+	void ResetMSAABuffer();
 private:
 	SRIBuffer *pVertexBuffer{};
 	SRIBuffer *pIndexBuffer{};
@@ -72,7 +82,8 @@ private:
 	SRIPixelShader *pPixelShader{};
 	SRIBuffer *pPixelConstantBuffer{};
 	SRIBuffer *pVertexConstantBuffer{};
-	SRRenderTargetView *pRenderTargetView{};
+	SRRenderTargetView *pBackBuffer{};
+	SRRenderTargetView *pFrontBuffer{};
 	SRDepthStencilView *pDepthStencilView{};
 	VIEWPORT *pViewports{};
 	ShaderState pShaderState;
@@ -85,8 +96,7 @@ private:
 	std::unordered_map<std::string, std::vector<glm::vec4>> m_Data;
 	std::unordered_map<std::string, int> vertexOutMapTable;
 	int posIdx = -1;
-	float *frameBuffer{};
-	float testW = 0;
+	std::vector<MSAAData> msaaBuffer;
 };
 
 class QuadFragments
