@@ -17,9 +17,9 @@ bool SRDevice::CreateBuffer(BUFFER_DESC *bd, SUBRESOURCE_DATA *sd, SRIBuffer **b
 	return (*buffer != nullptr);
 }
 
-bool SRDevice::CreateRenderTargetView(void *gFbo, int width, int height, SRRenderTargetView **pRTView)
+bool SRDevice::CreateRenderTargetView(int width, int height, SRRenderTargetView **pRTView)
 {
-	*pRTView = new SRRenderTargetView(width, height, 4, gFbo);
+	*pRTView = new SRRenderTargetView(width, height, 4);
 	return (*pRTView != nullptr);
 }
 

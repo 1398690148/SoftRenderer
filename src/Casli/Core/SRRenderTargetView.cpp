@@ -1,17 +1,16 @@
 #include "SRRenderTargetView.h"
 #include <memory>
 
-SRRenderTargetView::SRRenderTargetView(unsigned int w, unsigned int h, unsigned int structureByteStride, const void *buffer)
+SRRenderTargetView::SRRenderTargetView(unsigned int w, unsigned int h, unsigned int structureByteStride)
 	: SRIBuffer(w * h * structureByteStride, structureByteStride), width(w), height(h)
 {
-	if (buffer)
-	{
-		m_Buffer = (unsigned char *)(buffer);
-	}
-	else
-	{
-		m_Buffer = new unsigned char[ByteWidth];
-	}
+	m_Buffer = new unsigned char[ByteWidth];
+}
+
+SRRenderTargetView::SRRenderTargetView(unsigned int w, unsigned int h, unsigned int structureByteStride, void * gFbo)
+	: SRIBuffer(w * h * structureByteStride, structureByteStride), width(w), height(h)
+{
+	m_Buffer = (unsigned char *)gFbo;
 }
 
 void SRRenderTargetView::ClearBuffer(const float ColorRGBA[4])

@@ -6,8 +6,8 @@ Graphics::Graphics(unsigned int width, unsigned int height, HWND hWnd, HDC ghdcM
 	: width(width), height(height), hWnd(hWnd), ghdcMainWnd(ghdcMainWnd)
 {
 	pDevice = std::make_unique<SRDevice>();
-	pContext = std::make_unique<SRDeviceContext>();
-	pDevice->CreateRenderTargetView(gFbo, width, height, &pTarget);
+	pContext = std::make_unique<SRDeviceContext>(gFbo, width, height);
+	pDevice->CreateRenderTargetView(width, height, &pTarget);
 
 	SRTexture2D *pDepthStencil{};
 	TEXTURE2D_DESC descDepth = {};
@@ -29,8 +29,6 @@ Graphics::Graphics(unsigned int width, unsigned int height, HWND hWnd, HDC ghdcM
 	pViewports.Height = 500;
 	pViewports.TopLeftX = 0;
 	pViewports.TopLeftY = 0;
-	pViewports.MaxDepth = 10000;
-	pViewports.MinDepth = 0;
 	pContext->RSSetViewports(1, &pViewports);
 }
 
@@ -57,6 +55,7 @@ void Graphics::EndFrame()
 	HDC hDC = GetDC(hWnd);
 	BitBlt(hDC, 0, 0, width, height, ghdcMainWnd, 0, 0, SRCCOPY);
 	ReleaseDC(hWnd, hDC);
+	pContext->SwapBuffer();
 }
 
 void Graphics::DrawIndexed()

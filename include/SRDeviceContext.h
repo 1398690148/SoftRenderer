@@ -13,13 +13,6 @@
 #include <vector>
 #include <unordered_map>
 
-struct MSAAData
-{
-	bool coverage;
-	float depth;
-	glm::vec4 color;
-};
-
 class CORE_API SRDeviceContext
 {
 public:
@@ -42,9 +35,9 @@ public:
 	void OMSetBlendState(SRBlendState **blendState, const float *BlendFactor, unsigned int SampleMask);
 	void OMGetBlendState(SRBlendState **ppBlendState, float *BlendFactor, unsigned int *SampleMask);
 	void SetRenderState(ShaderState state);
-	void SwapBuffer();
 	void GenerateMips(SRTexture2D *texture);
 	void DrawIndex();
+	void SwapBuffer();
 
 private:
 	void Triangle(std::vector<glm::vec4> vertex[3]);
@@ -70,8 +63,7 @@ private:
 	void ParseDstBlendParam(BLEND blend, glm::vec4 srcColor, glm::vec4 &dstColor);
 
 	void BindConstanBuffer();
-	void Resolve();
-	void ResetMSAABuffer();
+	//void Resolve();
 private:
 	SRIBuffer *pVertexBuffer{};
 	SRIBuffer *pIndexBuffer{};
@@ -96,7 +88,6 @@ private:
 	std::unordered_map<std::string, std::vector<glm::vec4>> m_Data;
 	std::unordered_map<std::string, int> vertexOutMapTable;
 	int posIdx = -1;
-	std::vector<MSAAData> msaaBuffer;
 };
 
 class QuadFragments

@@ -16,7 +16,7 @@
 class CORE_API SRDeviceContext
 {
 public:
-	SRDeviceContext();
+	SRDeviceContext(void *gFbo, int width, int height);
 	~SRDeviceContext();
 	void ClearRenderTargetView(SRRenderTargetView *RenderTargetView, const float ColorRGBA[4]);
 	void ClearDepthStencilView(SRDepthStencilView *DepthStencilView);
@@ -37,6 +37,7 @@ public:
 	void SetRenderState(ShaderState state);
 	void GenerateMips(SRTexture2D *texture);
 	void DrawIndex();
+	void SwapBuffer();
 
 private:
 	void Triangle(std::vector<glm::vec4> vertex[3]);
@@ -62,7 +63,7 @@ private:
 	void ParseDstBlendParam(BLEND blend, glm::vec4 srcColor, glm::vec4 &dstColor);
 
 	void BindConstanBuffer();
-	void Resolve();
+	//void Resolve();
 private:
 	SRIBuffer *pVertexBuffer{};
 	SRIBuffer *pIndexBuffer{};
@@ -73,7 +74,8 @@ private:
 	SRIPixelShader *pPixelShader{};
 	SRIBuffer *pPixelConstantBuffer{};
 	SRIBuffer *pVertexConstantBuffer{};
-	SRRenderTargetView *pRenderTargetView{};
+	SRRenderTargetView *pBackBuffer{};
+	SRRenderTargetView *pFrontBuffer{};
 	SRDepthStencilView *pDepthStencilView{};
 	VIEWPORT *pViewports{};
 	ShaderState pShaderState;
@@ -86,7 +88,6 @@ private:
 	std::unordered_map<std::string, std::vector<glm::vec4>> m_Data;
 	std::unordered_map<std::string, int> vertexOutMapTable;
 	int posIdx = -1;
-	SRIBuffer *msaaDpethBuffer;
 };
 
 class QuadFragments

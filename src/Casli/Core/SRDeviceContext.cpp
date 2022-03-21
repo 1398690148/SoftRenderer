@@ -3,7 +3,7 @@
 #include "tbb/parallel_for.h"
 #include "tbb/blocked_range.h"
 
-SRDeviceContext::SRDeviceContext()
+SRDeviceContext::SRDeviceContext(void *gFbo, int width, int height)
 {
 	BLEND_DESC desc = { 0 };
 	desc.AlphaToCoverageEnable = false;
@@ -16,8 +16,7 @@ SRDeviceContext::SRDeviceContext()
 	desc.RenderTarget[0].BlendOpAlpha = BLEND_OP_ADD;
 	desc.RenderTarget[0].RenderTargetWriteMask = 0;
 	pBlendState = new SRBlendState(&desc);
-	unsigned int ByteSize = 666 * 500;
-	msaaDpethBuffer = new SRIBuffer(666 * 500 * 4, 4);
+	pFrontBuffer = new SRRenderTargetView(width, height, 4, gFbo);
 }
 
 SRDeviceContext::~SRDeviceContext()
@@ -26,7 +25,7 @@ SRDeviceContext::~SRDeviceContext()
 
 void SRDeviceContext::ClearRenderTargetView(SRRenderTargetView *RenderTargetView, const float ColorRGBA[4])
 {
-	RenderTargetView->ClearBuffer(ColorRGBA);
+	pBackBuffer->ClearBuffer(ColorRGBA);
 }
 
 void SRDeviceContext::ClearDepthStencilView(SRDepthStencilView * DepthStencilView)
@@ -97,6 +96,12 @@ void SRDeviceContext::SetRenderState(ShaderState state)
 	pShaderState = state;
 }
 
+void SRDeviceContext::SwapBuffer()
+{
+	//Resolve();
+	std::swap(pFrontBuffer, pBackBuffer);
+}
+
 void SRDeviceContext::VSSetConstantBuffers(unsigned int StartOffset, unsigned int NumBuffers, SRIBuffer *constantBuffer)
 {
 	pVertexConstantBuffer = constantBuffer;
@@ -124,16 +129,14 @@ void SRDeviceContext::RSSetViewports(unsigned int NumViewports, const VIEWPORT *
 	Viewport = glm::mat4x4(1.0);
 	Viewport[3][0] = (pViewports->Width - pViewports->TopLeftX) >> 1;
 	Viewport[3][1] = (pViewports->Height - pViewports->TopLeftY) >> 1;
-	Viewport[3][2] = (pViewports->MaxDepth - pViewports->MinDepth) >> 1;
 
 	Viewport[0][0] = pViewports->Width >> 1;
 	Viewport[1][1] = pViewports->Height >> 1;
-	Viewport[2][2] = (pViewports->MaxDepth - pViewports->MinDepth) >> 1;
 }
 
 void SRDeviceContext::OMSetRenderTargets(SRRenderTargetView **RenderTargetView, SRDepthStencilView **DepthStencilView)
 {
-	pRenderTargetView = *RenderTargetView;
+	pBackBuffer = *RenderTargetView;
 	pDepthStencilView = *DepthStencilView;
 }
 
@@ -343,36 +346,6 @@ void SRDeviceContext::Triangle(std::vector<glm::vec4> vertex[3])
 			glm::ivec2 P(x, y);
 			//插值深度
 			glm::vec3 bcScreen = Utils::Barycentric(points[0], points[1], points[2], P);
-
-			auto IsInsideTriangle = [&](glm::vec2 &pos) -> bool
-			{
-				glm::vec3 barycentric = Utils::Barycentric(points[0], points[1], points[2], pos);
-				if (barycentric[0] < 0 || barycentric[1] < 0 || barycentric[2] < 0) return false;
-				return true;
-			};
-
-			bool isInside0 = IsInsideTriangle(glm::vec2(P) + glm::vec2(-0.25, -0.25));
-			bool isInside1 = IsInsideTriangle(glm::vec2(P) + glm::vec2(-0.25, 0.25));
-			bool isInside2 = IsInsideTriangle(glm::vec2(P) + glm::vec2(0.25, 0.25));
-			bool isInside3 = IsInsideTriangle(glm::vec2(P) + glm::vec2(0.25, -0.25));
-
-			if (isInside0)
-			{
-				*msaaDpethBuffer->GetBuffer((P.x + P.y * (pViewports->Width - 1)) * 4) = 1;
-			}
-			if (isInside1)
-			{
-				*msaaDpethBuffer->GetBuffer((P.x + 1 + P.y * (pViewports->Width - 1)) * 4) = 1;
-			}
-			if (isInside2)
-			{
-				*msaaDpethBuffer->GetBuffer((P.x + 2 + P.y * (pViewports->Width - 1)) * 4) = 1;
-			}
-			if (isInside3)
-			{
-				*msaaDpethBuffer->GetBuffer((P.x + 3 + P.y * (pViewports->Width - 1)) * 4) = 1;
-			}
-
 			float depth = Utils::BarycentricLerp(points[0], points[1], points[2], bcScreen).z;
 			//Early-Z
 			if (bcScreen[0] < 0 || bcScreen[1] < 0 || bcScreen[2] < 0 || 
@@ -389,14 +362,14 @@ void SRDeviceContext::Triangle(std::vector<glm::vec4> vertex[3])
 				{
 					if (discard) return;
 					AlphaBlend(P.x, P.y, color);
-					pRenderTargetView->SetPixel(P.x, P.y, color[0], color[1], color[2], color[3]);
+					pBackBuffer->SetPixel(P.x, P.y, color[0], color[1], color[2], color[3]);
 					return;
 				}
 				if (pDepthStencilView->GetDepth(P.x, P.y) - 0.0001f < depth)
 				{
 					return;
 				}
-				pRenderTargetView->SetPixel(P.x, P.y, color[0], color[1], color[2], color[3]);
+				pBackBuffer->SetPixel(P.x, P.y, color[0], color[1], color[2], color[3]);
 				pDepthStencilView->SetDepth(P.x, P.y, depth);
 			}
 		});
@@ -537,7 +510,7 @@ unsigned char *SRDeviceContext::Interpolation(std::vector<glm::vec4> vertex[3], 
 
 void SRDeviceContext::AlphaBlend(int x, int y, glm::vec4 &color)
 {
-	glm::vec4 dstColor = pRenderTargetView->GetPixel(x, y);
+	glm::vec4 dstColor = pBackBuffer->GetPixel(x, y);
 	if (dstColor != glm::vec4(127, 127, 127, 255))
 	{
 		int k = 0;
@@ -662,23 +635,4 @@ void SRDeviceContext::BindConstanBuffer()
 		pPixelShader->cbuffer = (unsigned char *)realloc(pPixelShader->cbuffer, pPixelConstantBuffer->GetByteWidth());
 		memcpy(pPixelShader->cbuffer, pPixelConstantBuffer->GetBuffer(0), pPixelConstantBuffer->GetByteWidth());
 	}
-}
-
-void SRDeviceContext::Resolve()
-{
-	tbb::parallel_for(0, pViewports->Width, 1, [&](size_t x)
-	{
-		tbb::parallel_for(0, pViewports->Height, 1, [&](size_t y)
-		{
-			int coverage = 0;
-			coverage += (*msaaDpethBuffer->GetBuffer((x + y * (pViewports->Width - 1)) * 4));
-			coverage += (*msaaDpethBuffer->GetBuffer((x + 1 + y * (pViewports->Width - 1)) * 4));
-			coverage += (*msaaDpethBuffer->GetBuffer((x + 2 + y * (pViewports->Width - 1)) * 4));
-			coverage += (*msaaDpethBuffer->GetBuffer((x + 3 + y * (pViewports->Width - 1)) * 4));
-			if (coverage == 0 || coverage == 4) return;
-			glm::vec4 color = pRenderTargetView->GetPixel(x, y);
-			color *= ((float)coverage / 4);
-			pRenderTargetView->SetPixel(x, y, color.r, color.g, color.b, color.a);
-		});
-	});
 }
