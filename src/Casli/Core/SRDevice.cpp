@@ -39,7 +39,7 @@ bool SRDevice::CreateTexture2D(TEXTURE2D_DESC *desc, SUBRESOURCE_DATA *sd, SRTex
 {
 	if (!desc) return false;
 	if (desc->BindFlags != BIND_SHADER_RESOURCE && desc->BindFlags != BIND_DEPTH_STENCIL) return false;
-	*pTexture = new SRTexture2D(desc, sd);
+	*pTexture = sd ? new SRTexture2D(desc, sd) : new SRTexture2D(desc);
 	return (*pTexture) != nullptr;
 }
 

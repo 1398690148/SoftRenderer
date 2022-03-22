@@ -37,10 +37,9 @@ void SRRenderTargetView::SetPixel(int i, int j, unsigned char r, unsigned char g
 	g = g > 255 ? 255 : g;
 	b = b > 255 ? 255 : b;
 	a = a > 255 ? 255 : a;
-	unsigned int stride = sizeof(unsigned char) * StructureByteStride;
-	unsigned char *buffer = m_Buffer + i * StructureByteStride + (height - 1 - j) * width * StructureByteStride;
+	unsigned char *buffer = m_Buffer + (i + (height - 1 - j) * width) * StructureByteStride;
 	unsigned char color[4] = {b, g, r, a};
-	memcpy(buffer, color, stride);
+	memcpy(buffer, color, StructureByteStride);
 }
 
 glm::vec4 SRRenderTargetView::GetPixel(int i, int j)

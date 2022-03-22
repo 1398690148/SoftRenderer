@@ -4,24 +4,29 @@
 #include <glm/glm.hpp>
 #include "tgaimage.h"
 
-SRTexture2D::SRTexture2D(TEXTURE2D_DESC *desc, SUBRESOURCE_DATA *sd)
-	: SRIBuffer(sd ? sd->SysMemPitch * desc->Height : desc->Width * desc->Height * 4, sizeof(unsigned char)), 
-	width(desc->Width), height(desc->Height), mipLevels(desc->MipLevels), format(desc->Format)
+SRTexture2D::SRTexture2D(TEXTURE2D_DESC *desc)
+	: SRIBuffer(desc->Width * desc->Height * 4, sizeof(unsigned char)),
+	width(desc->Width), height(desc->Height), mipLevels(desc->MipLevels)
 {
-	if (sd)
+	int size = ByteWidth;
+	if (mipLevels > 1)
 	{
-		m_Buffer = (unsigned char *)sd->pSysMem;
-		if (mipLevels > 1)
-		{
-			m_Buffer = (unsigned char *)realloc(m_Buffer, ByteWidth * 3 / 2);
-		}
-		channels = sd->SysMemPitch / width;
+		size = size * 3 / 2;
 	}
-	else
+	m_Buffer = new unsigned char[size];
+	memset(m_Buffer, 0, size);
+}
+
+SRTexture2D::SRTexture2D(TEXTURE2D_DESC *desc, SUBRESOURCE_DATA *sd)
+	: SRIBuffer(sd->SysMemPitch * desc->Height, sizeof(unsigned char)), 
+	width(desc->Width), height(desc->Height), mipLevels(desc->MipLevels)
+{
+	m_Buffer = (unsigned char *)sd->pSysMem;
+	if (mipLevels > 1)
 	{
-		m_Buffer = new unsigned char[ByteWidth];
-		memset(m_Buffer, 0, ByteWidth);
+		m_Buffer = (unsigned char *)realloc(m_Buffer, ByteWidth * 3 / 2);
 	}
+	channels = sd->SysMemPitch / width;
 }
 
 SRTexture2D::~SRTexture2D()
@@ -225,11 +230,6 @@ glm::vec4 SRTexture2D::Sampler(glm::vec2 uv, SRSamplerState *sampler, float lod)
 	}
 	}
 	return glm::vec4(255, 255, 255, 255);
-}
-
-glm::vec4 SRTexture2D::GetColor(int index, int x, int y, int w)
-{
-	return glm::vec4();
 }
 
 glm::vec4 SRTexture2D::Sampler(glm::vec2 uv, SRSamplerState *sampler)

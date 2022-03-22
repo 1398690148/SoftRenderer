@@ -17,6 +17,7 @@ SRDeviceContext::SRDeviceContext(void *gFbo, int width, int height)
 	desc.RenderTarget[0].RenderTargetWriteMask = 0;
 	pBlendState = new SRBlendState(&desc);
 	pFrontBuffer = new SRRenderTargetView(width, height, 4, gFbo);
+	msaaBuffer.resize(width * height);
 }
 
 SRDeviceContext::~SRDeviceContext()
@@ -25,6 +26,7 @@ SRDeviceContext::~SRDeviceContext()
 
 void SRDeviceContext::ClearRenderTargetView(SRRenderTargetView *RenderTargetView, const float ColorRGBA[4])
 {
+	ResetMSAABuffer();
 	pBackBuffer->ClearBuffer(ColorRGBA);
 }
 
@@ -98,7 +100,7 @@ void SRDeviceContext::SetRenderState(ShaderState state)
 
 void SRDeviceContext::SwapBuffer()
 {
-	//Resolve();
+	Resolve();
 	std::swap(pFrontBuffer, pBackBuffer);
 }
 
@@ -310,7 +312,6 @@ void SRDeviceContext::DrawIndex()
 		delete o2;
 		delete buffer;
 	});
-	//Resolve();
 }
 
 bool SRDeviceContext::shouldCulled(const glm::ivec2 &v0, const glm::ivec2 &v1, const glm::ivec2 &v2)
@@ -345,41 +346,75 @@ void SRDeviceContext::Triangle(std::vector<glm::vec4> vertex[3])
 		{
 			glm::ivec2 P(x, y);
 			//插值深度
-			glm::vec3 bcScreen = Utils::Barycentric(points[0], points[1], points[2], P);
-			float depth = Utils::BarycentricLerp(points[0], points[1], points[2], bcScreen).z;
-			//Early-Z
-			if (bcScreen[0] < 0 || bcScreen[1] < 0 || bcScreen[2] < 0 || 
-				(!pBlendState->blendDesc.RenderTarget[0].BlendEnable && pDepthStencilView->GetDepth(P.x, P.y) - 0.0001f < depth))
-				return;
+			glm::vec3 bcScreen = Utils::Barycentric(points[0], points[1], points[2], glm::vec2(P.x + 0.5, P.y + 0.5));
+			//float depth = Utils::BarycentricLerp(points[0], points[1], points[2], bcScreen).z;
+
+			MSAAData data = CoverageCalc(x, y, points);
+			int coverage = 0;
+			auto &fragCache = msaaBuffer[P.x + P.y * (pViewports->Width - 1)];
+			for (int i = 0; i < 4; i++)
 			{
-				if (vertexOutMapTable.count("SV_TEXCOORD0"))
-					DDXDDY(vertex, points[0], points[1], points[2], P);
-				glm::vec4 color(0, 0, 0, 255);
-				unsigned char *buffer = Interpolation(vertex, bcScreen);
-				bool discard = pPixelShader->fragment(buffer, color);
-				delete buffer;
-				if (pBlendState->blendDesc.RenderTarget[0].BlendEnable)
+				if (pBlendState->blendDesc.RenderTarget[0].BlendEnable && data.coverage[i])
 				{
-					if (discard) return;
-					AlphaBlend(P.x, P.y, color);
-					pBackBuffer->SetPixel(P.x, P.y, color[0], color[1], color[2], color[3]);
-					return;
+					coverage++;
 				}
-				if (pDepthStencilView->GetDepth(P.x, P.y) - 0.0001f < depth)
+				else if (data.coverage[i] && data.depth[i] < fragCache.depth[i])
 				{
-					return;
+					coverage++;
 				}
-				pBackBuffer->SetPixel(P.x, P.y, color[0], color[1], color[2], color[3]);
-				pDepthStencilView->SetDepth(P.x, P.y, depth);
 			}
+			if (coverage == 0)
+			{
+				return;
+			}
+			if (vertexOutMapTable.count("SV_TEXCOORD0"))
+				DDXDDY(vertex, points[0], points[1], points[2], P);
+			glm::vec4 color(0, 0, 0, 255);
+			unsigned char *buffer = Interpolation(vertex, bcScreen);
+			bool discard = pPixelShader->fragment(buffer, color);
+			delete buffer;
+			if (pBlendState->blendDesc.RenderTarget[0].BlendEnable)
+			{
+				if (discard) return;
+				AlphaBlend(P.x, P.y, color);
+			}
+			for (int i = 0; i < 4; i++)
+			{
+				if (data.coverage[i])
+				{
+					fragCache.coverage[i] = 1;
+					fragCache.color[i] = color;
+					fragCache.depth[i] = data.depth[i];
+				}
+			}
+			//pDepthStencilView->SetDepth(P.x, P.y, depth);
+			//Early-Z
+			//if (bcScreen[0] < 0 || bcScreen[1] < 0 || bcScreen[2] < 0 || 
+			//	(!pBlendState->blendDesc.RenderTarget[0].BlendEnable && pDepthStencilView->GetDepth(P.x, P.y) - 0.0001f < depth))
+			//	return;
+			//{
+			//	if (vertexOutMapTable.count("SV_TEXCOORD0"))
+			//		DDXDDY(vertex, points[0], points[1], points[2], P);
+			//	glm::vec4 color(0, 0, 0, 255);
+			//	unsigned char *buffer = Interpolation(vertex, bcScreen);
+			//	bool discard = pPixelShader->fragment(buffer, color);
+			//	delete buffer;
+			//	if (pBlendState->blendDesc.RenderTarget[0].BlendEnable)
+			//	{
+			//		if (discard) return;
+			//		AlphaBlend(P.x, P.y, color);
+			//		pBackBuffer->SetPixel(P.x, P.y, color[0], color[1], color[2], color[3]);
+			//		return;
+			//	}
+			//	if (pDepthStencilView->GetDepth(P.x, P.y) < depth)
+			//	{
+			//		return;
+			//	}
+			//	pBackBuffer->SetPixel(P.x, P.y, color[0], color[1], color[2], color[3]);
+			//	pDepthStencilView->SetDepth(P.x, P.y, depth);
+			// }
 		});
 	});
-
-	//tbb::parallel_for(bboxmin.y, bboxmax.y + 1, 1, [&](size_t y)
-	//{
-	//	tbb::parallel_for(bboxmin.x, bboxmax.x + 1, 1, [&](size_t x)
-	//	{});
-	//});
 }
 
 void SRDeviceContext::ParseVertexBuffer()
@@ -635,4 +670,61 @@ void SRDeviceContext::BindConstanBuffer()
 		pPixelShader->cbuffer = (unsigned char *)realloc(pPixelShader->cbuffer, pPixelConstantBuffer->GetByteWidth());
 		memcpy(pPixelShader->cbuffer, pPixelConstantBuffer->GetBuffer(0), pPixelConstantBuffer->GetByteWidth());
 	}
+}
+
+void SRDeviceContext::ResetMSAABuffer()
+{
+	tbb::parallel_for(0, (int)msaaBuffer.size(), [&](size_t i) 
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			msaaBuffer[i].coverage[j] = 0;
+			msaaBuffer[i].depth[j] = FLT_MAX;
+			msaaBuffer[i].color[j] = glm::vec4(0, 0, 0, 0);
+		}
+	});
+}
+
+void SRDeviceContext::Resolve()
+{
+	tbb::parallel_for(0, pViewports->Width, 1, [&](size_t x)
+	{
+		tbb::parallel_for(0, pViewports->Height, 1, [&](size_t y)
+		{
+			int idx = x + y * (pViewports->Width - 1);
+			glm::vec4 color(0, 0, 0, 0);
+			for (int i = 0; i < 4; i++)
+			{
+				color += msaaBuffer[idx].color[i];
+			}
+			color /= 4.f;
+			if (color == glm::vec4(0, 0, 0, 0)) return;
+			pBackBuffer->SetPixel(x, y, color.r, color.g, color.b, color.a);
+		});
+	});
+
+}
+
+MSAAData SRDeviceContext::CoverageCalc(int x, int y, std::vector<glm::vec3> points)
+{
+	MSAAData data;
+	auto IsInsideTriangle = [&](glm::vec2 &pos, int idx)
+	{
+		glm::vec3 barycentric = Utils::Barycentric(points[0], points[1], points[2], pos);
+		if (barycentric[0] < 0 || barycentric[1] < 0 || barycentric[2] < 0)
+		{
+			data.coverage[idx] = 0;
+			data.depth[idx] = 1;
+			return;
+		}
+		data.coverage[idx] = 1;
+		data.depth[idx] = Utils::BarycentricLerp(points[0], points[1], points[2], barycentric).z;
+		return;
+	};
+
+	IsInsideTriangle(glm::vec2(x, y) + glm::vec2(0.25, 0.25), 0);
+	IsInsideTriangle(glm::vec2(x, y) + glm::vec2(0.25, 0.75), 1);
+	IsInsideTriangle(glm::vec2(x, y) + glm::vec2(0.75, 0.25), 2);
+	IsInsideTriangle(glm::vec2(x, y) + glm::vec2(0.75, 0.75), 3);
+	return data;
 }

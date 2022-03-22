@@ -1,6 +1,6 @@
 #pragma once
 #include <algorithm>
-#include "IPixelShader.h"
+#include "SRIPixelShader.h"
 
 struct PixelInput
 {
@@ -21,7 +21,7 @@ struct Directional
 	glm::vec3 dir;
 };
 
-struct BlinnPhongPS : public IPixelShader
+struct BlinnPhongPS : public SRIPixelShader
 {
 	BlinnPhongPS()
 	{

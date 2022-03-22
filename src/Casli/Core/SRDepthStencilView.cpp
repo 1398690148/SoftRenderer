@@ -5,22 +5,20 @@
 
 SRDepthStencilView::SRDepthStencilView(SRTexture2D *buffer)
 	: SRIBuffer(buffer->GetWidth() * buffer->GetHeight() * 4, buffer->GetStructureByteStride()), 
-	width(buffer->GetWidth()), height(buffer->GetHeight()), maxHeight(buffer->GetHeight() - 1)
+	width(buffer->GetWidth()), height(buffer->GetHeight())
 {
 	if (buffer)
 	{
 		buffer->GetUniqueBuffer(&m_Buffer);
 	}
-	else
+	//else
+	//{
+	//	m_Buffer = new unsigned char[ByteWidth];
+	//}
+	int size = width * height;
+	tbb::parallel_for(0, size, [&](size_t r)
 	{
-		m_Buffer = new unsigned char[ByteWidth];
-	}
-	tbb::parallel_for(tbb::blocked_range<size_t>(buffer->GetWidth() * buffer->GetHeight() - 1, 0), [&](const tbb::blocked_range<size_t> &r)
-	{
-		for (int i = r.begin(); i >= r.end(); i--)
-		{
-			((float *)m_Buffer)[i] = FLT_MAX;
-		}
+		((float *)m_Buffer)[r] = FLT_MAX;
 	});
 }
 
@@ -38,10 +36,10 @@ void SRDepthStencilView::ClearBuffer(const float depth)
 
 float SRDepthStencilView::GetDepth(int i, int j)
 {
-	return ((float *)m_Buffer)[i + (maxHeight - j) * width];
+	return  ((float *)m_Buffer)[i + (height - 1 - j) * width];
 }
 
 void SRDepthStencilView::SetDepth(int i, int j, float depth)
 {
-	((float *)m_Buffer)[i + (maxHeight - j) * width] = depth;
+	((float *)m_Buffer)[i + (height - 1 - j) * width] = depth;
 }

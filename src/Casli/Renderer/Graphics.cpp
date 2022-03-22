@@ -52,10 +52,10 @@ void Graphics::BeginFrame(float red, float green, float blue)
 
 void Graphics::EndFrame()
 {
+	pContext->SwapBuffer();
 	HDC hDC = GetDC(hWnd);
 	BitBlt(hDC, 0, 0, width, height, ghdcMainWnd, 0, 0, SRCCOPY);
 	ReleaseDC(hWnd, hDC);
-	pContext->SwapBuffer();
 }
 
 void Graphics::DrawIndexed()

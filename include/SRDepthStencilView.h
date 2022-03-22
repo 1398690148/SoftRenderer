@@ -13,5 +13,4 @@ public:
 private:
 	unsigned int width;
 	unsigned int height;
-	unsigned int maxHeight;
 };

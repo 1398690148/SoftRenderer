@@ -13,6 +13,19 @@
 #include <vector>
 #include <unordered_map>
 
+typedef struct MSAAData
+{
+	MSAAData(int size = 4)
+	{
+		coverage.resize(size);
+		depth.resize(size);
+		color.resize(size);
+	}
+	tbb::concurrent_vector<bool> coverage;
+	tbb::concurrent_vector<float> depth;
+	tbb::concurrent_vector<glm::vec4> color;
+} MSAAData;
+
 class CORE_API SRDeviceContext
 {
 public:
@@ -63,9 +76,14 @@ private:
 	void ParseDstBlendParam(BLEND blend, glm::vec4 srcColor, glm::vec4 &dstColor);
 
 	void BindConstanBuffer();
-	//void Resolve();
+
+	void ResetMSAABuffer();
+	MSAAData CoverageCalc(int x, int y, std::vector<glm::vec3> points);
+	void Resolve();
 private:
 	SRIBuffer *pVertexBuffer{};
+	//顶点缓存中的数据
+	std::unordered_map<std::string, std::vector<glm::vec4>> m_Data;
 	SRIBuffer *pIndexBuffer{};
 	std::vector<std::vector<unsigned int>> indices;
 	SRInputLayout *pInputLayout{};
@@ -84,10 +102,9 @@ private:
 	float pBlendFactor[4];
 	unsigned int pSampleMask = 0;
 	glm::mat4 Viewport;
-	//顶点缓存中的数据
-	std::unordered_map<std::string, std::vector<glm::vec4>> m_Data;
 	std::unordered_map<std::string, int> vertexOutMapTable;
 	int posIdx = -1;
+	tbb::concurrent_vector<MSAAData> msaaBuffer;
 };
 
 class QuadFragments
