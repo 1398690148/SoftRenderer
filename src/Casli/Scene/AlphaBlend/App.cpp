@@ -1,21 +1,14 @@
 #include "App.h"
-#include <math.h>
 #include <glm/gtc/matrix_transform.hpp>
-#include "AlphaBlendVS.h"
-#include "AlphaBlendPS.h"
-#include "SampleTextureVS.h"
-#include "SampleTexturePS.h"
-#include <iostream>
-#include <time.h>
 #include <tbb/tick_count.h>
-
-glm::vec3 eye(0, 0, 5);
+#include <Model.h>
 
 App::App()
-	: wnd(666, 500, "The Donkey Fart Box"), camera(eye, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0))
+	: wnd(666, 500, "The Donkey Fart Box")
 {
-	glm::mat4 Projection = glm::perspective(glm::radians(30.f), 4.0f / 3.0f, 0.1f, 100.f);
-	wnd.Gfx().SetProjection(Projection);
+	parser.parse("../src/Casli/Configure/AlphaBlend.scene", wnd.Gfx(), false);
+	camera = Camera(parser.m_scene.m_CameraPos, parser.m_scene.m_CameraFront, parser.m_scene.m_CameraUp);
+	wnd.Gfx().SetProjection(glm::perspective(glm::radians(parser.m_scene.m_FrustumFovy), 4.0f / 3.0f, parser.m_scene.m_FrustumNear, parser.m_scene.m_FrustumFar));
 }
 
 int App::Go()
@@ -37,16 +30,18 @@ void App::DoFrame()
 	tbb::tick_count t0 = tbb::tick_count().now();
 	const auto dt = timer.Mark() * speed_factor;
 	wnd.Gfx().SetCamera(camera.GetMatrix());
-	wnd.Gfx().SetVertexShader(new SampleTextureVS());
-	wnd.Gfx().SetPixelShader(new SampleTexturePS());
-	InitMatrix();
-	wnd.Gfx().BeginFrame(0.5f, 0.5f, 0.5f);
-	model.Bind((unsigned char *)(&CBuffer[1]), sizeof(glm::mat4) * 3);
-	model.Draw();
-	wnd.Gfx().SetVertexShader(new AlphaBlendVS());
-	wnd.Gfx().SetPixelShader(new AlphaBlendPS());
-	plane.Bind((unsigned char *)(&CBuffer[0]), sizeof(glm::mat4));
-	plane.Draw();
+	wnd.Gfx().BeginFrame(127, 127, 127);
+	auto &models = parser.m_scene.m_Models;
+	auto &drawable = parser.m_scene.m_Entities;
+
+	for (auto iter : models)
+	{
+		iter->Draw(wnd.Gfx(), glm::mat4(1.0));
+	}
+	for (auto iter : drawable)
+	{
+		iter->Draw(wnd.Gfx());
+	}
 	while (const auto e = wnd.kbd.ReadKey())
 	{
 		if (!e->IsPress())
@@ -73,19 +68,19 @@ void App::DoFrame()
 	{
 		if (wnd.kbd.KeyIsPressed('W'))
 		{
-			camera.Translate({ 0.0f,0.0f,-dt });
+			camera.Translate({ 0.0f,0.0f,dt });
 		}
 		if (wnd.kbd.KeyIsPressed('A'))
 		{
-			camera.Translate({ -dt,0.0f,0.0f });
+			camera.Translate({ dt,0.0f,0.0f });
 		}
 		if (wnd.kbd.KeyIsPressed('S'))
 		{
-			camera.Translate({ 0.0f,0.0f,dt });
+			camera.Translate({ 0.0f,0.0f,-dt });
 		}
 		if (wnd.kbd.KeyIsPressed('D'))
 		{
-			camera.Translate({ dt,0.0f,0.0f });
+			camera.Translate({ -dt,0.0f,0.0f });
 		}
 		if (wnd.kbd.KeyIsPressed('R'))
 		{
@@ -106,24 +101,4 @@ void App::DoFrame()
 	wnd.Gfx().EndFrame();
 	int fps = 1.0f / (tbb::tick_count::now() - t0).seconds();
 	wnd.SetTitle("FPS: " + std::to_string(fps));
-}
-
-void App::InitMatrix()
-{
-	CBuffer.clear();
-	glm::mat4 Model = glm::mat4(1.0);
-	Model = glm::scale(Model, glm::vec3(1, 1, 1));
-	CBuffer.push_back(wnd.Gfx().GetProjection() * camera.GetMatrix() * Model);
-
-	glm::mat4 MVP = glm::mat4(1.0);
-	glm::mat4 MT = glm::mat4(1.0);
-	glm::mat4 M = glm::mat4(1.0);
-	MVP = glm::translate(MVP, glm::vec3(0, 0, 0));
-	M = glm::translate(M, glm::vec3(0, 0, 0));
-	MT = glm::translate(MT, glm::vec3(0, 0, 0));
-	MT = glm::transpose(glm::inverse(MT));
-	MVP = wnd.Gfx().GetProjection() * camera.GetMatrix() * MVP;
-	CBuffer.push_back(MVP);
-	CBuffer.push_back(M);
-	CBuffer.push_back(MT);
 }

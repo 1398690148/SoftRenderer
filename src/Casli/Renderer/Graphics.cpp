@@ -27,8 +27,8 @@ Graphics::Graphics(unsigned int width, unsigned int height, HWND hWnd, HDC ghdcM
 	VIEWPORT pViewports;
 	pViewports.Width = 666;
 	pViewports.Height = 500;
-	pViewports.TopLeftX = 100;
-	pViewports.TopLeftY = 100;
+	pViewports.TopLeftX = 0;
+	pViewports.TopLeftY = 0;
 	pContext->RSSetViewports(1, &pViewports);
 }
 

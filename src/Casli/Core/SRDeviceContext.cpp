@@ -2,6 +2,7 @@
 #include "SRDeviceContext.h"
 #include "tbb/parallel_for.h"
 #include "tbb/blocked_range.h"
+#include <iostream>
 
 SRDeviceContext::SRDeviceContext(void *gFbo, int width, int height)
 {
@@ -26,13 +27,13 @@ SRDeviceContext::~SRDeviceContext()
 
 void SRDeviceContext::ClearRenderTargetView(SRRenderTargetView *RenderTargetView, const glm::vec4 &ColorRGBA)
 {
-	ResetMSAABuffer(ColorRGBA);
 	pBackBuffer->ClearBuffer(ColorRGBA);
+	ClearMSAABuffer();
 }
 
-void SRDeviceContext::ClearDepthStencilView(SRDepthStencilView * DepthStencilView)
+void SRDeviceContext::ClearDepthStencilView(SRDepthStencilView *DepthStencilView)
 {
-	DepthStencilView->ClearBuffer(FLT_MAX);
+	//DepthStencilView->ClearBuffer(FLT_MAX);
 }
 
 void SRDeviceContext::IASetVertexBuffers(SRIBuffer *buf, const unsigned int *pStrides, const unsigned int *pOffsets)
@@ -353,37 +354,38 @@ void SRDeviceContext::Triangle(std::vector<glm::vec4> vertex[3])
 			auto &fragCache = msaaBuffer[P.x + P.y * (pViewports->Width - 1)];
 			for (int i = 0; i < 4; i++)
 			{
-				if (pBlendState->blendDesc.RenderTarget[0].BlendEnable && data.coverage[i])
-				{
-					coverage++;
-				}
-				else if (data.coverage[i] && data.depth[i] < fragCache.depth[i])
+				if (data.coverage[i] && (pBlendState->blendDesc.RenderTarget[0].BlendEnable || data.depth[i] < fragCache.depth[i]))
 				{
 					coverage++;
 				}
 			}
 			if (coverage == 0) return;
 			if (vertexOutMapTable.count("SV_TEXCOORD0"))
-				DDXDDY(vertex, points[0], points[1], points[2], P);
+				DDXDDY(vertex, points[0], points[1], points[2], glm::vec2(P.x + 0.5, P.y + 0.5));
 			glm::vec4 color(0, 0, 0, 255);
 			unsigned char *buffer = Interpolation(vertex, bcScreen);
 			bool discard = pPixelShader->fragment(buffer, color);
 			delete buffer;
-			if (pBlendState->blendDesc.RenderTarget[0].BlendEnable)
-			{
-				if (discard) return;
-				AlphaBlend(P.x, P.y, color);
-			}
+			//Alpha Test
+			if (pBlendState->blendDesc.RenderTarget[0].BlendEnable && discard) return;
 			for (int i = 0; i < 4; i++)
 			{
-				if (data.coverage[i] && (pBlendState->blendDesc.RenderTarget[0].BlendEnable || data.depth[i] < fragCache.depth[i]))
+				if (!data.coverage[i]) continue;
+				//Alpha Blend
+				if (pBlendState->blendDesc.RenderTarget[0].BlendEnable)
+				{
+					fragCache.coverage[i] = 1;
+					AlphaBlend(color, fragCache.color[i]);
+					fragCache.color[i] = color;
+					fragCache.depth[i] = data.depth[i];
+				}
+				else if (data.depth[i] < fragCache.depth[i])
 				{
 					fragCache.coverage[i] = 1;
 					fragCache.color[i] = color;
 					fragCache.depth[i] = data.depth[i];
 				}
 			}
-			//pDepthStencilView->SetDepth(P.x, P.y, depth);
 			//Early-Z
 			//if (bcScreen[0] < 0 || bcScreen[1] < 0 || bcScreen[2] < 0 || 
 			//	(!pBlendState->blendDesc.RenderTarget[0].BlendEnable && pDepthStencilView->GetDepth(P.x, P.y) - 0.0001f < depth))
@@ -487,7 +489,7 @@ unsigned char * SRDeviceContext::Vertex(int idx, unsigned char *vertexBuffer)
 	return pVertexShader->vertex(vertexBuffer);
 }
 
-void SRDeviceContext::DDXDDY(std::vector<glm::vec4> vertex[3], glm::vec3 &t0, glm::vec3 &t1, glm::vec3 &t2, glm::ivec2 &P)
+void SRDeviceContext::DDXDDY(std::vector<glm::vec4> vertex[3], glm::vec3 &t0, glm::vec3 &t1, glm::vec3 &t2, glm::vec2 &P)
 {
 	unsigned int texCoordIdx = vertexOutMapTable["SV_TEXCOORD0"];
 	QuadFragments quadFragment;
@@ -539,13 +541,8 @@ unsigned char *SRDeviceContext::Interpolation(std::vector<glm::vec4> vertex[3], 
 	return buffer;
 }
 
-void SRDeviceContext::AlphaBlend(int x, int y, glm::vec4 &color)
+void SRDeviceContext::AlphaBlend(glm::vec4 &color, glm::vec4 dstColor)
 {
-	glm::vec4 dstColor = pBackBuffer->GetPixel(x, y);
-	if (dstColor != glm::vec4(127, 127, 127, 255))
-	{
-		int k = 0;
-	}
 	glm::vec4 srcColor = color;
 	ParseSrcBlendParam(pBlendState->blendDesc.RenderTarget[0].SrcBlend, color, dstColor);
 	ParseDstBlendParam(pBlendState->blendDesc.RenderTarget[0].DestBlend, srcColor, dstColor);
@@ -668,19 +665,6 @@ void SRDeviceContext::BindConstanBuffer()
 	}
 }
 
-void SRDeviceContext::ResetMSAABuffer(const glm::vec4 &color)
-{
-	//tbb::parallel_for(0, (int)msaaBuffer.size(), [&](size_t i) 
-	//{
-	//	for (int j = 0; j < 4; j++)
-	//	{
-	//		msaaBuffer[i].coverage[j] = 0;
-	//		msaaBuffer[i].depth[j] = FLT_MAX;
-	//		msaaBuffer[i].color[j] = color;
-	//	}
-	//});
-}
-
 void SRDeviceContext::Resolve()
 {
 	tbb::parallel_for(0, pViewports->Width, 1, [&](size_t x)
@@ -692,9 +676,6 @@ void SRDeviceContext::Resolve()
 			for (int i = 0; i < 4; i++)
 			{
 				color += msaaBuffer[idx].color[i];
-				msaaBuffer[idx].color[i] = glm::vec4(127, 127, 127, 255);
-				msaaBuffer[idx].coverage[i] = 0;
-				msaaBuffer[idx].depth[i] = FLT_MAX;
 			}
 			color /= 4.f;
 			if (color == glm::vec4(0, 0, 0, 0)) return;
@@ -702,6 +683,19 @@ void SRDeviceContext::Resolve()
 		});
 	});
 
+}
+
+void SRDeviceContext::ClearMSAABuffer()
+{
+	tbb::parallel_for(0, pViewports->Width * pViewports->Height, 1, [&](size_t idx)
+	{
+		tbb::parallel_for(0, 4, 1, [&](size_t i)
+		{
+			msaaBuffer[idx].color[i] = glm::vec4(127, 127, 127, 255);
+			msaaBuffer[idx].coverage[i] = 0;
+			msaaBuffer[idx].depth[i] = FLT_MAX;
+		});
+	});
 }
 
 MSAAData SRDeviceContext::CoverageCalc(int x, int y, std::vector<glm::vec3> points)

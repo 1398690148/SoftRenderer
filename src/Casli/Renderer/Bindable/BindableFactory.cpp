@@ -1,21 +1,21 @@
 #include "BindableFactory.h"
 #include <Tools.h>
 #include <VertexShader.h>
-#include <SampleTextureVS.h>
-#include <LambertVS.h>
-#include <AlphaTestVS.h>
 #include <PixelShader.h>
+#include <SampleTextureVS.h>
 #include <SampleTexturePS.h>
-#include <AlphaTestPS.h>
-#include <PointLightPS.h>
+#include <LambertVS.h>
 #include <LambertPS.h>
+#include <AlphaTestVS.h>
+#include <AlphaTestPS.h>
+#include <AlphaBlendVS.h>
+#include <AlphaBlendPS.h>
+#include <PointLightPS.h>
 #include <Texture.h>
 #include <Sampler.h>
 #include <InputLayout.h>
 #include <ConstantBuffers.h>
 #include <Topology.h>
-#include <glm/mat4x4.hpp>
-#include <glm/gtx/transform.hpp>
 
 std::shared_ptr<Bindable> BindableFactory::CreateBindable(Graphics &gfx, BindType type, std::vector<std::string> content)
 {
@@ -35,6 +35,10 @@ std::shared_ptr<Bindable> BindableFactory::CreateBindable(Graphics &gfx, BindTyp
 		else if (content[0] == "AlphaTestVS")
 		{
 			return std::make_shared<VertexShader>(gfx, new AlphaTestVS());
+		}
+		else if (content[0] == "AlphaBlendVS")
+		{
+			return std::make_shared<VertexShader>(gfx, new AlphaBlendVS());
 		}
 	}
 	break;
@@ -56,6 +60,10 @@ std::shared_ptr<Bindable> BindableFactory::CreateBindable(Graphics &gfx, BindTyp
 		else if (content[0] == "AlphaTestPS")
 		{
 			return std::make_shared<PixelShader>(gfx, new AlphaTestPS());
+		}
+		else if (content[0] == "AlphaBlendPS")
+		{
+			return std::make_shared<PixelShader>(gfx, new AlphaBlendPS());
 		}
 	}
 	break;

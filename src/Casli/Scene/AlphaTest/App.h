@@ -2,8 +2,6 @@
 #include "Platform/Window.h"
 #include "Platform/CasliTimer.h"
 #include <Camera.h>
-#include <Model.h>
-#include <Plane.h>
 #include <SceneParse.h>
 
 class App

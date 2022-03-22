@@ -1,10 +1,7 @@
 #include "App.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <tbb/tick_count.h>
-#include <Light.h>
-#include "AlphaTestVS.h"
-#include "AlphaTestPS.h"
-#include <iostream>
+#include <Model.h>
 
 App::App()
 	: wnd(666, 500, "The Donkey Fart Box") 
