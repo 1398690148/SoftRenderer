@@ -129,7 +129,7 @@ void SRDeviceContext::RSSetViewports(unsigned int NumViewports, const VIEWPORT *
 	pViewports = new VIEWPORT();
 	memcpy(pViewports, Viewports, sizeof(VIEWPORT));
 	Viewport = glm::mat4x4(1.0);
-	Viewport[3][0] = (pViewports->Width - pViewports->TopLeftX) >> 1;
+	Viewport[3][0] = (pViewports->Width + pViewports->TopLeftX) >> 1;
 	Viewport[3][1] = (pViewports->Height - pViewports->TopLeftY) >> 1;
 
 	Viewport[0][0] = pViewports->Width >> 1;
@@ -362,10 +362,7 @@ void SRDeviceContext::Triangle(std::vector<glm::vec4> vertex[3])
 					coverage++;
 				}
 			}
-			if (coverage == 0)
-			{
-				return;
-			}
+			if (coverage == 0) return;
 			if (vertexOutMapTable.count("SV_TEXCOORD0"))
 				DDXDDY(vertex, points[0], points[1], points[2], P);
 			glm::vec4 color(0, 0, 0, 255);
@@ -379,13 +376,7 @@ void SRDeviceContext::Triangle(std::vector<glm::vec4> vertex[3])
 			}
 			for (int i = 0; i < 4; i++)
 			{
-				if (pBlendState->blendDesc.RenderTarget[0].BlendEnable && data.coverage[i])
-				{
-					fragCache.coverage[i] = 1;
-					fragCache.color[i] = color;
-					fragCache.depth[i] = data.depth[i];
-				}
-				else if (data.coverage[i] && data.depth[i] < fragCache.depth[i])
+				if (data.coverage[i] && (pBlendState->blendDesc.RenderTarget[0].BlendEnable || data.depth[i] < fragCache.depth[i]))
 				{
 					fragCache.coverage[i] = 1;
 					fragCache.color[i] = color;
@@ -679,15 +670,15 @@ void SRDeviceContext::BindConstanBuffer()
 
 void SRDeviceContext::ResetMSAABuffer(const glm::vec4 &color)
 {
-	tbb::parallel_for(0, (int)msaaBuffer.size(), [&](size_t i) 
-	{
-		for (int j = 0; j < 4; j++)
-		{
-			msaaBuffer[i].coverage[j] = 0;
-			msaaBuffer[i].depth[j] = FLT_MAX;
-			msaaBuffer[i].color[j] = color;
-		}
-	});
+	//tbb::parallel_for(0, (int)msaaBuffer.size(), [&](size_t i) 
+	//{
+	//	for (int j = 0; j < 4; j++)
+	//	{
+	//		msaaBuffer[i].coverage[j] = 0;
+	//		msaaBuffer[i].depth[j] = FLT_MAX;
+	//		msaaBuffer[i].color[j] = color;
+	//	}
+	//});
 }
 
 void SRDeviceContext::Resolve()
@@ -701,6 +692,9 @@ void SRDeviceContext::Resolve()
 			for (int i = 0; i < 4; i++)
 			{
 				color += msaaBuffer[idx].color[i];
+				msaaBuffer[idx].color[i] = glm::vec4(127, 127, 127, 255);
+				msaaBuffer[idx].coverage[i] = 0;
+				msaaBuffer[idx].depth[i] = FLT_MAX;
 			}
 			color /= 4.f;
 			if (color == glm::vec4(0, 0, 0, 0)) return;
