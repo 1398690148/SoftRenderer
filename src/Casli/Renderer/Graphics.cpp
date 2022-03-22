@@ -40,7 +40,7 @@ Graphics::~Graphics()
 
 void Graphics::ClearBuffer(float red, float green, float blue)
 {
-	const float color[] = { red, green, blue, 1.0f };
+	glm::vec4 color = glm::vec4(red, green, blue, 255);
 	pContext->ClearRenderTargetView(pTarget, color);
 	pContext->ClearDepthStencilView(pDSV);
 }

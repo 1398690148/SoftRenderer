@@ -8,7 +8,7 @@ class CORE_API SRRenderTargetView : public SRIBuffer
 public:
 	SRRenderTargetView(unsigned int w, unsigned int h, unsigned int structureByteStride);
 	SRRenderTargetView(unsigned int w, unsigned int h, unsigned int structureByteStride, void *gFbo);
-	void ClearBuffer(const float ColorRGBA[4]);
+	void ClearBuffer(const glm::vec4 &ColorRGBA);
 	void SetPixel(int i, int j, unsigned char r, unsigned char g, unsigned char b, unsigned char a);
 	glm::vec4 GetPixel(int i, int j);
 private:

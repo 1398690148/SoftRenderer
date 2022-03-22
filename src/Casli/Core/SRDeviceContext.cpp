@@ -24,9 +24,9 @@ SRDeviceContext::~SRDeviceContext()
 {
 }
 
-void SRDeviceContext::ClearRenderTargetView(SRRenderTargetView *RenderTargetView, const float ColorRGBA[4])
+void SRDeviceContext::ClearRenderTargetView(SRRenderTargetView *RenderTargetView, const glm::vec4 &ColorRGBA)
 {
-	ResetMSAABuffer();
+	ResetMSAABuffer(ColorRGBA);
 	pBackBuffer->ClearBuffer(ColorRGBA);
 }
 
@@ -347,7 +347,6 @@ void SRDeviceContext::Triangle(std::vector<glm::vec4> vertex[3])
 			glm::ivec2 P(x, y);
 			//插值深度
 			glm::vec3 bcScreen = Utils::Barycentric(points[0], points[1], points[2], glm::vec2(P.x + 0.5, P.y + 0.5));
-			//float depth = Utils::BarycentricLerp(points[0], points[1], points[2], bcScreen).z;
 
 			MSAAData data = CoverageCalc(x, y, points);
 			int coverage = 0;
@@ -380,7 +379,13 @@ void SRDeviceContext::Triangle(std::vector<glm::vec4> vertex[3])
 			}
 			for (int i = 0; i < 4; i++)
 			{
-				if (data.coverage[i])
+				if (pBlendState->blendDesc.RenderTarget[0].BlendEnable && data.coverage[i])
+				{
+					fragCache.coverage[i] = 1;
+					fragCache.color[i] = color;
+					fragCache.depth[i] = data.depth[i];
+				}
+				else if (data.coverage[i] && data.depth[i] < fragCache.depth[i])
 				{
 					fragCache.coverage[i] = 1;
 					fragCache.color[i] = color;
@@ -672,7 +677,7 @@ void SRDeviceContext::BindConstanBuffer()
 	}
 }
 
-void SRDeviceContext::ResetMSAABuffer()
+void SRDeviceContext::ResetMSAABuffer(const glm::vec4 &color)
 {
 	tbb::parallel_for(0, (int)msaaBuffer.size(), [&](size_t i) 
 	{
@@ -680,7 +685,7 @@ void SRDeviceContext::ResetMSAABuffer()
 		{
 			msaaBuffer[i].coverage[j] = 0;
 			msaaBuffer[i].depth[j] = FLT_MAX;
-			msaaBuffer[i].color[j] = glm::vec4(0, 0, 0, 0);
+			msaaBuffer[i].color[j] = color;
 		}
 	});
 }
@@ -721,7 +726,6 @@ MSAAData SRDeviceContext::CoverageCalc(int x, int y, std::vector<glm::vec3> poin
 		data.depth[idx] = Utils::BarycentricLerp(points[0], points[1], points[2], barycentric).z;
 		return;
 	};
-
 	IsInsideTriangle(glm::vec2(x, y) + glm::vec2(0.25, 0.25), 0);
 	IsInsideTriangle(glm::vec2(x, y) + glm::vec2(0.25, 0.75), 1);
 	IsInsideTriangle(glm::vec2(x, y) + glm::vec2(0.75, 0.25), 2);

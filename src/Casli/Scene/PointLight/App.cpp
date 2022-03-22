@@ -31,7 +31,7 @@ void App::DoFrame()
 	const auto dt = timer.Mark() * speed_factor;
 
 	wnd.Gfx().SetCamera(camera.GetMatrix());
-	wnd.Gfx().BeginFrame(0.5f, 0.5f, 0.5f);
+	wnd.Gfx().BeginFrame(127, 127, 127);
 	auto &drawable = parser.m_scene.m_Models;
 	auto &lights = parser.m_scene.m_Lights;
 	glm::mat4 rotate = glm::mat4(1.0);

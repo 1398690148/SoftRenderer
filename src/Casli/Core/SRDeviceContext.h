@@ -31,7 +31,7 @@ class CORE_API SRDeviceContext
 public:
 	SRDeviceContext(void *gFbo, int width, int height);
 	~SRDeviceContext();
-	void ClearRenderTargetView(SRRenderTargetView *RenderTargetView, const float ColorRGBA[4]);
+	void ClearRenderTargetView(SRRenderTargetView *RenderTargetView, const glm::vec4 &ColorRGBA);
 	void ClearDepthStencilView(SRDepthStencilView *DepthStencilView);
 	void IASetVertexBuffers(SRIBuffer *buf, const unsigned int *pStrides, const unsigned int *pOffsets);
 	void IASetIndexBuffer(SRIBuffer *buf, unsigned int Offset);
@@ -77,7 +77,7 @@ private:
 
 	void BindConstanBuffer();
 
-	void ResetMSAABuffer();
+	void ResetMSAABuffer(const glm::vec4 &ColorRGBA);
 	MSAAData CoverageCalc(int x, int y, std::vector<glm::vec3> points);
 	void Resolve();
 private:

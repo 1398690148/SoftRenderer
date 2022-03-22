@@ -34,7 +34,7 @@ void App::DoFrame()
 	tbb::tick_count t0 = tbb::tick_count().now();
 	const auto dt = timer.Mark() * speed_factor;
 	wnd.Gfx().SetCamera(camera.GetMatrix());
-	wnd.Gfx().BeginFrame(0.5f, 0.5f, 0.5f);
+	wnd.Gfx().BeginFrame(127, 127, 127);
 	auto &drawable = parser.m_scene.m_Entities;
 	for (auto iter : drawable)
 	{
