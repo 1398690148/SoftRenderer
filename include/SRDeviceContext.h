@@ -15,19 +15,14 @@
 
 typedef struct MSAAData
 {
-	MSAAData(int size = 4)
-	{
-		coverage.resize(size);
-		depth.resize(size);
-		color.resize(size);
-	}
-	tbb::concurrent_vector<bool> coverage;
-	tbb::concurrent_vector<float> depth;
-	tbb::concurrent_vector<glm::vec4> color;
-} MSAAData;
+	bool coverage[4];
+	float depth[4];
+};
 
 class CORE_API SRDeviceContext
 {
+	using VertexData = std::vector<glm::vec4>;
+	using TriangleData = std::vector<VertexData>;
 public:
 	SRDeviceContext(void *gFbo, int width, int height);
 	~SRDeviceContext();
@@ -53,7 +48,7 @@ public:
 	void SwapBuffer();
 
 private:
-	void Triangle(std::vector<glm::vec4> vertex[3]);
+	void Triangle(TriangleData vertex);
 	//±³ÃæÌÞ³ý
 	bool shouldCulled(const glm::ivec2 &v0, const glm::ivec2 &v1, const glm::ivec2 &v2);
 	//Clip in the homogeneous clipping space
@@ -64,20 +59,19 @@ private:
 
 	void ParseVertexBuffer();
 	void ParseShaderOutput(unsigned char *buffer, std::vector<glm::vec4> &output);
-	
-	void ViewportTransform(std::vector<glm::vec4> vertex[3]);
+
+	void ViewportTransform(TriangleData &vertex);
 	unsigned char *Vertex(int idx, unsigned char *vertexBuffer);
-	void DDXDDY(std::vector<glm::vec4> vertex[3], glm::vec3 &t0, glm::vec3 &t1, glm::vec3 &t2, glm::ivec2 &P);
-	void prePerspCorrection(std::vector<glm::vec4> output[3]);
-	unsigned char * Interpolation(std::vector<glm::vec4> vertex[3], glm::vec3 &bcScreen);
+	void DDXDDY(TriangleData vertex, glm::vec3 &t0, glm::vec3 &t1, glm::vec3 &t2, glm::vec2 &P);
+	void prePerspCorrection(TriangleData &output);
+	unsigned char * Interpolation(TriangleData vertex, glm::vec3 &bcScreen);
 	//Alpha Blend
-	void AlphaBlend(int x, int y, glm::vec4 &color);
+	void AlphaBlend(glm::vec4 &color, glm::vec4 dstColor);
 	void ParseSrcBlendParam(BLEND blend, glm::vec4 &srcColor, glm::vec4 dstColor);
 	void ParseDstBlendParam(BLEND blend, glm::vec4 srcColor, glm::vec4 &dstColor);
 
 	void BindConstanBuffer();
 
-	void ResetMSAABuffer(const glm::vec4 &ColorRGBA);
 	MSAAData CoverageCalc(int x, int y, std::vector<glm::vec3> points);
 	void Resolve();
 private:
@@ -94,6 +88,7 @@ private:
 	SRIBuffer *pVertexConstantBuffer{};
 	SRRenderTargetView *pBackBuffer{};
 	SRRenderTargetView *pFrontBuffer{};
+	unsigned char *colorBuffer;
 	SRDepthStencilView *pDepthStencilView{};
 	VIEWPORT *pViewports{};
 	ShaderState pShaderState;
@@ -104,7 +99,7 @@ private:
 	glm::mat4 Viewport;
 	std::unordered_map<std::string, int> vertexOutMapTable;
 	int posIdx = -1;
-	tbb::concurrent_vector<MSAAData> msaaBuffer;
+	std::vector<std::array<bool, 4>> pixelCoverage;
 };
 
 class QuadFragments

@@ -1,9 +1,7 @@
 ﻿#include <algorithm>
 #include "SRDeviceContext.h"
-#include "tbb/parallel_for.h"
-#include "tbb/blocked_range.h"
+#include "tbb/tbb.h"
 #include <iostream>
-
 SRDeviceContext::SRDeviceContext(void *gFbo, int width, int height)
 {
 	BLEND_DESC desc = { 0 };
@@ -17,8 +15,8 @@ SRDeviceContext::SRDeviceContext(void *gFbo, int width, int height)
 	desc.RenderTarget[0].BlendOpAlpha = BLEND_OP_ADD;
 	desc.RenderTarget[0].RenderTargetWriteMask = 0;
 	pBlendState = new SRBlendState(&desc);
-	pFrontBuffer = new SRRenderTargetView(width, height, 4, gFbo);
-	msaaBuffer.resize(width * height);
+	colorBuffer = (unsigned char *)gFbo;
+	pixelCoverage.resize(width * height);
 }
 
 SRDeviceContext::~SRDeviceContext()
@@ -28,12 +26,11 @@ SRDeviceContext::~SRDeviceContext()
 void SRDeviceContext::ClearRenderTargetView(SRRenderTargetView *RenderTargetView, const glm::vec4 &ColorRGBA)
 {
 	pBackBuffer->ClearBuffer(ColorRGBA);
-	ClearMSAABuffer();
 }
 
 void SRDeviceContext::ClearDepthStencilView(SRDepthStencilView *DepthStencilView)
 {
-	//DepthStencilView->ClearBuffer(FLT_MAX);
+	DepthStencilView->ClearBuffer(FLT_MAX);
 }
 
 void SRDeviceContext::IASetVertexBuffers(SRIBuffer *buf, const unsigned int *pStrides, const unsigned int *pOffsets)
@@ -102,7 +99,6 @@ void SRDeviceContext::SetRenderState(ShaderState state)
 void SRDeviceContext::SwapBuffer()
 {
 	Resolve();
-	std::swap(pFrontBuffer, pBackBuffer);
 }
 
 void SRDeviceContext::VSSetConstantBuffers(unsigned int StartOffset, unsigned int NumBuffers, SRIBuffer *constantBuffer)
@@ -148,7 +144,7 @@ void SRDeviceContext::GenerateMips(SRTexture2D *texture)
 	texture->GenerateMips();
 }
 
-std::vector<std::vector<glm::vec4>> SRDeviceContext::ClipSutherlandHodgemanAux(const std::vector<std::vector<glm::vec4>> &polygon, 
+std::vector<std::vector<glm::vec4>> SRDeviceContext::ClipSutherlandHodgemanAux(const std::vector<std::vector<glm::vec4>> &polygon,
 	const int axis, const int side)
 {
 	std::vector<std::vector<glm::vec4>> insidePolygon;
@@ -279,14 +275,25 @@ void SRDeviceContext::DrawIndex()
 {
 	ParseVertexBuffer();
 	BindConstanBuffer();
-	tbb::parallel_for(0, (int)indices.size(), [&](size_t i)
-	{
+	tbb::flow::graph g;
+	int count = 0;
+	int indiceSize = indices.size();
+	tbb::flow::input_node<int> start_node(g, [&](tbb::flow_control &fc) -> int {
+		if (count < indiceSize)
+		{
+			return count++;
+		}
+		fc.stop();
+		return {};
+	});
+	tbb::flow::function_node<int, std::vector<TriangleData>> vertex_node(g,
+		tbb::flow::unlimited, [&](const int i) {
 		unsigned char *buffer = new unsigned char[160];
 		unsigned char *o0 = Vertex(indices[i][0], buffer);
 		unsigned char *o1 = Vertex(indices[i][1], buffer);
 		unsigned char *o2 = Vertex(indices[i][2], buffer);
 
-		std::vector<glm::vec4> vertex[3];
+		TriangleData vertex(3);
 		for (int i = 0; i < 3; i++)
 		{
 			vertex[i].resize(vertexOutMapTable.size());
@@ -295,24 +302,74 @@ void SRDeviceContext::DrawIndex()
 		ParseShaderOutput(o1, vertex[1]);
 		ParseShaderOutput(o2, vertex[2]);
 
-		std::vector<std::vector<glm::vec4>> clipped_vertices = ClipSutherlandHodgeman(vertex[0], vertex[1], vertex[2], 0.1, 100);
+		std::vector<VertexData> clipped_vertices = ClipSutherlandHodgeman(vertex[0], vertex[1], vertex[2], 0.1, 100);
 		int len = (int)clipped_vertices.size() - 2;
+		std::vector<TriangleData> v;
 		for (int i = 0; i < len; i++)
 		{
+			TriangleData vertex(3);
 			vertex[0] = clipped_vertices[0];
 			vertex[1] = clipped_vertices[i + 1];
 			vertex[2] = clipped_vertices[i + 2];
 			prePerspCorrection(vertex);
 			//视口变换
 			ViewportTransform(vertex);
-			Triangle(vertex);
+			if (shouldCulled(vertex[0][posIdx], vertex[1][posIdx], vertex[2][posIdx])) continue;
+			v.push_back(vertex);
 		}
-
 		delete o0;
 		delete o1;
 		delete o2;
 		delete buffer;
+		return v;
 	});
+	tbb::flow::function_node<std::vector<TriangleData>> pixel_node(g,
+		tbb::flow::unlimited, [&](std::vector<TriangleData> vertices) {
+
+		for (int i = 0; i < vertices.size(); i++)
+		{
+			Triangle(vertices[i]);
+		}
+	});
+	tbb::flow::make_edge(start_node, vertex_node);
+	tbb::flow::make_edge(vertex_node, pixel_node);
+
+	start_node.activate();
+	g.wait_for_all();
+	//tbb::parallel_for(0, (int)indices.size(), [&](size_t i)
+	//{
+	//	unsigned char *buffer = new unsigned char[160];
+	//	unsigned char *o0 = Vertex(indices[i][0], buffer);
+	//	unsigned char *o1 = Vertex(indices[i][1], buffer);
+	//	unsigned char *o2 = Vertex(indices[i][2], buffer);
+
+	//	std::vector<glm::vec4> vertex[3];
+	//	for (int i = 0; i < 3; i++)
+	//	{
+	//		vertex[i].resize(vertexOutMapTable.size());
+	//	}
+	//	ParseShaderOutput(o0, vertex[0]);
+	//	ParseShaderOutput(o1, vertex[1]);
+	//	ParseShaderOutput(o2, vertex[2]);
+
+	//	std::vector<std::vector<glm::vec4>> clipped_vertices = ClipSutherlandHodgeman(vertex[0], vertex[1], vertex[2], 0.1, 100);
+	//	int len = (int)clipped_vertices.size() - 2;
+	//	for (int i = 0; i < len; i++)
+	//	{
+	//		vertex[0] = clipped_vertices[0];
+	//		vertex[1] = clipped_vertices[i + 1];
+	//		vertex[2] = clipped_vertices[i + 2];
+	//		prePerspCorrection(vertex);
+	//		//视口变换
+	//		ViewportTransform(vertex);
+	//		Triangle(vertex);
+	//	}
+
+	//	delete o0;
+	//	delete o1;
+	//	delete o2;
+	//	delete buffer;
+	//});
 }
 
 bool SRDeviceContext::shouldCulled(const glm::ivec2 &v0, const glm::ivec2 &v1, const glm::ivec2 &v2)
@@ -325,16 +382,15 @@ bool SRDeviceContext::shouldCulled(const glm::ivec2 &v0, const glm::ivec2 &v1, c
 	return pShaderState.m_CullFaceMode == CullFaceMode::CULL_FRONT ? orient > 0 : orient < 0;
 }
 
-void SRDeviceContext::Triangle(std::vector<glm::vec4> vertex[3])
+void SRDeviceContext::Triangle(TriangleData vertex)
 {
 	std::vector<glm::vec3> points = { vertex[0][posIdx], vertex[1][posIdx], vertex[2][posIdx] };
-	if (shouldCulled(points[0], points[1], points[2])) return;
 
 	glm::ivec2 bboxmin(pViewports->Width - 1, pViewports->Height - 1);
 	glm::ivec2 bboxmax(0, 0);
 	glm::ivec2 clamp(pViewports->Width - 1, pViewports->Height - 1);
 
-	for (int i = 0; i < 3; i++) 
+	for (int i = 0; i < 3; i++)
 	{
 		bboxmin.x = max(0, min(bboxmin.x, points[i].x));
 		bboxmin.y = max(0, min(bboxmin.y, points[i].y));
@@ -349,12 +405,13 @@ void SRDeviceContext::Triangle(std::vector<glm::vec4> vertex[3])
 			//插值深度
 			glm::vec3 bcScreen = Utils::Barycentric(points[0], points[1], points[2], glm::vec2(P.x + 0.5, P.y + 0.5));
 
-			MSAAData data = CoverageCalc(x, y, points);
+			MSAAData curFrag = CoverageCalc(x, y, points);
 			int coverage = 0;
-			auto &fragCache = msaaBuffer[P.x + P.y * (pViewports->Width - 1)];
+			auto &fragColor = pBackBuffer->GetPixel(P.x, P.y);
+			auto &fragDepth = pDepthStencilView->GetDepth(P.x, P.y);
 			for (int i = 0; i < 4; i++)
 			{
-				if (data.coverage[i] && (pBlendState->blendDesc.RenderTarget[0].BlendEnable || data.depth[i] < fragCache.depth[i]))
+				if (curFrag.coverage[i] && (pBlendState->blendDesc.RenderTarget[0].BlendEnable || curFrag.depth[i] < fragDepth[i]))
 				{
 					coverage++;
 				}
@@ -370,20 +427,21 @@ void SRDeviceContext::Triangle(std::vector<glm::vec4> vertex[3])
 			if (pBlendState->blendDesc.RenderTarget[0].BlendEnable && discard) return;
 			for (int i = 0; i < 4; i++)
 			{
-				if (!data.coverage[i]) continue;
+				if (!curFrag.coverage[i]) continue;
 				//Alpha Blend
-				if (pBlendState->blendDesc.RenderTarget[0].BlendEnable)
+				//if (pBlendState->blendDesc.RenderTarget[0].BlendEnable)
+				//{
+				//	//fragCache.coverage[i] = 1;
+				//	AlphaBlend(color, fragColor[i]);
+				//	fragColor[i] = color;
+				//	fragDepth[i] = curFrag.depth[i];
+				//}
+				//else 
+				if (curFrag.depth[i] < fragDepth[i])
 				{
-					fragCache.coverage[i] = 1;
-					AlphaBlend(color, fragCache.color[i]);
-					fragCache.color[i] = color;
-					fragCache.depth[i] = data.depth[i];
-				}
-				else if (data.depth[i] < fragCache.depth[i])
-				{
-					fragCache.coverage[i] = 1;
-					fragCache.color[i] = color;
-					fragCache.depth[i] = data.depth[i];
+					//fragCache.coverage[i] = 1;
+					fragColor[i] = color;
+					fragDepth[i] = curFrag.depth[i];
 				}
 			}
 			//Early-Z
@@ -472,7 +530,7 @@ void SRDeviceContext::ParseShaderOutput(unsigned char *buffer, std::vector<glm::
 	}
 }
 
-void SRDeviceContext::ViewportTransform(std::vector<glm::vec4> vertex[3])
+void SRDeviceContext::ViewportTransform(TriangleData &vertex)
 {
 	vertex[0][posIdx] = Viewport * vertex[0][posIdx] + glm::vec4(0.5f);
 	vertex[1][posIdx] = Viewport * vertex[1][posIdx] + glm::vec4(0.5f);
@@ -489,7 +547,7 @@ unsigned char * SRDeviceContext::Vertex(int idx, unsigned char *vertexBuffer)
 	return pVertexShader->vertex(vertexBuffer);
 }
 
-void SRDeviceContext::DDXDDY(std::vector<glm::vec4> vertex[3], glm::vec3 &t0, glm::vec3 &t1, glm::vec3 &t2, glm::vec2 &P)
+void SRDeviceContext::DDXDDY(TriangleData vertex, glm::vec3 &t0, glm::vec3 &t1, glm::vec3 &t2, glm::vec2 &P)
 {
 	unsigned int texCoordIdx = vertexOutMapTable["SV_TEXCOORD0"];
 	QuadFragments quadFragment;
@@ -510,7 +568,7 @@ void SRDeviceContext::DDXDDY(std::vector<glm::vec4> vertex[3], glm::vec3 &t0, gl
 	memcpy(&pPixelShader->dFdy.local(), &ddy, sizeof(glm::vec2));
 }
 
-void SRDeviceContext::prePerspCorrection(std::vector<glm::vec4> output[3])
+void SRDeviceContext::prePerspCorrection(TriangleData &output)
 {
 	unsigned int normalIdx = vertexOutMapTable["SV_Normal"];
 	unsigned int texCoordIdx = vertexOutMapTable["SV_TEXCOORD0"];
@@ -525,13 +583,13 @@ void SRDeviceContext::prePerspCorrection(std::vector<glm::vec4> output[3])
 	}
 }
 
-unsigned char *SRDeviceContext::Interpolation(std::vector<glm::vec4> vertex[3], glm::vec3 &bcScreen)
+unsigned char *SRDeviceContext::Interpolation(TriangleData vertex, glm::vec3 &bcScreen)
 {
 	//插值其他信息
 	unsigned char *buffer = new unsigned char[100];
 	for (int i = 0; i < pPixelShader->inDesc.size(); i++)
 	{
-		glm::vec4 attribute = Utils::BarycentricLerp(vertex[0][i], vertex[1][i], vertex[2][i], bcScreen); 
+		glm::vec4 attribute = Utils::BarycentricLerp(vertex[0][i], vertex[1][i], vertex[2][i], bcScreen);
 		if (pPixelShader->inDesc[i].Name == "SV_TEXCOORD0" || pPixelShader->inDesc[i].Name == "SV_Normal")
 		{
 			attribute /= attribute.w;
@@ -671,31 +729,21 @@ void SRDeviceContext::Resolve()
 	{
 		tbb::parallel_for(0, pViewports->Height, 1, [&](size_t y)
 		{
-			int idx = x + y * (pViewports->Width - 1);
+			int idx = x + (pViewports->Height - 1 - y) * pViewports->Width;
 			glm::vec4 color(0, 0, 0, 0);
 			for (int i = 0; i < 4; i++)
 			{
-				color += msaaBuffer[idx].color[i];
+				color += pBackBuffer->GetPixel(x, y)[i];
 			}
 			color /= 4.f;
 			if (color == glm::vec4(0, 0, 0, 0)) return;
-			pBackBuffer->SetPixel(x, y, color.r, color.g, color.b, color.a);
+			colorBuffer[idx * 4] = color.b;
+			colorBuffer[idx * 4 + 1] = color.g;
+			colorBuffer[idx * 4 + 2] = color.r;
+			colorBuffer[idx * 4 + 3] = color.a;
 		});
 	});
 
-}
-
-void SRDeviceContext::ClearMSAABuffer()
-{
-	tbb::parallel_for(0, pViewports->Width * pViewports->Height, 1, [&](size_t idx)
-	{
-		tbb::parallel_for(0, 4, 1, [&](size_t i)
-		{
-			msaaBuffer[idx].color[i] = glm::vec4(127, 127, 127, 255);
-			msaaBuffer[idx].coverage[i] = 0;
-			msaaBuffer[idx].depth[i] = FLT_MAX;
-		});
-	});
 }
 
 MSAAData SRDeviceContext::CoverageCalc(int x, int y, std::vector<glm::vec3> points)
@@ -707,7 +755,7 @@ MSAAData SRDeviceContext::CoverageCalc(int x, int y, std::vector<glm::vec3> poin
 		if (barycentric[0] < 0 || barycentric[1] < 0 || barycentric[2] < 0)
 		{
 			data.coverage[idx] = 0;
-			data.depth[idx] = 1;
+			data.depth[idx] = FLT_MAX;
 			return;
 		}
 		data.coverage[idx] = 1;

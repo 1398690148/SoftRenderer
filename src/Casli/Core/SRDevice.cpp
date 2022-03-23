@@ -19,13 +19,13 @@ bool SRDevice::CreateBuffer(BUFFER_DESC *bd, SUBRESOURCE_DATA *sd, SRIBuffer **b
 
 bool SRDevice::CreateRenderTargetView(int width, int height, SRRenderTargetView **pRTView)
 {
-	*pRTView = new SRRenderTargetView(width, height, 4);
+	*pRTView = new SRRenderTargetView(width, height);
 	return (*pRTView != nullptr);
 }
 
 bool SRDevice::CreateDepthStencilView(SRTexture2D *pDepthBuffer, DEPTH_STENCIL_VIEW_DESC *desc, SRDepthStencilView **ppDepthStencilView)
 {
-	*ppDepthStencilView = new SRDepthStencilView(pDepthBuffer);
+	*ppDepthStencilView = new SRDepthStencilView(desc->width, desc->height);
 	return (*ppDepthStencilView != nullptr);
 }
 

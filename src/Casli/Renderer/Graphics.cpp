@@ -7,7 +7,7 @@ Graphics::Graphics(unsigned int width, unsigned int height, HWND hWnd, HDC ghdcM
 {
 	pDevice = std::make_unique<SRDevice>();
 	pContext = std::make_unique<SRDeviceContext>(gFbo, width, height);
-	pDevice->CreateRenderTargetView(width, height, &pTarget);
+	pDevice->CreateRenderTargetView(width * 2, height * 2, &pTarget);
 
 	SRTexture2D *pDepthStencil{};
 	TEXTURE2D_DESC descDepth = {};
@@ -20,6 +20,8 @@ Graphics::Graphics(unsigned int width, unsigned int height, HWND hWnd, HDC ghdcM
 	pDevice->CreateTexture2D(&descDepth, nullptr, &pDepthStencil);
 
 	DEPTH_STENCIL_VIEW_DESC descDSV = {};
+	descDSV.width = 666u;
+	descDSV.height = 500u;
 	descDSV.Format = FORMAT_FLOAT;
 	pDevice->CreateDepthStencilView(pDepthStencil, &descDSV, &pDSV);
 	pContext->OMSetRenderTargets(&pTarget, &pDSV);
