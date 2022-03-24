@@ -1,8 +1,9 @@
 #pragma once
 #include <algorithm>
 #include "SRIPixelShader.h"
+#include <glm/gtx/transform.hpp>
 
-struct PixelInput
+struct BlinnPhongPixelInput
 {
 	glm::vec4 position;
 	glm::vec3 normal;
@@ -10,13 +11,9 @@ struct PixelInput
 	glm::vec4 WorldPos;
 };
 
-struct BlinnPhongCBuffer
-{
-	glm::vec3 viewPos;
-};
-
 struct Directional
 {
+	glm::vec3 viewPos;
 	glm::vec3 color;
 	glm::vec3 dir;
 };
@@ -36,29 +33,23 @@ struct BlinnPhongPS : public SRIPixelShader
 	}
 	virtual bool fragment(unsigned char *in, glm::vec4 &color)
 	{
-		PixelInput *input = (PixelInput *)in;
-		BlinnPhongCBuffer *buffer = (BlinnPhongCBuffer *)(cbuffer + sizeof(Directional));
+		BlinnPhongPixelInput *input = (BlinnPhongPixelInput *)in;
 		Directional *directional = (Directional *)cbuffer;
 		glm::vec3 normal = glm::normalize(input->normal);
 
-		glm::vec4 diff = textures[0]->Sampler(input->uv, samplers[0], dFdx.local(), dFdy.local());
-		glm::vec4 spec(0, 0, 0, 0);
-		if (textures[1])
-			spec = textures[1]->Sampler(input->uv, samplers[0], dFdx.local(), dFdy.local());
+		glm::vec3 diffuseColor = textures[0]->Sampler(input->uv, samplers[0]);
+		glm::vec3 ambient = diffuseColor * 0.3f;
 
-		glm::vec3 viewDir = glm::normalize(buffer->viewPos - glm::vec3(input->WorldPos));
-		glm::vec3 halfwayDir = glm::normalize(viewDir + glm::normalize(directional->dir));
-		float diffCoe = std::max(glm::dot(normal, directional->dir), 0.0f);
-		float specCoe = glm::pow(glm::max(glm::dot(halfwayDir, normal), 0.0f), 5.0);
+		float diff = std::max(dot(normal, directional->dir), 0.0f);
+		diffuseColor *= diff;
+		diffuseColor *= directional->color;
 
-		glm::vec4 ambientColor = diff * 0.2f * glm::vec4(directional->color, 1.0);
-		glm::vec4 diffuseColor = diff * diffCoe * glm::vec4(directional->color, 1.0);
-		glm::vec4 specColor = spec * specCoe * glm::vec4(directional->color, 1.0);
-		color = ambientColor + diffuseColor + specColor;
-		for (int i = 0; i < 4; i++)
-		{
-			color[i] = std::min(255.0f, color[i]);
-		}
+		glm::vec3 viewDir = glm::normalize(directional->viewPos - glm::vec3(input->WorldPos));
+		glm::vec3 halfwayDir = glm::normalize(viewDir + directional->dir);
+		float spec = glm::pow(std::max(glm::dot(halfwayDir, normal), 0.0f), 1.0);
+		glm::vec3 specular = directional->color * spec * glm::vec3(textures[1]->Sampler(input->uv, samplers[0]));
+
+		color = glm::vec4(ambient + diffuseColor + specular, 255);
 		return false;
 	}
 };

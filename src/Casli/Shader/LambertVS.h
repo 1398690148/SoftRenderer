@@ -53,7 +53,7 @@ public:
 		LambertVertexOutput *o = new LambertVertexOutput();
 		o->WorldPos = cbuf->Model * glm::vec4(in->pos, 1.0f);
 		o->pos = cbuf->ModelViewProjection * glm::vec4(in->pos, 1.0f);
-		o->normal = glm::vec3(0, 0, 0);// cbuf->ModelT * glm::vec4(in->normal, 1.0);
+		o->normal = cbuf->ModelT * glm::vec4(in->normal, 1.0);
 		o->uv = in->uv;
 		return (unsigned char *)o;
 	}

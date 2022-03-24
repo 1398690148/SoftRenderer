@@ -9,6 +9,7 @@ private:
 	{
 		glm::mat4 modelViewProj;
 		glm::mat4 model;
+		glm::mat4 modelT;
 	};
 public:
 	TransformCbuf(Graphics& gfx, const Drawable& parent);
