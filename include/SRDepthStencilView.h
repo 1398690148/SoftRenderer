@@ -1,6 +1,7 @@
 #pragma once
 #include "SRCoreAPI.h"
 #include <array>
+#include <vector>
 
 class CORE_API SRDepthStencilView
 {

@@ -87,7 +87,6 @@ private:
 	SRIBuffer *pPixelConstantBuffer{};
 	SRIBuffer *pVertexConstantBuffer{};
 	SRRenderTargetView *pBackBuffer{};
-	SRRenderTargetView *pFrontBuffer{};
 	unsigned char *colorBuffer;
 	SRDepthStencilView *pDepthStencilView{};
 	VIEWPORT *pViewports{};
@@ -99,7 +98,6 @@ private:
 	glm::mat4 Viewport;
 	std::unordered_map<std::string, int> vertexOutMapTable;
 	int posIdx = -1;
-	std::vector<std::array<bool, 4>> pixelCoverage;
 };
 
 class QuadFragments

@@ -9,11 +9,14 @@ SRDepthStencilView::SRDepthStencilView(unsigned int w, unsigned int h)
 
 void SRDepthStencilView::ClearBuffer(const float depth)
 {
+	std::array<float, 4> clearDepth;
+	clearDepth.fill(depth);
 	tbb::parallel_for(0, (int)(width * height), [&](size_t i) {
-		for (auto &iter : m_Buffer[i])
-		{
-			iter = depth;
-		}
+		//for (auto &iter : m_Buffer[i])
+		//{
+			//iter = depth;
+		//}
+		m_Buffer[i] = clearDepth;
 	});
 	//unsigned int stride = sizeof(float);
 	//float *buffer = (float *)m_Buffer;

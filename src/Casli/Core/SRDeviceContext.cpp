@@ -16,7 +16,6 @@ SRDeviceContext::SRDeviceContext(void *gFbo, int width, int height)
 	desc.RenderTarget[0].RenderTargetWriteMask = 0;
 	pBlendState = new SRBlendState(&desc);
 	colorBuffer = (unsigned char *)gFbo;
-	pixelCoverage.resize(width * height);
 }
 
 SRDeviceContext::~SRDeviceContext()
@@ -397,9 +396,9 @@ void SRDeviceContext::Triangle(TriangleData vertex)
 		bboxmax.x = min(clamp.x, max(bboxmax.x, points[i].x));
 		bboxmax.y = min(clamp.y, max(bboxmax.y, points[i].y));
 	}
-	tbb::parallel_for(bboxmin.y, bboxmax.y + 1, 1, [&](size_t y)
+	tbb::parallel_for(bboxmin.x, bboxmax.x + 1, 1, [&](size_t x)
 	{
-		tbb::parallel_for(bboxmin.x, bboxmax.x + 1, 1, [&](size_t x)
+		tbb::parallel_for(bboxmin.y, bboxmax.y + 1, 1, [&](size_t y)
 		{
 			glm::ivec2 P(x, y);
 			//插值深度
@@ -736,11 +735,11 @@ void SRDeviceContext::Resolve()
 				color += pBackBuffer->GetPixel(x, y)[i];
 			}
 			color /= 4.f;
-			if (color == glm::vec4(0, 0, 0, 0)) return;
+			//if (color == glm::vec4(0, 0, 0, 0)) return;
 			colorBuffer[idx * 4] = color.b;
 			colorBuffer[idx * 4 + 1] = color.g;
 			colorBuffer[idx * 4 + 2] = color.r;
-			colorBuffer[idx * 4 + 3] = color.a;
+			//colorBuffer[idx * 4 + 3] = color.a;
 		});
 	});
 

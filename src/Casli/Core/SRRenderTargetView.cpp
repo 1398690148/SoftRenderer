@@ -16,12 +16,10 @@ SRRenderTargetView::SRRenderTargetView(unsigned int w, unsigned int h)
 
 void SRRenderTargetView::ClearBuffer(const glm::vec4 &ColorRGBA)
 {
-	glm::i8vec4 clearColor = ColorRGBA;
+	std::array<glm::ivec4, 4> clearColor;
+	clearColor.fill(ColorRGBA);
 	tbb::parallel_for(0, (int)(width * height), [&](size_t i) {
-		for (auto &iter : m_Buffer[i])
-		{
-			iter = clearColor;
-		}
+		m_Buffer[i] = clearColor;
 	});
 	/*unsigned int stride = sizeof(unsigned char) * StructureByteStride;
 	unsigned char *buffer = m_Buffer;
@@ -46,17 +44,21 @@ void SRRenderTargetView::SetPixel(int i, int j, int k, unsigned char r, unsigned
 	b = b > 255 ? 255 : b;
 	a = a > 255 ? 255 : a;
 	int index = i + j * width;
-	*(m_Buffer[index].begin() + k) = glm::i8vec4(r, g, b, a);
+	*(m_Buffer[index].begin() + k) = glm::ivec4(r, g, b, a);
 	/*unsigned char *buffer = m_Buffer + () * StructureByteStride;
 	unsigned char color[4] = {b, g, r, a};
 	memcpy(buffer, color, StructureByteStride);*/
 }
 
-std::array<glm::i8vec4, 4> &SRRenderTargetView::GetPixel(int i, int j)
+std::array<glm::ivec4, 4> &SRRenderTargetView::GetPixel(int i, int j)
 {
-	int index = i + j * width;
-	return m_Buffer[index];
+	return m_Buffer[i + j * width];
 	//unsigned int stride = sizeof(unsigned char) * StructureByteStride;
 	//unsigned char *buffer = m_Buffer + i * StructureByteStride + (height - 1 - j) * width * StructureByteStride;
 	//return glm::vec4(buffer[0], buffer[1], buffer[2], buffer[3]);
+}
+
+std::array<glm::ivec4, 4>& SRRenderTargetView::GetPixel(int index)
+{
+	return m_Buffer[index];
 }
