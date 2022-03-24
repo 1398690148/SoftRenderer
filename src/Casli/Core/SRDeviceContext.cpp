@@ -428,17 +428,14 @@ void SRDeviceContext::Triangle(TriangleData vertex)
 			{
 				if (!curFrag.coverage[i]) continue;
 				//Alpha Blend
-				//if (pBlendState->blendDesc.RenderTarget[0].BlendEnable)
-				//{
-				//	//fragCache.coverage[i] = 1;
-				//	AlphaBlend(color, fragColor[i]);
-				//	fragColor[i] = color;
-				//	fragDepth[i] = curFrag.depth[i];
-				//}
-				//else 
-				if (curFrag.depth[i] < fragDepth[i])
+				if (pBlendState->blendDesc.RenderTarget[0].BlendEnable)
 				{
-					//fragCache.coverage[i] = 1;
+					AlphaBlend(color, fragColor[i]);
+					fragColor[i] = color;
+					fragDepth[i] = curFrag.depth[i];
+				}
+				else if (curFrag.depth[i] < fragDepth[i])
+				{
 					fragColor[i] = color;
 					fragDepth[i] = curFrag.depth[i];
 				}
