@@ -1,0 +1,40 @@
+Camera:
+	Eye 0 0 -3.8
+	Focus 0.0 0.0 0.0
+	Up 0.0 1.0 0.0
+
+Frustum:
+	Fovy 45.0
+	Near 0.1
+	Nar 100.0
+	
+SpotLight:
+	Lightpos -0.7 -0.7 0
+	Lightcolor 1 1 0
+	LightDir 0.7 0 0
+	AngleCoe 12.5 17.5
+	Attenuation 1.0 0.09 0.032
+	
+Entity:
+	Path ../src/Casli/Model/diablo3_pose/diablo3_pose.obj
+	VertexShader LambertVS
+	PixelShader SpotLightPS
+	Sampler 0 0
+	translate 0.0 0.0 0.0
+	rotate 0.0 1.0 0.0 0.0
+	scale 1.0 1.0 1.0
+	Topology 1
+	Cullface: back
+	AlphaBlend false
+	
+Entity:
+	Path ../src/Casli/Model/wall/wall.obj
+	VertexShader LambertVS
+	PixelShader SpotLightPS
+	Sampler 0 1
+	translate 0.0 0.0 0.0
+	rotate 0.0 1.0 0.0 0.0
+	scale 1.0 1.0 1.0
+	Topology 1
+	Cullface: back
+	AlphaBlend false

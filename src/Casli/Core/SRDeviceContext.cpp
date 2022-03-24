@@ -335,40 +335,6 @@ void SRDeviceContext::DrawIndex()
 
 	start_node.activate();
 	g.wait_for_all();
-	//tbb::parallel_for(0, (int)indices.size(), [&](size_t i)
-	//{
-	//	unsigned char *buffer = new unsigned char[160];
-	//	unsigned char *o0 = Vertex(indices[i][0], buffer);
-	//	unsigned char *o1 = Vertex(indices[i][1], buffer);
-	//	unsigned char *o2 = Vertex(indices[i][2], buffer);
-
-	//	std::vector<glm::vec4> vertex[3];
-	//	for (int i = 0; i < 3; i++)
-	//	{
-	//		vertex[i].resize(vertexOutMapTable.size());
-	//	}
-	//	ParseShaderOutput(o0, vertex[0]);
-	//	ParseShaderOutput(o1, vertex[1]);
-	//	ParseShaderOutput(o2, vertex[2]);
-
-	//	std::vector<std::vector<glm::vec4>> clipped_vertices = ClipSutherlandHodgeman(vertex[0], vertex[1], vertex[2], 0.1, 100);
-	//	int len = (int)clipped_vertices.size() - 2;
-	//	for (int i = 0; i < len; i++)
-	//	{
-	//		vertex[0] = clipped_vertices[0];
-	//		vertex[1] = clipped_vertices[i + 1];
-	//		vertex[2] = clipped_vertices[i + 2];
-	//		prePerspCorrection(vertex);
-	//		//视口变换
-	//		ViewportTransform(vertex);
-	//		Triangle(vertex);
-	//	}
-
-	//	delete o0;
-	//	delete o1;
-	//	delete o2;
-	//	delete buffer;
-	//});
 }
 
 bool SRDeviceContext::shouldCulled(const glm::ivec2 &v0, const glm::ivec2 &v1, const glm::ivec2 &v2)
@@ -401,9 +367,7 @@ void SRDeviceContext::Triangle(TriangleData vertex)
 		tbb::parallel_for(bboxmin.y, bboxmax.y + 1, 1, [&](size_t y)
 		{
 			glm::ivec2 P(x, y);
-			//插值深度
 			glm::vec3 bcScreen = Utils::Barycentric(points[0], points[1], points[2], glm::vec2(P.x + 0.5, P.y + 0.5));
-
 			MSAAData curFrag = CoverageCalc(x, y, points);
 			int coverage = 0;
 			auto &fragColor = pBackBuffer->GetPixel(P.x, P.y);
@@ -418,9 +382,13 @@ void SRDeviceContext::Triangle(TriangleData vertex)
 			if (coverage == 0) return;
 			if (vertexOutMapTable.count("SV_TEXCOORD0"))
 				DDXDDY(vertex, points[0], points[1], points[2], glm::vec2(P.x + 0.5, P.y + 0.5));
-			glm::vec4 color(0, 0, 0, 255);
+			glm::vec4 color(0, 0, 0, 0);
 			unsigned char *buffer = Interpolation(vertex, bcScreen);
 			bool discard = pPixelShader->fragment(buffer, color);
+			color.r = min(255.0f, color.r);
+			color.g = min(255.0f, color.g);
+			color.b = min(255.0f, color.b);
+			color.a = min(255.0f, color.a);
 			delete buffer;
 			//Alpha Test
 			if (pBlendState->blendDesc.RenderTarget[0].BlendEnable && discard) return;
@@ -440,31 +408,6 @@ void SRDeviceContext::Triangle(TriangleData vertex)
 					fragDepth[i] = curFrag.depth[i];
 				}
 			}
-			//Early-Z
-			//if (bcScreen[0] < 0 || bcScreen[1] < 0 || bcScreen[2] < 0 || 
-			//	(!pBlendState->blendDesc.RenderTarget[0].BlendEnable && pDepthStencilView->GetDepth(P.x, P.y) - 0.0001f < depth))
-			//	return;
-			//{
-			//	if (vertexOutMapTable.count("SV_TEXCOORD0"))
-			//		DDXDDY(vertex, points[0], points[1], points[2], P);
-			//	glm::vec4 color(0, 0, 0, 255);
-			//	unsigned char *buffer = Interpolation(vertex, bcScreen);
-			//	bool discard = pPixelShader->fragment(buffer, color);
-			//	delete buffer;
-			//	if (pBlendState->blendDesc.RenderTarget[0].BlendEnable)
-			//	{
-			//		if (discard) return;
-			//		AlphaBlend(P.x, P.y, color);
-			//		pBackBuffer->SetPixel(P.x, P.y, color[0], color[1], color[2], color[3]);
-			//		return;
-			//	}
-			//	if (pDepthStencilView->GetDepth(P.x, P.y) < depth)
-			//	{
-			//		return;
-			//	}
-			//	pBackBuffer->SetPixel(P.x, P.y, color[0], color[1], color[2], color[3]);
-			//	pDepthStencilView->SetDepth(P.x, P.y, depth);
-			// }
 		});
 	});
 }
@@ -571,11 +514,8 @@ void SRDeviceContext::prePerspCorrection(TriangleData &output)
 	for (int i = 0; i < 3; i++)
 	{
 		float t = 1.0f / output[i][posIdx].w;
-		if (normalIdx)
-			output[i][normalIdx] *= t;
-		if (texCoordIdx)
-			output[i][texCoordIdx] *= t;
-		output[i][posIdx] *= t;
+		for (int j = 0; j < output[i].size(); j++)
+			output[i][j] *= t;
 	}
 }
 
@@ -586,10 +526,7 @@ unsigned char *SRDeviceContext::Interpolation(TriangleData vertex, glm::vec3 &bc
 	for (int i = 0; i < pPixelShader->inDesc.size(); i++)
 	{
 		glm::vec4 attribute = Utils::BarycentricLerp(vertex[0][i], vertex[1][i], vertex[2][i], bcScreen);
-		if (pPixelShader->inDesc[i].Name == "SV_TEXCOORD0" || pPixelShader->inDesc[i].Name == "SV_Normal")
-		{
-			attribute /= attribute.w;
-		}
+		attribute /= attribute.w;
 		memcpy(buffer + pPixelShader->inDesc[i].Offset, &attribute, pPixelShader->inDesc[i].Size);
 	}
 	return buffer;
@@ -732,11 +669,10 @@ void SRDeviceContext::Resolve()
 				color += pBackBuffer->GetPixel(x, y)[i];
 			}
 			color /= 4.f;
-			//if (color == glm::vec4(0, 0, 0, 0)) return;
 			colorBuffer[idx * 4] = color.b;
 			colorBuffer[idx * 4 + 1] = color.g;
 			colorBuffer[idx * 4 + 2] = color.r;
-			//colorBuffer[idx * 4 + 3] = color.a;
+			colorBuffer[idx * 4 + 3] = color.a;
 		});
 	});
 

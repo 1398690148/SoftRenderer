@@ -93,37 +93,28 @@ void SceneParse::parse(const std::string &path, Graphics &gfx, bool generatedMip
 				std::getline(sceneFile, line);
 				pos = Tools::parseVec3(line);
 			}
-
-			glm::vec3 atten;
-			{
-				std::getline(sceneFile, line);
-				atten = Tools::parseVec3(line);
-			}
-
 			glm::vec3 color;
 			{
 				std::getline(sceneFile, line);
 				color = Tools::parseVec3(line);
 			}
-
-			float innerCutoff;
+			glm::vec3 dir;
 			{
 				std::getline(sceneFile, line);
-				innerCutoff = Tools::parseFloat(line);
+				dir = Tools::parseVec3(line);
 			}
-
-			float outerCutoff;
+			glm::vec2 angleCoe;
 			{
 				std::getline(sceneFile, line);
-				outerCutoff = Tools::parseFloat(line);
+				angleCoe = Tools::parseVec2(line);
 			}
-
-			glm::vec3 spotDir;
+			glm::vec3 atten;
 			{
 				std::getline(sceneFile, line);
-				spotDir = Tools::parseVec3(line);
+				atten = Tools::parseVec3(line);
 			}
-
+			std::shared_ptr<SpotLight> light = std::make_shared<SpotLight>(gfx, color, pos, dir, angleCoe, atten);
+			m_scene.m_Lights.push_back(light);
 		}
 		else if (header == "DirectionalLight:")
 		{

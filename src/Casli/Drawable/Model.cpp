@@ -73,10 +73,15 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 		material.GetTexture(aiTextureType_DIFFUSE, 0, &texFileName);
 		std::string path = directory + "/" + texFileName.C_Str();
 		binds.push_back(std::make_shared<Texture>(pGfx, path.c_str(), 10, 0));
-		if (material.GetTexture(aiTextureType_SPECULAR, 0, &texFileName))
+		if (material.GetTexture(aiTextureType_SPECULAR, 0, &texFileName) == aiReturn_SUCCESS)
 		{
 			path = directory + "/" + texFileName.C_Str();
-			binds.push_back(std::make_shared<Texture>(pGfx, path.c_str(), 10, 1));
+			binds.push_back(std::make_shared<Texture>(pGfx, path.c_str(), 1, 1));
+		}
+		if (material.GetTexture(aiTextureType_HEIGHT, 0, &texFileName) == aiReturn_SUCCESS)
+		{
+			path = directory + "/" + texFileName.C_Str();
+			binds.push_back(std::make_shared<Texture>(pGfx, path.c_str(), 1, 2));
 		}
 	}
 	binds.push_back(std::make_shared<VertexBuffer>(gfx, vbuf));

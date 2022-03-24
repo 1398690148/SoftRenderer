@@ -40,10 +40,6 @@ Texture::Texture(Graphics& gfx, const char *path, int mipMapLevel, int idx) : in
 			GetContext(gfx)->GenerateMips(pTexture);
 		}
 	}
-	//else
-	//{
-	//	throw std::string("texture path null");
-	//}
 	stbi_image_free(data);
 	
 }

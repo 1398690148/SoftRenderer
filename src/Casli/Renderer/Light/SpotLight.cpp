@@ -1,28 +1,35 @@
-//#include "SpotLight.h"
-//#include <Graphics.h>
-//
-//SpotLight::SpotLight(Graphics &gfx, glm::vec3 color, glm::vec3 position, glm::vec3 direction, 
-//	float constant, float linear, float exp, float cutoff, unsigned int offset)
-//{
-//	//this->color = color;
-//	//this->position = position;
-//	//this->direction = direction;
-//	//this->Constant = constant;
-//	//this->Linear = linear;
-//	//this->Exp = exp;
-//	//this->Cutoff = cutoff;
-//	//cbuf = new unsigned char[52];
-//	//memcpy(cbuf, &color, 12);
-//	//memcpy(cbuf + 12, &position, 12);
-//	//memcpy(cbuf + 24, &direction, 12);
-//	//memcpy(cbuf + 36, &Constant, 4);
-//	//memcpy(cbuf + 40, &Linear, 4);
-//	//memcpy(cbuf + 44, &Exp, 4);
-//	//memcpy(cbuf + 48, &Cutoff, 4);
-//	//pConstantBuffer = new PixelConstantBuffer(gfx, cbuf, offset, 52);
-//}
-//
-//void SpotLight::Bind(Graphics &gfx)
-//{
-//	//pConstantBuffer->Bind(gfx);
-//}
+#include "SpotLight.h"
+#include <Graphics.h>
+#include <glm/gtx/transform.hpp>
+
+SpotLight::SpotLight(Graphics &gfx, glm::vec3 color, glm::vec3 position, glm::vec3 dir, glm::vec2 angleCoe, glm::vec3 attenuation)
+	: mesh(gfx, 5), cbuf(gfx)
+{
+	cbData.color = color;
+	cbData.pos = position;
+	cbData.dir = dir;
+	cbData.cutOff = glm::cos(glm::radians(angleCoe.x));
+	cbData.outerCutOff = glm::cos(glm::radians(angleCoe.y));
+	cbData.constant = attenuation.x;
+	cbData.linear = attenuation.y;
+	cbData.quadratic = attenuation.z;
+}
+
+void SpotLight::Draw(Graphics& gfx) const
+{
+	mesh.SetPos(cbData.pos);
+	mesh.Draw(gfx);
+}
+
+void SpotLight::Bind(Graphics& gfx, glm::mat4 view)
+{
+	auto dataCopy = cbData;
+	const auto pos = cbData.pos;
+	dataCopy.pos = view * glm::vec4(pos, 1.0);
+	cbData.pos = dataCopy.pos;
+	const auto dir = cbData.dir;
+	dataCopy.dir = view * glm::vec4(dir, 1.0);
+	cbData.dir = dataCopy.dir;
+	cbuf.Update(gfx, dataCopy);
+	cbuf.Bind(gfx);
+}

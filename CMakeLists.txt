@@ -76,6 +76,7 @@ src/Casli/Shader/AlphaTestPS.h
 src/Casli/Shader/AlphaBlendVS.h
 src/Casli/Shader/AlphaBlendPS.h
 src/Casli/Shader/PointLightPS.h
+src/Casli/Shader/SpotLightPS.h
 )
 
 set(DRAWANLE 
@@ -150,32 +151,32 @@ Set_Target_Properties(MipMap PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS /
 #点光源测试场景
 add_executable(PointLight src/Casli/Scene/PointLight/App.h src/Casli/Scene/PointLight/App.cpp src/Casli/Scene/PointLight/main.cpp)
 TARGET_LINK_LIBRARIES(PointLight Renderer)
-#设置release模式下关闭cmd窗口
 Set_Target_Properties(PointLight PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
 
 # Alpha Test
 add_executable(AlphaTest src/Casli/Scene/AlphaTest/App.h src/Casli/Scene/AlphaTest/App.cpp src/Casli/Scene/AlphaTest/main.cpp)
 TARGET_LINK_LIBRARIES(AlphaTest Renderer)
-#设置release模式下关闭cmd窗口
 Set_Target_Properties(AlphaTest PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
 
 # Alpha Blend
 add_executable(AlphaBlend src/Casli/Scene/AlphaBlend/App.h src/Casli/Scene/AlphaBlend/App.cpp src/Casli/Scene/AlphaBlend/main.cpp)
 TARGET_LINK_LIBRARIES(AlphaBlend Renderer)
-#设置release模式下关闭cmd窗口
 Set_Target_Properties(AlphaBlend PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
 
 # Bilinear
 add_executable(Bilinear src/Casli/Scene/Bilinear/App.h src/Casli/Scene/Bilinear/App.cpp src/Casli/Scene/Bilinear/main.cpp)
 TARGET_LINK_LIBRARIES(Bilinear Renderer)
-#设置release模式下关闭cmd窗口
 Set_Target_Properties(Bilinear PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
 
-#点光源测试场景
+#BlinnPhong测试场景
 add_executable(BlinnPhong src/Casli/Scene/BlinnPhong/App.h src/Casli/Scene/BlinnPhong/App.cpp src/Casli/Scene/BlinnPhong/main.cpp)
 TARGET_LINK_LIBRARIES(BlinnPhong Renderer)
-#设置release模式下关闭cmd窗口
 Set_Target_Properties(BlinnPhong PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
+
+#聚光灯测试场景
+add_executable(SpotLight src/Casli/Scene/SpotLight/App.h src/Casli/Scene/SpotLight/App.cpp src/Casli/Scene/SpotLight/main.cpp)
+TARGET_LINK_LIBRARIES(SpotLight Renderer)
+Set_Target_Properties(SpotLight PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories(${PROJECT_SOURCE_DIR}/src/Casli/Renderer)

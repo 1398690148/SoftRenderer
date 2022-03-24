@@ -11,6 +11,7 @@
 #include <AlphaBlendVS.h>
 #include <AlphaBlendPS.h>
 #include <PointLightPS.h>
+#include <SpotLightPS.h>
 #include <Texture.h>
 #include <Sampler.h>
 #include <InputLayout.h>
@@ -56,6 +57,10 @@ std::shared_ptr<Bindable> BindableFactory::CreateBindable(Graphics &gfx, BindTyp
 		else if (content[0] == "PointLightPS")
 		{
 			return std::make_shared<PixelShader>(gfx, new PointLightPS());
+		}
+		else if (content[0] == "SpotLightPS")
+		{
+			return std::make_shared<PixelShader>(gfx, new SpotLightPS());
 		}
 		else if (content[0] == "AlphaTestPS")
 		{
