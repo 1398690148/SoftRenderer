@@ -1,6 +1,4 @@
 #include "PointLight.h"
-#include <Graphics.h>
-#include <glm/gtx/transform.hpp>
 
 PointLight::PointLight(Graphics &gfx, glm::vec3 color, glm::vec3 position, float constant, float linear, float exp)
 	: mesh(gfx, 5), cbuf(gfx)

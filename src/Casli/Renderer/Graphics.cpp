@@ -1,7 +1,5 @@
 #include <Graphics.h>
 
-glm::vec3 light_dir(1, 1, 1);
-
 Graphics::Graphics(unsigned int width, unsigned int height, HWND hWnd, HDC ghdcMainWnd, void *gFbo)
 	: width(width), height(height), hWnd(hWnd), ghdcMainWnd(ghdcMainWnd)
 {
@@ -54,7 +52,7 @@ void Graphics::BeginFrame(float red, float green, float blue)
 
 void Graphics::EndFrame()
 {
-	pContext->SwapBuffer();
+	pContext->Resolve();
 	HDC hDC = GetDC(hWnd);
 	BitBlt(hDC, 0, 0, width, height, ghdcMainWnd, 0, 0, SRCCOPY);
 	ReleaseDC(hWnd, hDC);

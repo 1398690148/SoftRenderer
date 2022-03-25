@@ -2,7 +2,6 @@
 #include "SRSamplerState.h"
 #include <algorithm>
 #include <glm/glm.hpp>
-#include "tgaimage.h"
 
 SRTexture2D::SRTexture2D(TEXTURE2D_DESC *desc)
 	: SRIBuffer(desc->Width * desc->Height * 4, sizeof(unsigned char)),
@@ -35,7 +34,6 @@ SRTexture2D::~SRTexture2D()
 
 void SRTexture2D::GenerateMips()
 {
-	TGAImage image(1024, 1024, TGAImage::RGBA);
 	int currentPos = ByteWidth;
 	int startPos = 0;
 	int w = width;
@@ -64,9 +62,6 @@ void SRTexture2D::GenerateMips()
 				{
 					m_Buffer[currentPos++] = (c00 + c01 + c10 + c11).a / 4;
 				}
-				TGAColor color((c00.r + c01.r + c10.r + c11.r) / 4, (c00.g + c01.g + c10.g + c11.g) / 4, 
-					(c00.b + c01.b + c10.b + c11.b) / 4, (c00.a + c01.a + c10.a + c11.a) / 4);
-				image.set(i / 2, j / 2, color);
 			}
 		}
 		startPos += (ByteWidth / (coe * coe));
@@ -77,8 +72,6 @@ void SRTexture2D::GenerateMips()
 			break;
 		}
 	}
-	image.flip_vertically();
-	image.write_tga_file("../output.tga");
 }
 
 glm::vec4 SRTexture2D::Bilinear(const float &tx, const float  &ty,
@@ -244,8 +237,8 @@ glm::vec4 SRTexture2D::Sampler(glm::vec2 uv, SRSamplerState *sampler, glm::vec2 
 		//Calculate lod level
 		glm::vec2 dfdx = ddx * glm::vec2(width, height);
 		glm::vec2 dfdy = ddy * glm::vec2(width, height);
-		float L = glm::max(glm::dot(dfdx, dfdx), glm::dot(dfdy, dfdy));
-		return Sampler(uv, sampler, glm::max(0.5f * log2(L), 0.0f));
+		float L = std::max(glm::dot(dfdx, dfdx), glm::dot(dfdy, dfdy));
+		return Sampler(uv, sampler, std::max(0.5f * log2(L), 0.0f));
 	}
 	return Sampler(uv, sampler);
 }

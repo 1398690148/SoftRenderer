@@ -1,5 +1,5 @@
 Camera:
-	Eye 0 0 -3.8
+	Eye 0 0 -2.3
 	Focus 0.0 0.0 0.0
 	Up 0.0 1.0 0.0
 
@@ -9,9 +9,9 @@ Frustum:
 	Nar 100.0
 	
 SpotLight:
-	Lightpos -0.7 -0.7 0
+	Lightpos 0.7 -0.7 0
 	Lightcolor 1 1 0
-	LightDir 0.7 0 0
+	LightDir -0.7 0 0
 	AngleCoe 12.5 17.5
 	Attenuation 1.0 0.09 0.032
 	

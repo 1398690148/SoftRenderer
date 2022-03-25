@@ -18,6 +18,7 @@
 #include <InputLayout.h>
 #include <ConstantBuffers.h>
 #include <Topology.h>
+#include <Blender.h>
 
 std::shared_ptr<Bindable> BindableFactory::CreateBindable(Graphics &gfx, BindType type, std::vector<std::string> content)
 {

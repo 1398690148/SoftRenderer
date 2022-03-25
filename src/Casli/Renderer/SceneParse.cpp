@@ -1,7 +1,7 @@
 #include "SceneParse.h"
-#include <iostream>
 #include <fstream>
 #include <sstream>
+#include <iostream>
 #include <Model.h>
 #include <Plane.h>
 #include <DirectionalLight.h>

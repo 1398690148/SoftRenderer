@@ -17,7 +17,7 @@ private:
 	Window wnd;
 	Camera camera;
 	CasliTimer timer;
-	float speed_factor = 1.0f;
+	float speed_factor = 0.7f;
 	SceneParse parser;
 	float z = 0;
 };

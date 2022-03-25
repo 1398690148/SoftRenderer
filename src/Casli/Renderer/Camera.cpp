@@ -1,9 +1,5 @@
 #include "Camera.h"
 #include <glm/gtc/matrix_transform.hpp>
-#include <iostream>
-#include <Platform/CasliMath.h>
-#include <algorithm>
-#include <glm/vec4.hpp>
 Camera::Camera()
 {
 

@@ -126,8 +126,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${PROJECT_SOURCE_DIR}/output/bin/)
 AUX_SOURCE_DIRECTORY(${PROJECT_SOURCE_DIR}/src/Casli/Core CORE_SRCS)
 ADD_LIBRARY(Core SHARED ${CORE_SRCS} ${PROJECT_SOURCE_DIR}/src/Casli/Core/SRBlendState.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/SRCoreAPI.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/SRDeviceContext.h 
 ${PROJECT_SOURCE_DIR}/src/Casli/Core/SRIBuffer.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/SRDevice.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/SRIVertexShader.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/SRIPixelShader.h 
-${PROJECT_SOURCE_DIR}/src/Casli/Core/Utils.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/SRSamplerState.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/SRTexture2D.h ./src/Casli/Core/tgaimage.h 
-./src/Casli/Core/SRShaderInput.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/SRRenderTargetView.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/SRInputLayout.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/SRDepthStencilView.h 
+${PROJECT_SOURCE_DIR}/src/Casli/Core/Utils.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/SRSamplerState.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/SRTexture2D.h
+${PROJECT_SOURCE_DIR}/src/Casli/Core/SRShaderInput.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/SRRenderTargetView.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/SRInputLayout.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/SRDepthStencilView.h 
 ${PROJECT_SOURCE_DIR}/src/Casli/Core/SRCore.h)
 
 if (CMAKE_BUILD_TYPE EQUAL Debug)

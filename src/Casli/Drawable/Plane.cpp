@@ -1,14 +1,7 @@
 #include <Plane.h>
-#include <Texture.h>
-#include <Sampler.h>
 #include <Topology.h>
 #include <InputLayout.h>
-#include <SampleTextureVS.h>
-#include <SampleTexturePS.h>
-#include <VertexShader.h>
-#include <PixelShader.h>
 #include <TransformCbuf.h>
-#include <Blender.h>
 #include <glm/gtx/transform.hpp>
 
 Plane::Plane(Graphics &gfx, std::vector<std::shared_ptr<Bindable>> binds, glm::mat4 transform) : m_Transform(transform)

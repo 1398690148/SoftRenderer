@@ -3,7 +3,6 @@
 #include <SRDeviceContext.h>
 #include <SRRenderTargetView.h>
 #include <SRDepthStencilView.h>
-#include "Platform/CasliWin.h"
 
 class Graphics
 {

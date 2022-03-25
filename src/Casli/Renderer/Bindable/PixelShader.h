@@ -1,6 +1,7 @@
 #pragma once
 #include "Bindable.h"
-#include "SRIPixelShader.h"
+
+class SRIPixelShader;
 
 class PixelShader : public Bindable
 {

@@ -1,4 +1,5 @@
 #include "Tools.h"
+#include <iostream>
 
 namespace Tools
 {

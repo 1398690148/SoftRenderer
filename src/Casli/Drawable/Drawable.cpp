@@ -1,5 +1,4 @@
 #include "Drawable.h"
-#include <Graphics.h>
 #include <IndexBuffer.h>
 
 void Drawable::Draw(Graphics& gfx) const
@@ -9,16 +8,6 @@ void Drawable::Draw(Graphics& gfx) const
 		b->Bind(gfx);
 	}
 	gfx.DrawIndexed();
-}
-
-void Drawable::SetCullFaceMode(CullFaceMode cullFaceMode)
-{
-	//state.m_CullFaceMode = cullFaceMode;
-}
-
-void Drawable::SetBlendState(bool flag)
-{
-	//pBlender = new Blender(pGfx, flag, {});
 }
 
 void Drawable::AddBind(std::shared_ptr<Bindable> bind)

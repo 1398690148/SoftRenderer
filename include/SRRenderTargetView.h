@@ -8,7 +8,6 @@ class CORE_API SRRenderTargetView
 {
 public:
 	SRRenderTargetView(unsigned int w, unsigned int h);
-	//SRRenderTargetView(unsigned int w, unsigned int h, unsigned int structureByteStride, void *gFbo);
 	void ClearBuffer(const glm::vec4 &ColorRGBA);
 	void SetPixel(int i, int j, int k, unsigned char r, unsigned char g, unsigned char b, unsigned char a);
 	std::array<glm::ivec4, 4> &GetPixel(int i, int j);

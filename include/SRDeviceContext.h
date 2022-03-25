@@ -45,8 +45,8 @@ public:
 	void SetRenderState(ShaderState state);
 	void GenerateMips(SRTexture2D *texture);
 	void DrawIndex();
-	void SwapBuffer();
-
+	//MSAA
+	void Resolve();
 private:
 	void Triangle(TriangleData vertex);
 	//背面剔除
@@ -72,8 +72,6 @@ private:
 
 	void BindConstanBuffer();
 
-	MSAAData CoverageCalc(int x, int y, std::vector<glm::vec3> points);
-	void Resolve();
 private:
 	SRIBuffer *pVertexBuffer{};
 	//顶点缓存中的数据

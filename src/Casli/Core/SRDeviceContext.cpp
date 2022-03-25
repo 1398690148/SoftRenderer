@@ -1,7 +1,7 @@
 ﻿#include <algorithm>
 #include "SRDeviceContext.h"
 #include "tbb/tbb.h"
-#include <iostream>
+
 SRDeviceContext::SRDeviceContext(void *gFbo, int width, int height)
 {
 	BLEND_DESC desc = { 0 };
@@ -37,7 +37,7 @@ void SRDeviceContext::IASetVertexBuffers(SRIBuffer *buf, const unsigned int *pSt
 	pVertexBuffer = buf;
 }
 
-void SRDeviceContext::IASetIndexBuffer(SRIBuffer * buf, unsigned int Offset)
+void SRDeviceContext::IASetIndexBuffer(SRIBuffer *buf, unsigned int Offset)
 {
 	pIndexBuffer = buf;
 	indices.clear();
@@ -93,11 +93,6 @@ void SRDeviceContext::OMGetBlendState(SRBlendState **ppBlendState, float *BlendF
 void SRDeviceContext::SetRenderState(ShaderState state)
 {
 	pShaderState = state;
-}
-
-void SRDeviceContext::SwapBuffer()
-{
-	Resolve();
 }
 
 void SRDeviceContext::VSSetConstantBuffers(unsigned int StartOffset, unsigned int NumBuffers, SRIBuffer *constantBuffer)
@@ -286,7 +281,8 @@ void SRDeviceContext::DrawIndex()
 		return {};
 	});
 	tbb::flow::function_node<int, std::vector<TriangleData>> vertex_node(g,
-		tbb::flow::unlimited, [&](const int i) {
+		tbb::flow::unlimited, [&](const int i) 
+	{
 		unsigned char *buffer = new unsigned char[160];
 		unsigned char *o0 = Vertex(indices[i][0], buffer);
 		unsigned char *o1 = Vertex(indices[i][1], buffer);
@@ -323,11 +319,10 @@ void SRDeviceContext::DrawIndex()
 		return v;
 	});
 	tbb::flow::function_node<std::vector<TriangleData>> pixel_node(g,
-		tbb::flow::unlimited, [&](std::vector<TriangleData> vertices) {
-
-		for (int i = 0; i < vertices.size(); i++)
+		tbb::flow::unlimited, [&](std::vector<TriangleData> triangleData) {
+		for (int i = 0; i < triangleData.size(); i++)
 		{
-			Triangle(vertices[i]);
+			Triangle(triangleData[i]);
 		}
 	});
 	tbb::flow::make_edge(start_node, vertex_node);
@@ -362,54 +357,107 @@ void SRDeviceContext::Triangle(TriangleData vertex)
 		bboxmax.x = min(clamp.x, max(bboxmax.x, points[i].x));
 		bboxmax.y = min(clamp.y, max(bboxmax.y, points[i].y));
 	}
-	tbb::parallel_for(bboxmin.x, bboxmax.x + 1, 1, [&](size_t x)
-	{
-		tbb::parallel_for(bboxmin.y, bboxmax.y + 1, 1, [&](size_t y)
+	bool alphaFlag = pBlendState->blendDesc.RenderTarget[0].BlendEnable;
+
+	auto fragment_func = [&](int x, int  y) {
+		if (x >= pViewports->Width || y >= pViewports->Height) return;
+		MSAAData curFrag;
+		auto IsInsideTriangle = [&curFrag, &points](glm::vec2 &pos, int idx) -> bool
 		{
-			glm::ivec2 P(x, y);
-			glm::vec3 bcScreen = Utils::Barycentric(points[0], points[1], points[2], glm::vec2(P.x + 0.5, P.y + 0.5));
-			MSAAData curFrag = CoverageCalc(x, y, points);
-			int coverage = 0;
-			auto &fragColor = pBackBuffer->GetPixel(P.x, P.y);
-			auto &fragDepth = pDepthStencilView->GetDepth(P.x, P.y);
-			for (int i = 0; i < 4; i++)
+			glm::vec3 barycentric = Utils::Barycentric(points[0], points[1], points[2], pos);
+			if (barycentric[0] < 0 || barycentric[1] < 0 || barycentric[2] < 0)
 			{
-				if (curFrag.coverage[i] && (pBlendState->blendDesc.RenderTarget[0].BlendEnable || curFrag.depth[i] < fragDepth[i]))
-				{
-					coverage++;
-				}
+				curFrag.coverage[idx] = 0;
+				curFrag.depth[idx] = FLT_MAX;
+				return false;
 			}
-			if (coverage == 0) return;
+			curFrag.coverage[idx] = 1;
+			curFrag.depth[idx] = Utils::BarycentricLerp(points[0], points[1], points[2], barycentric).z;
+			return true;
+		};
+		bool flag = IsInsideTriangle(glm::vec2(x + 0.25, y + 0.25), 0);
+		flag |= IsInsideTriangle(glm::vec2(x + 0.25, y + 0.75), 1);
+		flag |= IsInsideTriangle(glm::vec2(x + 0.75, y + 0.25), 2);
+		flag |= IsInsideTriangle(glm::vec2(x + 0.75, y + 0.75), 3);
+		if (!flag) return;
+		int coverage = 0;
+		auto &fragDepth = pDepthStencilView->GetDepth(x, y);
+		for (int i = 0; i < 4; i++)
+		{
+			if (curFrag.coverage[i] && (alphaFlag || curFrag.depth[i] < fragDepth[i]))
+			{
+				coverage++;
+			}
+		}
+		glm::vec4 color(0, 0, 0, 255);
+		glm::vec3 bcScreen = Utils::Barycentric(points[0], points[1], points[2], glm::vec2(x + 0.5, y + 0.5));
+		unsigned char *buffer = Interpolation(vertex, bcScreen);
+		bool discard = pPixelShader->fragment(buffer, color);
+		color = glm::vec4(min(255.0f, color[0]), min(255.0f, color[1]), min(255.0f, color[2]), min(255.0f, color[3]));
+		delete buffer;
+		//Alpha Test
+		if (alphaFlag && discard) return;
+		auto &fragColor = pBackBuffer->GetPixel(x, y);
+		for (int i = 0; i < 4; i++)
+		{
+			if (!curFrag.coverage[i]) continue;
+			//Alpha Blend
+			if (alphaFlag)
+			{
+				AlphaBlend(color, fragColor[i]);
+				fragColor[i] = color;
+				fragDepth[i] = curFrag.depth[i];
+			}
+			else if (curFrag.depth[i] < fragDepth[i])
+			{
+				fragColor[i] = color;
+				fragDepth[i] = curFrag.depth[i];
+			}
+		}
+	};
+
+	//auto nomsaafragment_func = [&](int x, int y) {
+	//	if (x >= pViewports->Width || y >= pViewports->Height) return;
+	//	glm::vec3 bcScreen = Utils::Barycentric(points[0], points[1], points[2], glm::vec2(x + 0.5, y + 0.5));
+	//	float depth = Utils::BarycentricLerp(points[0], points[1], points[2], bcScreen).z;
+	//	//Early-Z
+	//	if (bcScreen[0] < 0 || bcScreen[1] < 0 || bcScreen[2] < 0 ||
+	//		(!alphaFlag && pDepthStencilView->GetDepth(x, y)[0] < depth))
+	//		return;
+	//	{
+	//		glm::vec4 color(0, 0, 0, 255);
+	//		unsigned char *buffer = Interpolation(vertex, bcScreen);
+	//		bool discard = pPixelShader->fragment(buffer, color);
+	//		delete buffer;
+	//		if (pBlendState->blendDesc.RenderTarget[0].BlendEnable)
+	//		{
+	//			if (discard) return;
+	//			//AlphaBlend(color, );
+	//			pBackBuffer->SetPixel(x, y, 0, color[0], color[1], color[2], color[3]);
+	//			return;
+	//		}
+	//		if (pDepthStencilView->GetDepth(x, y)[0] < depth)
+	//		{
+	//			return;
+	//		}
+	//		pBackBuffer->SetPixel(x, y, 0, color[0], color[1], color[2], color[3]);
+	//		pDepthStencilView->SetDepth(x, y, 0, depth);
+	//	}
+	//};
+
+	tbb::parallel_for(bboxmin.x, bboxmax.x + 1, 2, [&](size_t x)
+	{
+		for (size_t y = bboxmin.y; y <= bboxmax.y; y += 2)
+		{
 			if (vertexOutMapTable.count("SV_TEXCOORD0"))
-				DDXDDY(vertex, points[0], points[1], points[2], glm::vec2(P.x + 0.5, P.y + 0.5));
-			glm::vec4 color(0, 0, 0, 0);
-			unsigned char *buffer = Interpolation(vertex, bcScreen);
-			bool discard = pPixelShader->fragment(buffer, color);
-			color.r = min(255.0f, color.r);
-			color.g = min(255.0f, color.g);
-			color.b = min(255.0f, color.b);
-			color.a = min(255.0f, color.a);
-			delete buffer;
-			//Alpha Test
-			if (pBlendState->blendDesc.RenderTarget[0].BlendEnable && discard) return;
-			for (int i = 0; i < 4; i++)
-			{
-				if (!curFrag.coverage[i]) continue;
-				//Alpha Blend
-				if (pBlendState->blendDesc.RenderTarget[0].BlendEnable)
-				{
-					AlphaBlend(color, fragColor[i]);
-					fragColor[i] = color;
-					fragDepth[i] = curFrag.depth[i];
-				}
-				else if (curFrag.depth[i] < fragDepth[i])
-				{
-					fragColor[i] = color;
-					fragDepth[i] = curFrag.depth[i];
-				}
-			}
-		});
+				DDXDDY(vertex, points[0], points[1], points[2], glm::vec2(x + 0.5, y + 0.5));
+			fragment_func(x, y);
+			fragment_func(x + 1, y);
+			fragment_func(x, y + 1);
+			fragment_func(x + 1, y + 1);
+		}
 	});
+	
 }
 
 void SRDeviceContext::ParseVertexBuffer()
@@ -499,8 +547,8 @@ void SRDeviceContext::DDXDDY(TriangleData vertex, glm::vec3 &t0, glm::vec3 &t1, 
 	quadFragment.m_fragments[1] /= quadFragment.m_fragments[1].z;
 	quadFragment.m_fragments[2] = Utils::BarycentricLerp(texCoord0, texCoord1, texCoord2, Utils::Barycentric(t0, t1, t2, glm::vec3(P.x, P.y + 1, 1.0)));
 	quadFragment.m_fragments[2] /= quadFragment.m_fragments[2].z;
-	quadFragment.m_fragments[3] = Utils::BarycentricLerp(texCoord0, texCoord1, texCoord2, Utils::Barycentric(t0, t1, t2, glm::vec3(P.x + 1, P.y + 1, 1.0)));
-	quadFragment.m_fragments[3] /= quadFragment.m_fragments[3].z;
+	//quadFragment.m_fragments[3] = Utils::BarycentricLerp(texCoord0, texCoord1, texCoord2, Utils::Barycentric(t0, t1, t2, glm::vec3(P.x + 1, P.y + 1, 1.0)));
+	//quadFragment.m_fragments[3] /= quadFragment.m_fragments[3].z;
 	glm::vec2 ddx(quadFragment.dUdx(), quadFragment.dUdy());
 	glm::vec2 ddy(quadFragment.dVdx(), quadFragment.dVdy());
 	memcpy(&pPixelShader->dFdx.local(), &ddx, sizeof(glm::vec2));
@@ -509,13 +557,13 @@ void SRDeviceContext::DDXDDY(TriangleData vertex, glm::vec3 &t0, glm::vec3 &t1, 
 
 void SRDeviceContext::prePerspCorrection(TriangleData &output)
 {
-	unsigned int normalIdx = vertexOutMapTable["SV_Normal"];
-	unsigned int texCoordIdx = vertexOutMapTable["SV_TEXCOORD0"];
 	for (int i = 0; i < 3; i++)
 	{
 		float t = 1.0f / output[i][posIdx].w;
 		for (int j = 0; j < output[i].size(); j++)
+		{
 			output[i][j] *= t;
+		}
 	}
 }
 
@@ -658,45 +706,23 @@ void SRDeviceContext::BindConstanBuffer()
 
 void SRDeviceContext::Resolve()
 {
+	int width = pViewports->Width;
+	int height = pViewports->Height - 1;
 	tbb::parallel_for(0, pViewports->Width, 1, [&](size_t x)
 	{
-		tbb::parallel_for(0, pViewports->Height, 1, [&](size_t y)
+		for (int y = 0; y < height; y++)
 		{
-			int idx = x + (pViewports->Height - 1 - y) * pViewports->Width;
+			int idx = x + (height - y) * width;
 			glm::vec4 color(0, 0, 0, 0);
+			auto &fragCache = pBackBuffer->GetPixel(x, y);
 			for (int i = 0; i < 4; i++)
 			{
-				color += pBackBuffer->GetPixel(x, y)[i];
+				color += fragCache[i];
 			}
 			color /= 4.f;
 			colorBuffer[idx * 4] = color.b;
 			colorBuffer[idx * 4 + 1] = color.g;
 			colorBuffer[idx * 4 + 2] = color.r;
-			colorBuffer[idx * 4 + 3] = color.a;
-		});
-	});
-
-}
-
-MSAAData SRDeviceContext::CoverageCalc(int x, int y, std::vector<glm::vec3> points)
-{
-	MSAAData data;
-	auto IsInsideTriangle = [&](glm::vec2 &pos, int idx)
-	{
-		glm::vec3 barycentric = Utils::Barycentric(points[0], points[1], points[2], pos);
-		if (barycentric[0] < 0 || barycentric[1] < 0 || barycentric[2] < 0)
-		{
-			data.coverage[idx] = 0;
-			data.depth[idx] = FLT_MAX;
-			return;
 		}
-		data.coverage[idx] = 1;
-		data.depth[idx] = Utils::BarycentricLerp(points[0], points[1], points[2], barycentric).z;
-		return;
-	};
-	IsInsideTriangle(glm::vec2(x, y) + glm::vec2(0.25, 0.25), 0);
-	IsInsideTriangle(glm::vec2(x, y) + glm::vec2(0.25, 0.75), 1);
-	IsInsideTriangle(glm::vec2(x, y) + glm::vec2(0.75, 0.25), 2);
-	IsInsideTriangle(glm::vec2(x, y) + glm::vec2(0.75, 0.75), 3);
-	return data;
+	});
 }

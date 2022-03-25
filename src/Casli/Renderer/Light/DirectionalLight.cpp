@@ -1,6 +1,4 @@
 #include "DirectionalLight.h"
-#include <Graphics.h>
-#include <glm/gtx/transform.hpp>
 
 DirectionalLight::DirectionalLight(Graphics &gfx, glm::vec3 color, glm::vec3 dir)
 	: mesh(gfx, 5), cbuf(gfx)

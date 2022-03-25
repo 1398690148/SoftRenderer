@@ -1,6 +1,4 @@
 #include "SpotLight.h"
-#include <Graphics.h>
-#include <glm/gtx/transform.hpp>
 
 SpotLight::SpotLight(Graphics &gfx, glm::vec3 color, glm::vec3 position, glm::vec3 dir, glm::vec2 angleCoe, glm::vec3 attenuation)
 	: mesh(gfx, 5), cbuf(gfx)

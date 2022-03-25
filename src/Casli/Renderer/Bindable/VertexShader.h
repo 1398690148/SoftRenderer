@@ -1,6 +1,7 @@
 #pragma once
 #include "Bindable.h"
-#include "SRIVertexShader.h"
+
+class SRIVertexShader;
 
 class VertexShader : public Bindable
 {

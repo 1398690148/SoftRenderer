@@ -1,6 +1,5 @@
 #include <glm/vec3.hpp>
 #include <vector>
-#include <memory>
 #include <Drawable.h>
 
 class Light;
