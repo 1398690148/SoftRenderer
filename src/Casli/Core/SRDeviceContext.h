@@ -62,15 +62,14 @@ private:
 	void ViewportTransform(TriangleData &vertex);
 	unsigned char *Vertex(int idx, unsigned char *vertexBuffer);
 	void DDXDDY(TriangleData vertex, glm::vec3 &t0, glm::vec3 &t1, glm::vec3 &t2, glm::vec2 &P);
-	void prePerspCorrection(TriangleData &output);
-	unsigned char * Interpolation(TriangleData vertex, glm::vec3 &bcScreen);
+	void PrePerspCorrection(TriangleData &output);
+	void Interpolation(unsigned char *buffer, TriangleData vertex, glm::vec3 &bcScreen);
 	//Alpha Blend
 	void AlphaBlend(glm::vec4 &color, glm::vec4 dstColor);
 	void ParseSrcBlendParam(BLEND blend, glm::vec4 &srcColor, glm::vec4 dstColor);
 	void ParseDstBlendParam(BLEND blend, glm::vec4 srcColor, glm::vec4 &dstColor);
 
 	void BindConstanBuffer();
-
 private:
 	SRIBuffer *pVertexBuffer{};
 	//顶点缓存中的数据
@@ -95,6 +94,7 @@ private:
 	glm::mat4 Viewport;
 	std::unordered_map<std::string, int> vertexOutMapTable;
 	int posIdx = -1;
+	float frameTime = 0;
 };
 
 class QuadFragments

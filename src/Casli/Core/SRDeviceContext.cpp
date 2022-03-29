@@ -1,7 +1,8 @@
 ﻿#include <algorithm>
 #include "SRDeviceContext.h"
 #include "tbb/tbb.h"
-
+#include <tbb/tick_count.h>
+#include <iostream>
 SRDeviceContext::SRDeviceContext(void *gFbo, int width, int height)
 {
 	BLEND_DESC desc = { 0 };
@@ -24,6 +25,7 @@ SRDeviceContext::~SRDeviceContext()
 
 void SRDeviceContext::ClearRenderTargetView(SRRenderTargetView *RenderTargetView, const glm::vec4 &ColorRGBA)
 {
+	frameTime = 0;
 	pBackBuffer->ClearBuffer(ColorRGBA);
 }
 
@@ -281,18 +283,14 @@ void SRDeviceContext::DrawIndex()
 		return {};
 	});
 	tbb::flow::function_node<int, std::vector<TriangleData>> vertex_node(g,
-		tbb::flow::unlimited, [&](const int i) 
+		tbb::flow::unlimited, [&](const int i)
 	{
 		unsigned char *buffer = new unsigned char[160];
 		unsigned char *o0 = Vertex(indices[i][0], buffer);
 		unsigned char *o1 = Vertex(indices[i][1], buffer);
 		unsigned char *o2 = Vertex(indices[i][2], buffer);
 
-		TriangleData vertex(3);
-		for (int i = 0; i < 3; i++)
-		{
-			vertex[i].resize(vertexOutMapTable.size());
-		}
+		TriangleData vertex(3, VertexData(vertexOutMapTable.size()));
 		ParseShaderOutput(o0, vertex[0]);
 		ParseShaderOutput(o1, vertex[1]);
 		ParseShaderOutput(o2, vertex[2]);
@@ -306,7 +304,7 @@ void SRDeviceContext::DrawIndex()
 			vertex[0] = clipped_vertices[0];
 			vertex[1] = clipped_vertices[i + 1];
 			vertex[2] = clipped_vertices[i + 2];
-			prePerspCorrection(vertex);
+			PrePerspCorrection(vertex);
 			//视口变换
 			ViewportTransform(vertex);
 			if (shouldCulled(vertex[0][posIdx], vertex[1][posIdx], vertex[2][posIdx])) continue;
@@ -359,45 +357,61 @@ void SRDeviceContext::Triangle(TriangleData vertex)
 	}
 	bool alphaFlag = pBlendState->blendDesc.RenderTarget[0].BlendEnable;
 
-	auto fragment_func = [&](int x, int  y) {
+	auto fragment_func = [&](int x, int  y, unsigned char *buffer) {
 		if (x >= pViewports->Width || y >= pViewports->Height) return;
 		MSAAData curFrag;
-		auto IsInsideTriangle = [&curFrag, &points](glm::vec2 &pos, int idx) -> bool
+
+		auto IsInsideTriangle = [&](glm::vec2 &pos, int idx) -> bool
 		{
-			glm::vec3 barycentric = Utils::Barycentric(points[0], points[1], points[2], pos);
-			if (barycentric[0] < 0 || barycentric[1] < 0 || barycentric[2] < 0)
+			auto edgeFunction = [](const glm::vec2 &a, const glm::vec2 &b, const glm::vec2 &c)
+			{
+				return (c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x);
+			};
+			float w0 = edgeFunction(points[0], points[1], pos);
+			float w1 = edgeFunction(points[1], points[2], pos);
+			float w2 = edgeFunction(points[2], points[0], pos);
+			//
+			
+			if (w0 > 0 || w1 > 0 || w2 > 0)
 			{
 				curFrag.coverage[idx] = 0;
 				curFrag.depth[idx] = FLT_MAX;
 				return false;
 			}
+			float area = edgeFunction(points[0], points[1], points[2]);
 			curFrag.coverage[idx] = 1;
-			curFrag.depth[idx] = Utils::BarycentricLerp(points[0], points[1], points[2], barycentric).z;
+			curFrag.depth[idx] = Utils::BarycentricLerp(points[0], points[1], points[2], glm::vec3(w0 / area, w1 / area, w2 / area)).z;
+
 			return true;
 		};
-		bool flag = IsInsideTriangle(glm::vec2(x + 0.25, y + 0.25), 0);
-		flag |= IsInsideTriangle(glm::vec2(x + 0.25, y + 0.75), 1);
-		flag |= IsInsideTriangle(glm::vec2(x + 0.75, y + 0.25), 2);
-		flag |= IsInsideTriangle(glm::vec2(x + 0.75, y + 0.75), 3);
-		if (!flag) return;
-		int coverage = 0;
-		auto &fragDepth = pDepthStencilView->GetDepth(x, y);
-		for (int i = 0; i < 4; i++)
-		{
-			if (curFrag.coverage[i] && (alphaFlag || curFrag.depth[i] < fragDepth[i]))
-			{
-				coverage++;
-			}
-		}
-		glm::vec4 color(0, 0, 0, 255);
+		//0.2
+		bool isInside0 = IsInsideTriangle(glm::vec2(x + 0.25, y + 0.25), 0);
+		bool isInside1 = IsInsideTriangle(glm::vec2(x + 0.25, y + 0.75), 1);
+		bool isInside2 = IsInsideTriangle(glm::vec2(x + 0.75, y + 0.25), 2);
+		bool isInside3 = IsInsideTriangle(glm::vec2(x + 0.75, y + 0.75), 3);
+		if (!isInside0 && !isInside1 && !isInside2 && !isInside3) return;
+
+		//0.012
 		glm::vec3 bcScreen = Utils::Barycentric(points[0], points[1], points[2], glm::vec2(x + 0.5, y + 0.5));
-		unsigned char *buffer = Interpolation(vertex, bcScreen);
+		glm::vec4 color(0, 0, 0, 255);
+
+		//0.02 调用函数开销很大
+		//Interpolation(buffer, vertex, bcScreen);
+		for (int i = 0; i < pPixelShader->inDesc.size(); i++)
+		{
+			glm::vec4 attribute = Utils::BarycentricLerp(vertex[0][i], vertex[1][i], vertex[2][i], bcScreen);
+			attribute /= attribute.w;
+			memcpy(buffer + pPixelShader->inDesc[i].Offset, &attribute, pPixelShader->inDesc[i].Size);
+		}
+		//0.04
 		bool discard = pPixelShader->fragment(buffer, color);
+
 		color = glm::vec4(min(255.0f, color[0]), min(255.0f, color[1]), min(255.0f, color[2]), min(255.0f, color[3]));
-		delete buffer;
 		//Alpha Test
 		if (alphaFlag && discard) return;
+
 		auto &fragColor = pBackBuffer->GetPixel(x, y);
+		auto &fragDepth = pDepthStencilView->GetDepth(x, y);
 		for (int i = 0; i < 4; i++)
 		{
 			if (!curFrag.coverage[i]) continue;
@@ -406,7 +420,7 @@ void SRDeviceContext::Triangle(TriangleData vertex)
 			{
 				AlphaBlend(color, fragColor[i]);
 				fragColor[i] = color;
-				fragDepth[i] = curFrag.depth[i];
+				//fragDepth[i] = curFrag.depth[i];
 			}
 			else if (curFrag.depth[i] < fragDepth[i])
 			{
@@ -414,6 +428,7 @@ void SRDeviceContext::Triangle(TriangleData vertex)
 				fragDepth[i] = curFrag.depth[i];
 			}
 		}
+
 	};
 
 	//auto nomsaafragment_func = [&](int x, int y) {
@@ -444,20 +459,41 @@ void SRDeviceContext::Triangle(TriangleData vertex)
 	//		pDepthStencilView->SetDepth(x, y, 0, depth);
 	//	}
 	//};
-
+	//for (int x = bboxmin.x; x <= bboxmax.x; x+=2)
 	tbb::parallel_for(bboxmin.x, bboxmax.x + 1, 2, [&](size_t x)
 	{
+		unsigned char *buffer = new unsigned char[100];
 		for (size_t y = bboxmin.y; y <= bboxmax.y; y += 2)
+		//	tbb::parallel_for(bboxmin.y, bboxmax.y, 2, [&](size_t y)
 		{
+
 			if (vertexOutMapTable.count("SV_TEXCOORD0"))
-				DDXDDY(vertex, points[0], points[1], points[2], glm::vec2(x + 0.5, y + 0.5));
-			fragment_func(x, y);
-			fragment_func(x + 1, y);
-			fragment_func(x, y + 1);
-			fragment_func(x + 1, y + 1);
-		}
+			{
+				unsigned int texCoordIdx = vertexOutMapTable["SV_TEXCOORD0"];
+				QuadFragments quadFragment;
+				glm::vec3 texCoord0 = vertex[0][texCoordIdx];
+				glm::vec3 texCoord1 = vertex[1][texCoordIdx];
+				glm::vec3 texCoord2 = vertex[2][texCoordIdx];
+				quadFragment.m_fragments[0] = Utils::BarycentricLerp(texCoord0, texCoord1, texCoord2, Utils::Barycentric(points[0], points[1], points[2], glm::vec3(x + 0.5, y + 0.5, 1.0)));
+				quadFragment.m_fragments[0] /= quadFragment.m_fragments[0].z;											 
+				quadFragment.m_fragments[1] = Utils::BarycentricLerp(texCoord0, texCoord1, texCoord2, Utils::Barycentric(points[0], points[1], points[2], glm::vec3(x + 1.5, y + 0.5, 1.0)));
+				quadFragment.m_fragments[1] /= quadFragment.m_fragments[1].z;											 
+				quadFragment.m_fragments[2] = Utils::BarycentricLerp(texCoord0, texCoord1, texCoord2, Utils::Barycentric(points[0], points[1], points[2], glm::vec3(x + 0.5, y + 1.5, 1.0)));
+				quadFragment.m_fragments[2] /= quadFragment.m_fragments[2].z;											 
+				glm::vec2 ddx(quadFragment.dUdx(), quadFragment.dUdy());
+				glm::vec2 ddy(quadFragment.dVdx(), quadFragment.dVdy());
+				memcpy(&pPixelShader->dFdx.local(), &ddx, sizeof(glm::vec2));
+				memcpy(&pPixelShader->dFdy.local(), &ddy, sizeof(glm::vec2));
+			}
+			
+			fragment_func(x, y, buffer);
+			fragment_func(x + 1, y, buffer);
+			fragment_func(x, y + 1, buffer);
+			fragment_func(x + 1, y + 1, buffer);
+			
+		}/*);*/
+		delete buffer;
 	});
-	
 }
 
 void SRDeviceContext::ParseVertexBuffer()
@@ -536,6 +572,8 @@ unsigned char * SRDeviceContext::Vertex(int idx, unsigned char *vertexBuffer)
 
 void SRDeviceContext::DDXDDY(TriangleData vertex, glm::vec3 &t0, glm::vec3 &t1, glm::vec3 &t2, glm::vec2 &P)
 {
+	tbb::tick_count time = tbb::tick_count().now();
+
 	unsigned int texCoordIdx = vertexOutMapTable["SV_TEXCOORD0"];
 	QuadFragments quadFragment;
 	glm::vec3 texCoord0 = vertex[0][texCoordIdx];
@@ -547,15 +585,17 @@ void SRDeviceContext::DDXDDY(TriangleData vertex, glm::vec3 &t0, glm::vec3 &t1, 
 	quadFragment.m_fragments[1] /= quadFragment.m_fragments[1].z;
 	quadFragment.m_fragments[2] = Utils::BarycentricLerp(texCoord0, texCoord1, texCoord2, Utils::Barycentric(t0, t1, t2, glm::vec3(P.x, P.y + 1, 1.0)));
 	quadFragment.m_fragments[2] /= quadFragment.m_fragments[2].z;
-	//quadFragment.m_fragments[3] = Utils::BarycentricLerp(texCoord0, texCoord1, texCoord2, Utils::Barycentric(t0, t1, t2, glm::vec3(P.x + 1, P.y + 1, 1.0)));
-	//quadFragment.m_fragments[3] /= quadFragment.m_fragments[3].z;
+	quadFragment.m_fragments[3] = Utils::BarycentricLerp(texCoord0, texCoord1, texCoord2, Utils::Barycentric(t0, t1, t2, glm::vec3(P.x + 1, P.y + 1, 1.0)));
+	quadFragment.m_fragments[3] /= quadFragment.m_fragments[3].z;
 	glm::vec2 ddx(quadFragment.dUdx(), quadFragment.dUdy());
 	glm::vec2 ddy(quadFragment.dVdx(), quadFragment.dVdy());
 	memcpy(&pPixelShader->dFdx.local(), &ddx, sizeof(glm::vec2));
 	memcpy(&pPixelShader->dFdy.local(), &ddy, sizeof(glm::vec2));
+	frameTime += (tbb::tick_count::now() - time).seconds();
+
 }
 
-void SRDeviceContext::prePerspCorrection(TriangleData &output)
+void SRDeviceContext::PrePerspCorrection(TriangleData &output)
 {
 	for (int i = 0; i < 3; i++)
 	{
@@ -567,17 +607,18 @@ void SRDeviceContext::prePerspCorrection(TriangleData &output)
 	}
 }
 
-unsigned char *SRDeviceContext::Interpolation(TriangleData vertex, glm::vec3 &bcScreen)
+void SRDeviceContext::Interpolation(unsigned char *buffer, TriangleData vertex, glm::vec3 &bcScreen)
 {
 	//插值其他信息
-	unsigned char *buffer = new unsigned char[100];
+
 	for (int i = 0; i < pPixelShader->inDesc.size(); i++)
 	{
+
 		glm::vec4 attribute = Utils::BarycentricLerp(vertex[0][i], vertex[1][i], vertex[2][i], bcScreen);
 		attribute /= attribute.w;
 		memcpy(buffer + pPixelShader->inDesc[i].Offset, &attribute, pPixelShader->inDesc[i].Size);
 	}
-	return buffer;
+
 }
 
 void SRDeviceContext::AlphaBlend(glm::vec4 &color, glm::vec4 dstColor)
@@ -725,4 +766,6 @@ void SRDeviceContext::Resolve()
 			colorBuffer[idx * 4 + 2] = color.r;
 		}
 	});
+
+	std::cout << frameTime << std::endl;
 }
