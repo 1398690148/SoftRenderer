@@ -356,6 +356,11 @@ void SRDeviceContext::Triangle(TriangleData vertex)
 		bboxmax.y = min(clamp.y, max(bboxmax.y, points[i].y));
 	}
 	bool alphaFlag = pBlendState->blendDesc.RenderTarget[0].BlendEnable;
+	auto edgeFunction = [](const glm::vec2 &a, const glm::vec2 &b, const glm::vec2 &c)
+	{
+		return (c.x - a.x) * (a.y - b.y) - (c.y - a.y) * (a.x - b.x);
+	};
+	float area = edgeFunction(points[0], points[1], points[2]);
 
 	auto fragment_func = [&](int x, int  y, unsigned char *buffer) {
 		if (x >= pViewports->Width || y >= pViewports->Height) return;
@@ -363,27 +368,33 @@ void SRDeviceContext::Triangle(TriangleData vertex)
 
 		auto IsInsideTriangle = [&](glm::vec2 &pos, int idx) -> bool
 		{
-			auto edgeFunction = [](const glm::vec2 &a, const glm::vec2 &b, const glm::vec2 &c)
-			{
-				return (c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x);
-			};
 			float w0 = edgeFunction(points[0], points[1], pos);
 			float w1 = edgeFunction(points[1], points[2], pos);
 			float w2 = edgeFunction(points[2], points[0], pos);
-			//
-			
-			if (w0 > 0 || w1 > 0 || w2 > 0)
+			if (w0 < 0 || w1 < 0 || w2 < 0)
 			{
 				curFrag.coverage[idx] = 0;
 				curFrag.depth[idx] = FLT_MAX;
 				return false;
 			}
-			float area = edgeFunction(points[0], points[1], points[2]);
 			curFrag.coverage[idx] = 1;
-			curFrag.depth[idx] = Utils::BarycentricLerp(points[0], points[1], points[2], glm::vec3(w0 / area, w1 / area, w2 / area)).z;
-
+			curFrag.depth[idx] = Utils::BarycentricLerp(points[0], points[1], points[2], glm::vec3(w1, w2, w0) / area).z;
 			return true;
 		};
+		//auto IsInsideTriangle = [&curFrag, &points](glm::vec2 &pos, int idx) -> bool
+		//{
+		//	glm::vec3 barycentric = Utils::Barycentric(points[0], points[1], points[2], pos);
+		//	if (barycentric[0] < 0 || barycentric[1] < 0 || barycentric[2] < 0)
+		//	{
+		//		curFrag.coverage[idx] = 0;
+		//		curFrag.depth[idx] = FLT_MAX;
+		//		return false;
+		//	}
+		//	curFrag.coverage[idx] = 1;
+		//	curFrag.depth[idx] = Utils::BarycentricLerp(points[0], points[1], points[2], barycentric).z;
+		//	return true;
+		//};
+
 		//0.2
 		bool isInside0 = IsInsideTriangle(glm::vec2(x + 0.25, y + 0.25), 0);
 		bool isInside1 = IsInsideTriangle(glm::vec2(x + 0.25, y + 0.75), 1);
@@ -392,7 +403,11 @@ void SRDeviceContext::Triangle(TriangleData vertex)
 		if (!isInside0 && !isInside1 && !isInside2 && !isInside3) return;
 
 		//0.012
-		glm::vec3 bcScreen = Utils::Barycentric(points[0], points[1], points[2], glm::vec2(x + 0.5, y + 0.5));
+		glm::vec2 P(x + 0.5, y + 0.5);
+		float w0 = edgeFunction(points[0], points[1], P);
+		float w1 = edgeFunction(points[1], points[2], P);
+		float w2 = edgeFunction(points[2], points[0], P);
+		glm::vec3 bcScreen = glm::vec3(w1, w2, w0) / area;
 		glm::vec4 color(0, 0, 0, 255);
 
 		//0.02 调用函数开销很大
