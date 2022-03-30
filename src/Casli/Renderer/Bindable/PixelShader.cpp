@@ -5,7 +5,7 @@ PixelShader::PixelShader(Graphics &gfx, SRIPixelShader *shader)
 	pShader = shader;
 }
 
-void PixelShader::Bind(Graphics & gfx) noexcept
+void PixelShader::Bind(Graphics & gfx)
 {
 	GetContext(gfx)->PSSetShader(pShader);
 }

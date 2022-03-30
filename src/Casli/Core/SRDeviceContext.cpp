@@ -92,9 +92,9 @@ void SRDeviceContext::OMGetBlendState(SRBlendState **ppBlendState, float *BlendF
 	*SampleMask = pSampleMask;
 }
 
-void SRDeviceContext::SetRenderState(ShaderState state)
+void SRDeviceContext::SetRenderState(RenderState state)
 {
-	pShaderState = state;
+	pRenderState = state;
 }
 
 void SRDeviceContext::VSSetConstantBuffers(unsigned int StartOffset, unsigned int NumBuffers, SRIBuffer *constantBuffer)
@@ -171,7 +171,7 @@ std::vector<std::vector<glm::vec4>> SRDeviceContext::ClipSutherlandHodgemanAux(c
 			insidePolygon.push_back(endVert);
 		}
 	}
-	return insidePolygon;
+	return std::move(insidePolygon);
 }
 
 
@@ -264,7 +264,7 @@ std::vector<std::vector<glm::vec4>> SRDeviceContext::ClipSutherlandHodgeman(
 			insideVertices.push_back(endVert);
 		}
 	}
-	return insideVertices;
+	return std::move(insideVertices);
 }
 
 void SRDeviceContext::DrawIndex()
@@ -295,7 +295,7 @@ void SRDeviceContext::DrawIndex()
 		ParseShaderOutput(o1, vertex[1]);
 		ParseShaderOutput(o2, vertex[2]);
 
-		std::vector<VertexData> clipped_vertices = ClipSutherlandHodgeman(vertex[0], vertex[1], vertex[2], 0.1, 100);
+		TriangleData clipped_vertices = ClipSutherlandHodgeman(vertex[0], vertex[1], vertex[2], 0.1, 100);
 		int len = (int)clipped_vertices.size() - 2;
 		std::vector<TriangleData> v;
 		for (int i = 0; i < len; i++)
@@ -308,7 +308,7 @@ void SRDeviceContext::DrawIndex()
 			//视口变换
 			ViewportTransform(vertex);
 			if (shouldCulled(vertex[0][posIdx], vertex[1][posIdx], vertex[2][posIdx])) continue;
-			v.push_back(vertex);
+			v.push_back(std::move(vertex));
 		}
 		delete o0;
 		delete o1;
@@ -320,7 +320,7 @@ void SRDeviceContext::DrawIndex()
 		tbb::flow::unlimited, [&](std::vector<TriangleData> triangleData) {
 		for (int i = 0; i < triangleData.size(); i++)
 		{
-			Triangle(triangleData[i]);
+			DrawTriangle(triangleData[i]);
 		}
 	});
 	tbb::flow::make_edge(start_node, vertex_node);
@@ -332,17 +332,20 @@ void SRDeviceContext::DrawIndex()
 
 bool SRDeviceContext::shouldCulled(const glm::ivec2 &v0, const glm::ivec2 &v1, const glm::ivec2 &v2)
 {
-	if (pShaderState.m_CullFaceMode == CullFaceMode::CULL_DISABLE) return false;
+	if (pRenderState.m_CullFaceMode == CullFaceMode::CULL_DISABLE) return false;
 	//Back face culling in screen space
 	auto e1 = v1 - v0;
 	auto e2 = v2 - v0;
 	int orient = e1.x * e2.y - e1.y * e2.x;
-	return pShaderState.m_CullFaceMode == CullFaceMode::CULL_FRONT ? orient > 0 : orient < 0;
+	return pRenderState.m_CullFaceMode == CullFaceMode::CULL_FRONT ? orient > 0 : orient < 0;
 }
 
-void SRDeviceContext::Triangle(TriangleData vertex)
+void SRDeviceContext::DrawTriangle(TriangleData &vertex)
 {
-	std::vector<glm::vec3> points = { vertex[0][posIdx], vertex[1][posIdx], vertex[2][posIdx] };
+	std::vector<glm::vec3> points(3);
+	points[0] = vertex[0][posIdx];
+	points[1] = vertex[1][posIdx];
+	points[2] = vertex[2][posIdx];
 
 	glm::ivec2 bboxmin(pViewports->Width - 1, pViewports->Height - 1);
 	glm::ivec2 bboxmax(0, 0);
@@ -356,62 +359,56 @@ void SRDeviceContext::Triangle(TriangleData vertex)
 		bboxmax.y = min(clamp.y, max(bboxmax.y, points[i].y));
 	}
 	bool alphaFlag = pBlendState->blendDesc.RenderTarget[0].BlendEnable;
-	auto edgeFunction = [](const glm::vec2 &a, const glm::vec2 &b, const glm::vec2 &c)
-	{
-		return (c.x - a.x) * (a.y - b.y) - (c.y - a.y) * (a.x - b.x);
-	};
-	float area = edgeFunction(points[0], points[1], points[2]);
+	float delta0X = points[0].x - points[1].x;
+	float delta1X = points[1].x - points[2].x;
+	float delta2X = points[2].x - points[0].x;
 
-	auto fragment_func = [&](int x, int  y, unsigned char *buffer) -> bool {
+	float delta0Y = points[0].y - points[1].y;
+	float delta1Y = points[1].y - points[2].y;
+	float delta2Y = points[2].y - points[0].y;
+	float area = (points[2].x - points[0].x) * delta0Y - (points[2].y - points[0].y) * delta0X; 
+
+	auto fragment_func = [&](int x, int  y, unsigned char *buffer) -> bool 
+	{
 		if (x >= pViewports->Width || y >= pViewports->Height) return false;
 		MSAAData curFrag;
-
-		auto IsInsideTriangle = [&](glm::vec2 &pos, int idx) -> bool
+		glm::vec2 P(x + 0.5, y + 0.5);
+		float w0 = delta0Y * (P.x - points[0].x) - delta0X * (P.y - points[0].y);
+		float w1 = delta1Y * (P.x - points[1].x) - delta1X * (P.y - points[1].y);
+		float w2 = delta2Y * (P.x - points[2].x) - delta2X * (P.y - points[2].y);
+		auto IsInsideTriangle = [&](float w0, float w1, float w2, glm::vec2 &pos, int idx) -> bool
 		{
-			float w0 = edgeFunction(points[0], points[1], pos);
-			float w1 = edgeFunction(points[1], points[2], pos);
-			float w2 = edgeFunction(points[2], points[0], pos);
+			w0 += (pos.x * delta0Y - pos.y * delta0X);
+			w1 += (pos.x * delta1Y - pos.y * delta1X);
+			w2 += (pos.x * delta2Y - pos.y * delta2X);
+
 			if (w0 < 0 || w1 < 0 || w2 < 0)
 			{
 				curFrag.coverage[idx] = 0;
-				curFrag.depth[idx] = FLT_MAX;
 				return false;
 			}
 			curFrag.coverage[idx] = 1;
 			curFrag.depth[idx] = Utils::BarycentricLerp(points[0], points[1], points[2], glm::vec3(w1, w2, w0) / area).z;
 			return true;
 		};
-
-		//0.2
-		bool isInside0 = IsInsideTriangle(glm::vec2(x + 0.25, y + 0.25), 0);
-		bool isInside1 = IsInsideTriangle(glm::vec2(x + 0.25, y + 0.75), 1);
-		bool isInside2 = IsInsideTriangle(glm::vec2(x + 0.75, y + 0.25), 2);
-		bool isInside3 = IsInsideTriangle(glm::vec2(x + 0.75, y + 0.75), 3);
+		bool isInside0 = IsInsideTriangle(w0, w1, w2, glm::vec2(-0.25, -0.25), 0);
+		bool isInside1 = IsInsideTriangle(w0, w1, w2, glm::vec2(-0.25, 0.25), 1);
+		bool isInside2 = IsInsideTriangle(w0, w1, w2, glm::vec2(0.25, -0.25), 2);
+		bool isInside3 = IsInsideTriangle(w0, w1, w2, glm::vec2(0.25, 0.25), 3);
 		if (!isInside0 && !isInside1 && !isInside2 && !isInside3) return false;
 
-		//0.012
-		glm::vec2 P(x + 0.5, y + 0.5);
-		float w0 = edgeFunction(points[0], points[1], P);
-		float w1 = edgeFunction(points[1], points[2], P);
-		float w2 = edgeFunction(points[2], points[0], P);
 		glm::vec3 bcScreen = glm::vec3(w1, w2, w0) / area;
-		glm::vec4 color(0, 0, 0, 255);
-
-		//0.02 调用函数开销很大
-		//Interpolation(buffer, vertex, bcScreen);
 		for (int i = 0; i < pPixelShader->inDesc.size(); i++)
 		{
 			glm::vec4 attribute = Utils::BarycentricLerp(vertex[0][i], vertex[1][i], vertex[2][i], bcScreen);
 			attribute /= attribute.w;
 			memcpy(buffer + pPixelShader->inDesc[i].Offset, &attribute, pPixelShader->inDesc[i].Size);
 		}
-		//0.04
+		glm::vec4 color(0, 0, 0, 255);
 		bool discard = pPixelShader->fragment(buffer, color);
-
-		color = glm::vec4(min(255.0f, color[0]), min(255.0f, color[1]), min(255.0f, color[2]), min(255.0f, color[3]));
 		//Alpha Test
 		if (alphaFlag && discard) return true;
-
+		color = glm::vec4(min(255.0f, color[0]), min(255.0f, color[1]), min(255.0f, color[2]), min(255.0f, color[3]));
 		auto &fragColor = pBackBuffer->GetPixel(x, y);
 		auto &fragDepth = pDepthStencilView->GetDepth(x, y);
 		for (int i = 0; i < 4; i++)
@@ -431,32 +428,31 @@ void SRDeviceContext::Triangle(TriangleData vertex)
 		}
 		return true;
 	};
-
+	auto InterpolationTexCoords = [&](const glm::vec3 &texCoord0, const glm::vec3 &texCoord1, const glm::vec3 &texCoord2, glm::vec3 &fragment, glm::vec2 &P, float w0, float w1, float w2)
+	{
+		w0 += (delta0Y * P.x - delta0X * P.y);
+		w1 += (delta1Y * P.x - delta1X * P.y);
+		w2 += (delta2Y * P.x - delta2X * P.y);
+		fragment = Utils::BarycentricLerp(texCoord0, texCoord1, texCoord2, glm::vec3(w1, w2, w0) / area);
+		fragment /= fragment.z;
+	};
 	auto DDXDDY = [&](int x, int y)
 	{
 		if (vertexOutMapTable.find("SV_TEXCOORD0") == vertexOutMapTable.end()) return;
 		unsigned int texCoordIdx = vertexOutMapTable["SV_TEXCOORD0"];
-		QuadFragments quadFragment;
-		glm::vec3 texCoord0 = vertex[0][texCoordIdx];
-		glm::vec3 texCoord1 = vertex[1][texCoordIdx];
-		glm::vec3 texCoord2 = vertex[2][texCoordIdx];
-		float w0 = edgeFunction(points[0], points[1], glm::vec2(x + 0.5, y + 0.5));
-		float w1 = edgeFunction(points[1], points[2], glm::vec2(x + 0.5, y + 0.5));
-		float w2 = edgeFunction(points[2], points[0], glm::vec2(x + 0.5, y + 0.5));
-		quadFragment.m_fragments[0] = Utils::BarycentricLerp(texCoord0, texCoord1, texCoord2, glm::vec3(w1 / area, w2 / area, w0 / area));
-		quadFragment.m_fragments[0] /= quadFragment.m_fragments[0].z;
-		w0 = edgeFunction(points[0], points[1], glm::vec2(x + 1.5, y + 0.5));
-		w1 = edgeFunction(points[1], points[2], glm::vec2(x + 1.5, y + 0.5));
-		w2 = edgeFunction(points[2], points[0], glm::vec2(x + 1.5, y + 0.5));
-		quadFragment.m_fragments[1] = Utils::BarycentricLerp(texCoord0, texCoord1, texCoord2, glm::vec3(w1 / area, w2 / area, w0 / area));
-		quadFragment.m_fragments[1] /= quadFragment.m_fragments[1].z;
-		w0 = edgeFunction(points[0], points[1], glm::vec2(x + 0.5, y + 1.5));
-		w1 = edgeFunction(points[1], points[2], glm::vec2(x + 0.5, y + 1.5));
-		w2 = edgeFunction(points[2], points[0], glm::vec2(x + 0.5, y + 1.5));
-		quadFragment.m_fragments[2] = Utils::BarycentricLerp(texCoord0, texCoord1, texCoord2, glm::vec3(w1 / area, w2 / area, w0 / area));
-		quadFragment.m_fragments[2] /= quadFragment.m_fragments[2].z;
-		glm::vec2 ddx(quadFragment.dUdx(), quadFragment.dUdy());
-		glm::vec2 ddy(quadFragment.dVdx(), quadFragment.dVdy());
+		glm::vec3 fragments[3];
+		const glm::vec3 texCoord0 = vertex[0][texCoordIdx];
+		const glm::vec3 texCoord1 = vertex[1][texCoordIdx];
+		const glm::vec3 texCoord2 = vertex[2][texCoordIdx];
+		glm::vec2 P(x + 0.5, y + 0.5);
+		float w0 = delta0Y * (P.x - points[0].x) - delta0X * (P.y - points[0].y);
+		float w1 = delta1Y * (P.x - points[1].x) - delta1X * (P.y - points[1].y);
+		float w2 = delta2Y * (P.x - points[2].x) - delta2X * (P.y - points[2].y);
+		InterpolationTexCoords(texCoord0, texCoord1, texCoord2, fragments[0], glm::vec2(0, 0), w0, w1, w2);
+		InterpolationTexCoords(texCoord0, texCoord1, texCoord2, fragments[1], glm::vec2(1, 0), w0, w1, w2);
+		InterpolationTexCoords(texCoord0, texCoord1, texCoord2, fragments[2], glm::vec2(0, 1), w0, w1, w2);
+		glm::vec2 ddx(fragments[1].x - fragments[0].x, fragments[2].x - fragments[0].x);
+		glm::vec2 ddy(fragments[1].y - fragments[0].y, fragments[2].y - fragments[0].y);
 		memcpy(&pPixelShader->dFdx.local(), &ddx, sizeof(glm::vec2));
 		memcpy(&pPixelShader->dFdy.local(), &ddy, sizeof(glm::vec2));
 	};
@@ -520,7 +516,7 @@ void SRDeviceContext::ParseVertexBuffer()
 	}
 }
 
-void SRDeviceContext::ParseShaderOutput(unsigned char *buffer, std::vector<glm::vec4> &output)
+void SRDeviceContext::ParseShaderOutput(unsigned char *buffer, VertexData &output)
 {
 	int offset = 0;
 	for (int i = 0; i < pVertexShader->outDesc.size(); i++)
@@ -565,31 +561,6 @@ unsigned char * SRDeviceContext::Vertex(int idx, unsigned char *vertexBuffer)
 	return pVertexShader->vertex(vertexBuffer);
 }
 
-void SRDeviceContext::DDXDDY(TriangleData vertex, glm::vec3 &t0, glm::vec3 &t1, glm::vec3 &t2, glm::vec2 &P)
-{
-	tbb::tick_count time = tbb::tick_count().now();
-
-	unsigned int texCoordIdx = vertexOutMapTable["SV_TEXCOORD0"];
-	QuadFragments quadFragment;
-	glm::vec3 texCoord0 = vertex[0][texCoordIdx];
-	glm::vec3 texCoord1 = vertex[1][texCoordIdx];
-	glm::vec3 texCoord2 = vertex[2][texCoordIdx];
-	quadFragment.m_fragments[0] = Utils::BarycentricLerp(texCoord0, texCoord1, texCoord2, Utils::Barycentric(t0, t1, t2, glm::vec3(P.x, P.y, 1.0)));
-	quadFragment.m_fragments[0] /= quadFragment.m_fragments[0].z;
-	quadFragment.m_fragments[1] = Utils::BarycentricLerp(texCoord0, texCoord1, texCoord2, Utils::Barycentric(t0, t1, t2, glm::vec3(P.x + 1, P.y, 1.0)));
-	quadFragment.m_fragments[1] /= quadFragment.m_fragments[1].z;
-	quadFragment.m_fragments[2] = Utils::BarycentricLerp(texCoord0, texCoord1, texCoord2, Utils::Barycentric(t0, t1, t2, glm::vec3(P.x, P.y + 1, 1.0)));
-	quadFragment.m_fragments[2] /= quadFragment.m_fragments[2].z;
-	quadFragment.m_fragments[3] = Utils::BarycentricLerp(texCoord0, texCoord1, texCoord2, Utils::Barycentric(t0, t1, t2, glm::vec3(P.x + 1, P.y + 1, 1.0)));
-	quadFragment.m_fragments[3] /= quadFragment.m_fragments[3].z;
-	glm::vec2 ddx(quadFragment.dUdx(), quadFragment.dUdy());
-	glm::vec2 ddy(quadFragment.dVdx(), quadFragment.dVdy());
-	memcpy(&pPixelShader->dFdx.local(), &ddx, sizeof(glm::vec2));
-	memcpy(&pPixelShader->dFdy.local(), &ddy, sizeof(glm::vec2));
-	frameTime += (tbb::tick_count::now() - time).seconds();
-
-}
-
 void SRDeviceContext::PrePerspCorrection(TriangleData &output)
 {
 	for (int i = 0; i < 3; i++)
@@ -600,20 +571,6 @@ void SRDeviceContext::PrePerspCorrection(TriangleData &output)
 			output[i][j] *= t;
 		}
 	}
-}
-
-void SRDeviceContext::Interpolation(unsigned char *buffer, TriangleData vertex, glm::vec3 &bcScreen)
-{
-	//插值其他信息
-
-	for (int i = 0; i < pPixelShader->inDesc.size(); i++)
-	{
-
-		glm::vec4 attribute = Utils::BarycentricLerp(vertex[0][i], vertex[1][i], vertex[2][i], bcScreen);
-		attribute /= attribute.w;
-		memcpy(buffer + pPixelShader->inDesc[i].Offset, &attribute, pPixelShader->inDesc[i].Size);
-	}
-
 }
 
 void SRDeviceContext::AlphaBlend(glm::vec4 &color, glm::vec4 dstColor)
@@ -761,6 +718,5 @@ void SRDeviceContext::Resolve()
 			colorBuffer[idx * 4 + 2] = color.r;
 		}
 	});
-
 	std::cout << frameTime << std::endl;
 }

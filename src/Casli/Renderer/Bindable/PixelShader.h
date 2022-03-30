@@ -7,7 +7,7 @@ class PixelShader : public Bindable
 {
 public:
 	PixelShader(Graphics& gfx, SRIPixelShader *shader);
-	void Bind(Graphics& gfx) noexcept override;
+	void Bind(Graphics& gfx) override;
 private:
 	SRIPixelShader* pShader;
 };

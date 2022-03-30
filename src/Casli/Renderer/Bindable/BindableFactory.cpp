@@ -19,6 +19,7 @@
 #include <ConstantBuffers.h>
 #include <Topology.h>
 #include <Blender.h>
+#include <BRenderState.h>
 
 std::shared_ptr<Bindable> BindableFactory::CreateBindable(Graphics &gfx, BindType type, std::vector<std::string> content)
 {
@@ -120,7 +121,19 @@ std::shared_ptr<Bindable> BindableFactory::CreateBindable(Graphics &gfx, BindTyp
 	break;
 	case BCullBack:
 	{
-
+		std::string cullface = Tools::parseStr(content[0]);
+		if (cullface == "back")
+		{
+			return std::make_shared<BRenderState>(gfx, CULL_BACK);
+		}
+		else if (cullface == "front")
+		{
+			return std::make_shared<BRenderState>(gfx, CULL_FRONT);
+		}
+		else
+		{
+			return std::make_shared<BRenderState>(gfx, CULL_DISABLE);
+		}
 	}
 	break;
 	}

@@ -155,7 +155,7 @@ enum CullFaceMode
 	CULL_BACK,
 };
 
-struct ShaderState
+struct RenderState
 {
 	CullFaceMode m_CullFaceMode = CullFaceMode::CULL_BACK;
 };

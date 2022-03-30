@@ -41,13 +41,13 @@ public:
 	void OMSetRenderTargets(SRRenderTargetView **RenderTargetView, SRDepthStencilView **DepthStencilView);
 	void OMSetBlendState(SRBlendState **blendState, const float *BlendFactor, unsigned int SampleMask);
 	void OMGetBlendState(SRBlendState **ppBlendState, float *BlendFactor, unsigned int *SampleMask);
-	void SetRenderState(ShaderState state);
+	void SetRenderState(RenderState state);
 	void GenerateMips(SRTexture2D *texture);
 	void DrawIndex();
 	//MSAA
 	void Resolve();
 private:
-	void Triangle(TriangleData vertex);
+	void DrawTriangle(TriangleData &vertex);
 	//±³ÃæÌÞ³ý
 	bool shouldCulled(const glm::ivec2 &v0, const glm::ivec2 &v1, const glm::ivec2 &v2);
 	//Clip in the homogeneous clipping space
@@ -57,13 +57,11 @@ private:
 		, const int side);
 
 	void ParseVertexBuffer();
-	void ParseShaderOutput(unsigned char *buffer, std::vector<glm::vec4> &output);
+	unsigned char *Vertex(int idx, unsigned char *vertexBuffer);
+	void ParseShaderOutput(unsigned char *buffer, VertexData &output);
 
 	void ViewportTransform(TriangleData &vertex);
-	unsigned char *Vertex(int idx, unsigned char *vertexBuffer);
-	void DDXDDY(TriangleData vertex, glm::vec3 &t0, glm::vec3 &t1, glm::vec3 &t2, glm::vec2 &P);
 	void PrePerspCorrection(TriangleData &output);
-	void Interpolation(unsigned char *buffer, TriangleData vertex, glm::vec3 &bcScreen);
 	//Alpha Blend
 	void AlphaBlend(glm::vec4 &color, glm::vec4 dstColor);
 	void ParseSrcBlendParam(BLEND blend, glm::vec4 &srcColor, glm::vec4 dstColor);
@@ -86,7 +84,7 @@ private:
 	unsigned char *colorBuffer;
 	SRDepthStencilView *pDepthStencilView{};
 	VIEWPORT *pViewports{};
-	ShaderState pShaderState;
+	RenderState pRenderState;
 	//»ìºÏ×´Ì¬
 	SRBlendState *pBlendState{};
 	float pBlendFactor[4];
@@ -95,14 +93,4 @@ private:
 	std::unordered_map<std::string, int> vertexOutMapTable;
 	int posIdx = -1;
 	float frameTime = 0;
-};
-
-class QuadFragments
-{
-public:
-	glm::vec3 m_fragments[4];
-	inline float dUdx() const { return m_fragments[1].x - m_fragments[0].x; }
-	inline float dUdy() const { return m_fragments[2].x - m_fragments[0].x; }
-	inline float dVdx() const { return m_fragments[1].y - m_fragments[0].y; }
-	inline float dVdy() const { return m_fragments[2].y - m_fragments[0].y; }
 };

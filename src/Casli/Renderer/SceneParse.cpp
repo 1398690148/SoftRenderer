@@ -166,24 +166,11 @@ void SceneParse::parse(const std::string &path, Graphics &gfx, bool generatedMip
 
 			//Topology
 			std::getline(sceneFile, line);
+
 			binds.push_back(BindableFactory::CreateBindable(gfx, BTopology, { line }));
+			std::getline(sceneFile, line);
+			binds.push_back(BindableFactory::CreateBindable(gfx, BCullBack, { line }));
 
-			{
-				std::getline(sceneFile, line);
-				std::string cullface = Tools::parseStr(line);
-				if (cullface == "back")
-				{
-
-				}
-				else if (cullface == "front")
-				{
-
-				}
-				else
-				{
-
-				}
-			}
 
 			std::getline(sceneFile, line);
 			binds.push_back(BindableFactory::CreateBindable(gfx, BBlendState, { line }));
