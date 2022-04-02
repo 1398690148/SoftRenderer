@@ -6,7 +6,7 @@
 class DirectionalLight : public Light
 {
 public:
-	DirectionalLight(Graphics &gfx, glm::vec3 color, glm::vec3 dir);
+	DirectionalLight(Graphics &gfx, int offset, glm::vec3 color, glm::vec3 dir);
 	void Draw(Graphics& gfx) const;
 	void Bind(Graphics& gfx, glm::mat4 view);
 
@@ -19,6 +19,5 @@ private:
 	};
 protected:
 	DirectionalLightCbuf cbData;
-	mutable SolidSphere mesh;
 	mutable PixelConstantBuffer<DirectionalLightCbuf> cbuf;
 };

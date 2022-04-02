@@ -9,6 +9,7 @@ Frustum:
 	Nar 100.0
 	
 SpotLight:
+	offset 0
 	Lightpos 0.7 -0.7 0
 	Lightcolor 1 1 0
 	LightDir -0.7 0 0

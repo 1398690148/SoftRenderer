@@ -1,7 +1,7 @@
 #include "PointLight.h"
 
-PointLight::PointLight(Graphics &gfx, glm::vec3 color, glm::vec3 position, float constant, float linear, float exp)
-	: mesh(gfx, 5), cbuf(gfx)
+PointLight::PointLight(Graphics &gfx, int offset, glm::vec3 color, glm::vec3 position, float constant, float linear, float exp)
+	: Light(gfx, offset), cbuf(gfx)
 {
 	cbData.color = color;
 	cbData.pos = position;
@@ -22,6 +22,6 @@ void PointLight::Bind(Graphics& gfx, glm::mat4 view)
 	const auto pos = cbData.pos;
 	dataCopy.pos = view * glm::vec4(pos, 1.0);
 	cbData.pos = dataCopy.pos;
-	cbuf.Update(gfx, dataCopy);
+	cbuf.Update(gfx, offset, dataCopy);
 	cbuf.Bind(gfx);
 }

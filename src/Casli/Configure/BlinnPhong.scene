@@ -9,6 +9,7 @@ Frustum:
 	Nar 100.0
 	
 DirectionalLight:
+	offset 0
 	LightDir 1.0 1.0 -1.0
 	Lightcolor 1.0 1.0 1.0
 	

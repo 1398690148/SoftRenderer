@@ -35,13 +35,13 @@ void App::DoFrame()
 	auto &drawable = parser.m_scene.m_Models;
 	auto &lights = parser.m_scene.m_Lights;
 
-	for (auto light : lights)
-	{
-		light->SetEyePos(camera.GetPosition());
-		light->Bind(wnd.Gfx(), glm::mat4(1.0));
-	}
 	for (auto iter : drawable)
 	{
+		for (auto light : lights)
+		{
+			light->SetEyePos(camera.GetPosition());
+			light->Bind(wnd.Gfx(), glm::mat4(1.0));
+		}
 		iter->Draw(wnd.Gfx(), glm::mat4(1.0));
 	}
 	for (auto light : lights)

@@ -30,6 +30,7 @@ struct BlinnPhongPS : public SRIPixelShader
 		inDesc.push_back(sv_normal);
 		inDesc.push_back(sv_uv);
 		inDesc.push_back(sv_worldpos);
+		cbuffer = new unsigned char[sizeof(Directional)];
 	}
 	virtual bool fragment(unsigned char *in, glm::vec4 &color)
 	{

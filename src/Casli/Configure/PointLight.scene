@@ -9,9 +9,16 @@ Frustum:
 	Nar 100.0
 	
 PointLight:
-	Lightpos 0.3 0 0
-	Lightcolor 1 1 1
-	Attenuation 1.0 0.0014 0.000007
+	offset 0
+	Lightpos 0.6 0 0
+	Lightcolor 1 0 0
+	Attenuation 1 0.0014 0.000007
+	
+PointLight:
+	offset 36
+	Lightpos -0.6 0 0
+	Lightcolor 0 1 0
+	Attenuation 1 0.0014 0.000007
 		
 Entity:
 	Path ../src/Casli/Model/diablo3_pose/diablo3_pose.obj

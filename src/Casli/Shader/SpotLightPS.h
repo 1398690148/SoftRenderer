@@ -36,6 +36,7 @@ struct SpotLightPS : public SRIPixelShader
 		inDesc.push_back(sv_normal);
 		inDesc.push_back(sv_uv);
 		inDesc.push_back(sv_worldpos);
+		cbuffer = new unsigned char[sizeof(SpotCBuf)];
 	}
 	float clamp(float t, float min, float max)
 	{

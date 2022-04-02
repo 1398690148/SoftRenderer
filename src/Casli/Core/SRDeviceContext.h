@@ -23,7 +23,7 @@ class CORE_API SRDeviceContext
 	using VertexData = std::vector<glm::vec4>;
 	using TriangleData = std::vector<VertexData>;
 public:
-	SRDeviceContext(void *gFbo, int width, int height);
+	SRDeviceContext(void *gFbo, int sampleNum);
 	~SRDeviceContext();
 	void ClearRenderTargetView(SRRenderTargetView *RenderTargetView, const glm::vec4 &ColorRGBA);
 	void ClearDepthStencilView(SRDepthStencilView *DepthStencilView);
@@ -78,9 +78,9 @@ private:
 	PRIMITIVE_TOPOLOGY pTopology;
 	SRIVertexShader *pVertexShader{};
 	SRIPixelShader *pPixelShader{};
-	SRIBuffer *pPixelConstantBuffer{};
-	SRIBuffer *pVertexConstantBuffer{};
-	SRRenderTargetView *pBackBuffer{};
+	std::unordered_map<unsigned int, SRIBuffer *> pPixelConstantBuffer{};
+	SRIBuffer * pVertexConstantBuffer{};
+	SRRenderTargetView * pBackBuffer{};
 	unsigned char *colorBuffer;
 	SRDepthStencilView *pDepthStencilView{};
 	VIEWPORT *pViewports{};
@@ -88,9 +88,10 @@ private:
 	//»ìºÏ×´Ì¬
 	SRBlendState *pBlendState{};
 	float pBlendFactor[4];
-	unsigned int pSampleMask = 0;
+	//unsigned int pSampleMask = 0;
 	glm::mat4 Viewport;
 	std::unordered_map<std::string, int> vertexOutMapTable;
+	unsigned int msaaSampleNum = 4;
 	int posIdx = -1;
 	float frameTime = 0;
 };

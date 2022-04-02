@@ -17,6 +17,6 @@ void TransformCbuf::Bind(Graphics& gfx)
 		ModelT,
 	};
 	glm::mat4 matrix = tf.modelViewProj;
-	vcbuf.Update(gfx, tf);
+	vcbuf.Update(gfx, 0, tf);
 	vcbuf.Bind(gfx);
 }

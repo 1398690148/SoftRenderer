@@ -1,7 +1,7 @@
 #include "SpotLight.h"
 
-SpotLight::SpotLight(Graphics &gfx, glm::vec3 color, glm::vec3 position, glm::vec3 dir, glm::vec2 angleCoe, glm::vec3 attenuation)
-	: mesh(gfx, 5), cbuf(gfx)
+SpotLight::SpotLight(Graphics &gfx, int offset, glm::vec3 color, glm::vec3 position, glm::vec3 dir, glm::vec2 angleCoe, glm::vec3 attenuation)
+	: Light(gfx, offset), cbuf(gfx)
 {
 	cbData.color = color;
 	cbData.pos = position;
@@ -28,6 +28,6 @@ void SpotLight::Bind(Graphics& gfx, glm::mat4 view)
 	const auto dir = cbData.dir;
 	dataCopy.dir = view * glm::vec4(dir, 1.0);
 	cbData.dir = dataCopy.dir;
-	cbuf.Update(gfx, dataCopy);
+	cbuf.Update(gfx, offset, dataCopy);
 	cbuf.Bind(gfx);
 }

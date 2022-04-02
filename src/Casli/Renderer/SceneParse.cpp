@@ -67,6 +67,11 @@ void SceneParse::parse(const std::string &path, Graphics &gfx, bool generatedMip
 		else if (header == "PointLight:")
 		{
 			std::cout << "PointLight:=====================================\n";
+			int offset;
+			{
+				std::getline(sceneFile, line);
+				offset = Tools::parseInt(line);
+			}
 			glm::vec3 pos;
 			{
 				std::getline(sceneFile, line);
@@ -82,12 +87,17 @@ void SceneParse::parse(const std::string &path, Graphics &gfx, bool generatedMip
 				std::getline(sceneFile, line);
 				atten = Tools::parseVec3(line);
 			}
-			std::shared_ptr<PointLight> light = std::make_shared<PointLight>(gfx, color, pos, atten[0], atten[1], atten[2]);
+			std::shared_ptr<PointLight> light = std::make_shared<PointLight>(gfx, offset, color, pos, atten[0], atten[1], atten[2]);
 			m_scene.m_Lights.push_back(light);
 		}
 		else if (header == "SpotLight:")
 		{
 			std::cout << "SpotLight:=====================================\n";
+			int offset;
+			{
+				std::getline(sceneFile, line);
+				offset = Tools::parseInt(line);
+			}
 			glm::vec3 pos;
 			{
 				std::getline(sceneFile, line);
@@ -113,12 +123,17 @@ void SceneParse::parse(const std::string &path, Graphics &gfx, bool generatedMip
 				std::getline(sceneFile, line);
 				atten = Tools::parseVec3(line);
 			}
-			std::shared_ptr<SpotLight> light = std::make_shared<SpotLight>(gfx, color, pos, dir, angleCoe, atten);
+			std::shared_ptr<SpotLight> light = std::make_shared<SpotLight>(gfx, offset, color, pos, dir, angleCoe, atten);
 			m_scene.m_Lights.push_back(light);
 		}
 		else if (header == "DirectionalLight:")
 		{
 			std::cout << "DirectionalLight:=====================================\n";
+			int offset;
+			{
+				std::getline(sceneFile, line);
+				offset = Tools::parseInt(line);
+			}
 			glm::vec3 dir;
 			{
 				std::getline(sceneFile, line);
@@ -130,7 +145,7 @@ void SceneParse::parse(const std::string &path, Graphics &gfx, bool generatedMip
 				std::getline(sceneFile, line);
 				color = Tools::parseVec3(line);
 			}
-			std::shared_ptr<DirectionalLight> light = std::make_shared<DirectionalLight>(gfx, color, dir);
+			std::shared_ptr<DirectionalLight> light = std::make_shared<DirectionalLight>(gfx, offset, color, dir);
 			m_scene.m_Lights.push_back(light);
 		}
 		else if (header == "Entity:")

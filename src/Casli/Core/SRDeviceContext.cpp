@@ -3,7 +3,8 @@
 #include "tbb/tbb.h"
 #include <tbb/tick_count.h>
 #include <iostream>
-SRDeviceContext::SRDeviceContext(void *gFbo, int width, int height)
+SRDeviceContext::SRDeviceContext(void *gFbo, int sampleNum)
+	: msaaSampleNum(sampleNum)
 {
 	BLEND_DESC desc = { 0 };
 	desc.AlphaToCoverageEnable = false;
@@ -89,7 +90,7 @@ void SRDeviceContext::OMGetBlendState(SRBlendState **ppBlendState, float *BlendF
 {
 	*ppBlendState = pBlendState;
 	BlendFactor = pBlendFactor;
-	*SampleMask = pSampleMask;
+	//*SampleMask = pSampleMask;
 }
 
 void SRDeviceContext::SetRenderState(RenderState state)
@@ -104,7 +105,7 @@ void SRDeviceContext::VSSetConstantBuffers(unsigned int StartOffset, unsigned in
 
 void SRDeviceContext::PSSetConstantBuffers(unsigned int StartOffset, unsigned int NumBuffers, SRIBuffer *constantBuffer)
 {
-	pPixelConstantBuffer = constantBuffer;
+	pPixelConstantBuffer.insert({ StartOffset, constantBuffer });
 }
 
 void SRDeviceContext::IASetInputLayout(SRInputLayout *InputLayout)
@@ -328,6 +329,7 @@ void SRDeviceContext::DrawIndex()
 
 	start_node.activate();
 	g.wait_for_all();
+	pPixelConstantBuffer.clear();
 }
 
 bool SRDeviceContext::shouldCulled(const glm::ivec2 &v0, const glm::ivec2 &v1, const glm::ivec2 &v2)
@@ -391,11 +393,18 @@ void SRDeviceContext::DrawTriangle(TriangleData &vertex)
 			curFrag.depth[idx] = Utils::BarycentricLerp(points[0], points[1], points[2], glm::vec3(w1, w2, w0) / area).z;
 			return true;
 		};
-		bool isInside0 = IsInsideTriangle(w0, w1, w2, glm::vec2(-0.25, -0.25), 0);
-		bool isInside1 = IsInsideTriangle(w0, w1, w2, glm::vec2(-0.25, 0.25), 1);
-		bool isInside2 = IsInsideTriangle(w0, w1, w2, glm::vec2(0.25, -0.25), 2);
-		bool isInside3 = IsInsideTriangle(w0, w1, w2, glm::vec2(0.25, 0.25), 3);
-		if (!isInside0 && !isInside1 && !isInside2 && !isInside3) return false;
+		if (msaaSampleNum > 1)
+		{
+			bool isInside0 = IsInsideTriangle(w0, w1, w2, glm::vec2(-0.25, -0.25), 0);
+			bool isInside1 = IsInsideTriangle(w0, w1, w2, glm::vec2(-0.25, 0.25), 1);
+			bool isInside2 = IsInsideTriangle(w0, w1, w2, glm::vec2(0.25, -0.25), 2);
+			bool isInside3 = IsInsideTriangle(w0, w1, w2, glm::vec2(0.25, 0.25), 3);
+			if (!isInside0 && !isInside1 && !isInside2 && !isInside3) return false;
+		}
+		else
+		{
+			if (!IsInsideTriangle(w0, w1, w2, glm::vec2(0, 0), 0)) return false;
+		}
 
 		glm::vec3 bcScreen = glm::vec3(w1, w2, w0) / area;
 		for (int i = 0; i < pPixelShader->inDesc.size(); i++)
@@ -411,7 +420,7 @@ void SRDeviceContext::DrawTriangle(TriangleData &vertex)
 		color = glm::vec4(min(255.0f, color[0]), min(255.0f, color[1]), min(255.0f, color[2]), min(255.0f, color[3]));
 		auto &fragColor = pBackBuffer->GetPixel(x, y);
 		auto &fragDepth = pDepthStencilView->GetDepth(x, y);
-		for (int i = 0; i < 4; i++)
+		for (int i = 0; i < msaaSampleNum; i++)
 		{
 			if (!curFrag.coverage[i]) continue;
 			//Alpha Blend
@@ -563,7 +572,7 @@ unsigned char * SRDeviceContext::Vertex(int idx, unsigned char *vertexBuffer)
 
 void SRDeviceContext::PrePerspCorrection(TriangleData &output)
 {
-	for (int i = 0; i < 3; i++)
+	for (int i = 0; i < output.size(); i++)
 	{
 		float t = 1.0f / output[i][posIdx].w;
 		for (int j = 0; j < output[i].size(); j++)
@@ -690,10 +699,11 @@ void SRDeviceContext::BindConstanBuffer()
 		memcpy(pVertexShader->cbuffer, pVertexConstantBuffer->GetBuffer(0), pVertexConstantBuffer->GetByteWidth());
 	}
 
-	if (pPixelConstantBuffer)
+	if (!pPixelConstantBuffer.empty())
 	{
-		pPixelShader->cbuffer = (unsigned char *)realloc(pPixelShader->cbuffer, pPixelConstantBuffer->GetByteWidth());
-		memcpy(pPixelShader->cbuffer, pPixelConstantBuffer->GetBuffer(0), pPixelConstantBuffer->GetByteWidth());
+		//pPixelShader->cbuffer = (unsigned char *)realloc(pPixelShader->cbuffer, pPixelConstantBuffer->GetByteWidth());
+		for (auto buffer : pPixelConstantBuffer)
+			memcpy(pPixelShader->cbuffer + buffer.first, buffer.second->GetBuffer(0), buffer.second->GetByteWidth());
 	}
 }
 
@@ -708,15 +718,14 @@ void SRDeviceContext::Resolve()
 			int idx = x + (height - y) * width;
 			glm::vec4 color(0, 0, 0, 0);
 			auto &fragCache = pBackBuffer->GetPixel(x, y);
-			for (int i = 0; i < 4; i++)
+			for (int i = 0; i < msaaSampleNum; i++)
 			{
 				color += fragCache[i];
 			}
-			color /= 4.f;
+			color /= msaaSampleNum;
 			colorBuffer[idx * 4] = color.b;
 			colorBuffer[idx * 4 + 1] = color.g;
 			colorBuffer[idx * 4 + 2] = color.r;
 		}
 	});
-	std::cout << frameTime << std::endl;
 }

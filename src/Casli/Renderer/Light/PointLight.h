@@ -6,7 +6,7 @@
 class PointLight : public Light
 {
 public:
-	PointLight(Graphics &gfx, glm::vec3 color, glm::vec3 position, float constant, float linear, float exp);
+	PointLight(Graphics &gfx, int offset, glm::vec3 color, glm::vec3 position, float constant, float linear, float exp);
 	void Draw(Graphics& gfx) const;
 	void Bind(Graphics& gfx, glm::mat4 view);
 
@@ -21,6 +21,5 @@ private:
 	};
 protected:
 	PointLightCBuf cbData;
-	mutable SolidSphere mesh;
 	mutable PixelConstantBuffer<PointLightCBuf> cbuf;
 };

@@ -37,6 +37,8 @@ src/Casli/Renderer/Bindable/VertexShader.h
 src/Casli/Renderer/Bindable/VertexShader.cpp
 src/Casli/Renderer/Bindable/PixelShader.h
 src/Casli/Renderer/Bindable/PixelShader.cpp
+src/Casli/Renderer/Bindable/BRenderState.h
+src/Casli/Renderer/Bindable/BRenderState.cpp
 )
 
 set(LIGHT 
@@ -92,8 +94,6 @@ src/Casli/Drawable/Mesh.h
 src/Casli/Drawable/Mesh.cpp
 src/Casli/Drawable/Model.h
 src/Casli/Drawable/Model.cpp
-#src/Casli/Test/AlphaPlane.h 
-#src/Casli/Test/AlphaPlane.cpp
 )
 
 set(PLATFORM
@@ -118,10 +118,10 @@ source_group( Platform FILES ${PLATFORM})
 source_group( Shader FILES ${SHADER})
 
 #设置库生成目录
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${PROJECT_SOURCE_DIR}/output/bin_d/)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${PROJECT_SOURCE_DIR}/output/bin_d/)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${PROJECT_SOURCE_DIR}/output/bin/)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${PROJECT_SOURCE_DIR}/output/bin/)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${PROJECT_SOURCE_DIR}/output)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${PROJECT_SOURCE_DIR}/output)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${PROJECT_SOURCE_DIR}/output)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${PROJECT_SOURCE_DIR}/output)
 
 AUX_SOURCE_DIRECTORY(${PROJECT_SOURCE_DIR}/src/Casli/Core CORE_SRCS)
 ADD_LIBRARY(Core SHARED ${CORE_SRCS} ${PROJECT_SOURCE_DIR}/src/Casli/Core/SRBlendState.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/SRCoreAPI.h ${PROJECT_SOURCE_DIR}/src/Casli/Core/SRDeviceContext.h 
@@ -177,6 +177,11 @@ Set_Target_Properties(BlinnPhong PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDO
 add_executable(SpotLight src/Casli/Scene/SpotLight/App.h src/Casli/Scene/SpotLight/App.cpp src/Casli/Scene/SpotLight/main.cpp)
 TARGET_LINK_LIBRARIES(SpotLight Renderer)
 Set_Target_Properties(SpotLight PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
+
+#输入测试场景
+add_executable(StandardScene src/Casli/Scene/StandardScene/App.h src/Casli/Scene/StandardScene/App.cpp src/Casli/Scene/StandardScene/main.cpp)
+TARGET_LINK_LIBRARIES(StandardScene Renderer)
+#Set_Target_Properties(StandardScene PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories(${PROJECT_SOURCE_DIR}/src/Casli/Renderer)

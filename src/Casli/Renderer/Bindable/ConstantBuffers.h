@@ -5,8 +5,9 @@ template<typename C>
 class ConstantBuffer : public Bindable
 {
 public:
-	void Update(Graphics &gfx, const C &consts)
+	void Update(Graphics &gfx, int offset, const C &consts)
 	{
+		this->offset = offset;
 		memcpy(pConstantBuffer->GetBuffer(0), (const void *)&consts, sizeof(C));
 	}
 	ConstantBuffer(Graphics &gfx, const C &consts)
@@ -32,6 +33,7 @@ public:
 
 protected:
 	SRIBuffer *pConstantBuffer{};
+	int offset;
 };
 
 template<typename C>
@@ -56,6 +58,6 @@ public:
 	using ConstantBuffer<C>::ConstantBuffer;
 	void Bind(Graphics& gfx)override
 	{
-		GetContext(gfx)->PSSetConstantBuffers(0u, 1u, pConstantBuffer);
+		GetContext(gfx)->PSSetConstantBuffers(offset, 1u, pConstantBuffer);
 	}
 };

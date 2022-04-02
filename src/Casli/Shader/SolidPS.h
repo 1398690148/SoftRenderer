@@ -7,10 +7,10 @@ struct SolidPixelInput
 	glm::vec4 position;
 };
 
-struct SolidPixelCBuffer
-{
-	glm::vec3 viewPos;
-};
+//struct SolidPixelCBuffer
+//{
+//	glm::vec3 viewPos;
+//};
 
 
 struct SolidPS : public SRIPixelShader
@@ -19,6 +19,7 @@ struct SolidPS : public SRIPixelShader
 	{
 		Description sv_position = { "SV_Position", 4, 16, 0 };
 		inDesc.push_back(sv_position);
+		//cbuffer = new unsigned char[sizeof(SolidPixelCBuffer)];
 	}
 	virtual bool fragment(unsigned char *in, glm::vec4 &color)
 	{

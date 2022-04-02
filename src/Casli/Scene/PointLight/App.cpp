@@ -36,12 +36,13 @@ void App::DoFrame()
 	auto &lights = parser.m_scene.m_Lights;
 	glm::mat4 rotate = glm::mat4(1.0);
 	rotate = glm::rotate(rotate, glm::radians(3.f), glm::vec3(0, 1, 0));
-	for (auto light : lights)
-	{
-		light->Bind(wnd.Gfx(), rotate);
-	}
+
 	for (auto iter : drawable)
 	{
+		for (auto light : lights)
+		{
+			light->Bind(wnd.Gfx(), rotate);
+		}
 		iter->Draw(wnd.Gfx(), glm::mat4(1.0));
 	}
 	for (auto light : lights)

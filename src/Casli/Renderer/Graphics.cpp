@@ -4,7 +4,7 @@ Graphics::Graphics(unsigned int width, unsigned int height, HWND hWnd, HDC ghdcM
 	: width(width), height(height), hWnd(hWnd), ghdcMainWnd(ghdcMainWnd)
 {
 	pDevice = std::make_unique<SRDevice>();
-	pContext = std::make_unique<SRDeviceContext>(gFbo, width, height);
+	pContext = std::make_unique<SRDeviceContext>(gFbo, 4);
 	pDevice->CreateRenderTargetView(width * 2, height * 2, &pTarget);
 
 	SRTexture2D *pDepthStencil{};
