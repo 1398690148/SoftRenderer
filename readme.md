@@ -64,7 +64,7 @@ cmake --build . --config Release
 - Alpha Blend
 - Alpha Test
 - TBB并行加速
-- MSAA![MSAA](E:\SoftRenderer\document\MSAA.png)
+- MSAA![MSAA](https://github.com/1398690148/SoftRenderer/blob/master/document/MSAA.png)
 
 ## 接触
 
