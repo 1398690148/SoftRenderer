@@ -6,7 +6,7 @@
 
 在不借助任何图形库的情况下，从零开始构建这样一个3D渲染系统，初衷是为了彻底了解3D渲染过程。
 
-![image-20220403112302919](E:\SoftRenderer\document\StandardScene.png)
+![image-20220403112302919](https://github.com/1398690148/SoftRenderer/blob/master/document/StandardScene.png)
 
 **内置**
 
@@ -52,7 +52,7 @@ cmake --build . --config Release
 
 ## 用法
 
-更多详情请查看examples/![示例图](E:\SoftRenderer\document\示例图.png)
+更多详情请查看examples/![示例图](https://github.com/1398690148/SoftRenderer/blob/master/document/%E7%A4%BA%E4%BE%8B%E5%9B%BE.png)
 
 ## 功能
 
