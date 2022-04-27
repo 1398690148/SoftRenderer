@@ -40,7 +40,7 @@ Graphics::~Graphics()
 
 void Graphics::ClearBuffer(float red, float green, float blue)
 {
-	glm::vec4 color = glm::vec4(red, green, blue, 255);
+	unsigned char color[4] = { red, green, blue, 1.0 };
 	pContext->ClearRenderTargetView(pTarget, color);
 	pContext->ClearDepthStencilView(pDSV);
 }
@@ -82,14 +82,3 @@ const glm::mat4 &Graphics::GetProjection() const
 {
 	return projection;
 }
-
-void Graphics::SetVertexShader(SRIVertexShader *pVertexShader)
-{
-	pContext->VSSetShader(pVertexShader);
-}
-
-void Graphics::SetPixelShader(SRIPixelShader *pPixelShader)
-{
-	pContext->PSSetShader(pPixelShader);
-}
-

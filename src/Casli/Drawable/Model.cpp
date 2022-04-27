@@ -4,9 +4,10 @@
 #include <VertexBuffer.h>
 #include <Vertex.h>
 #include <InputLayout.h>
+#include <iostream>
 
 Model::Model(Graphics &gfx, std::vector<std::shared_ptr<Bindable>> bindVec, const std::string fileName, glm::mat4 transform)
-	: pGfx(gfx), binds(bindVec)
+	: pGfx(gfx), binds(bindVec), initTransform(transform)
 {
 	Assimp::Importer imp;
 	const auto pScene = imp.ReadFile(fileName.c_str(),
@@ -18,7 +19,8 @@ Model::Model(Graphics &gfx, std::vector<std::shared_ptr<Bindable>> bindVec, cons
 
 	if (pScene == nullptr)
 	{
-		throw ;
+		std::cerr << "Not Found " << fileName << std::endl;
+		exit(-1);
 	}
 	directory = fileName.substr(0, fileName.find_last_of('/'));
 	for (size_t i = 0; i < pScene->mNumMeshes; i++)
@@ -27,7 +29,7 @@ Model::Model(Graphics &gfx, std::vector<std::shared_ptr<Bindable>> bindVec, cons
 	}
 
 	pRoot = ParseNode(*pScene->mRootNode);
-	pRoot->SetAppliedTransform(transform);
+	//pRoot->SetAppliedTransform(transform);
 }
 
 
@@ -70,25 +72,44 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 	{
 		auto &material = *pMaterials[mesh.mMaterialIndex];
 		aiString texFileName;
-		material.GetTexture(aiTextureType_DIFFUSE, 0, &texFileName);
-		std::string path = directory + "/" + texFileName.C_Str();
-		binds.push_back(std::make_shared<Texture>(pGfx, path.c_str(), 10, 0));
+		if (material.GetTexture(aiTextureType_DIFFUSE, 0, &texFileName) == aiReturn_SUCCESS)
+		{
+			std::string path = directory + "/" + texFileName.C_Str();
+			if (textures.find(path) == textures.end())
+			{
+				textures[path] = std::make_shared<Texture>(pGfx, path.c_str(), 10, 0);
+				binds.push_back(textures[path]);
+			}
+			else
+				binds.push_back(textures[path]);
+		}
 		if (material.GetTexture(aiTextureType_SPECULAR, 0, &texFileName) == aiReturn_SUCCESS)
 		{
-			path = directory + "/" + texFileName.C_Str();
-			binds.push_back(std::make_shared<Texture>(pGfx, path.c_str(), 1, 1));
+			std::string path = directory + "/" + texFileName.C_Str();
+			if (textures.find(path) == textures.end())
+			{
+				textures[path] = std::make_shared<Texture>(pGfx, path.c_str(), 1, 1);
+				binds.push_back(textures[path]);
+			}
+			else
+				binds.push_back(textures[path]);
 		}
 		if (material.GetTexture(aiTextureType_HEIGHT, 0, &texFileName) == aiReturn_SUCCESS)
 		{
-			path = directory + "/" + texFileName.C_Str();
+			std::string path = directory + "/" + texFileName.C_Str();
 			binds.push_back(std::make_shared<Texture>(pGfx, path.c_str(), 1, 2));
+		}
+		if (material.GetTexture(aiTextureType_EMISSIVE, 0, &texFileName) == aiReturn_SUCCESS)
+		{
+			std::string path = directory + "/" + texFileName.C_Str();
+			binds.push_back(std::make_shared<Texture>(pGfx, path.c_str(), 1, 3));
 		}
 	}
 	binds.push_back(std::make_shared<VertexBuffer>(gfx, vbuf));
 	binds.push_back(std::make_shared<IndexBuffer>(gfx, indices));
 	binds.push_back(std::make_shared<InputLayout>(gfx, vbuf.GetLayout().GetD3DLayout()));
 
-	return std::make_unique<Mesh>(gfx, std::move(binds));
+	return std::make_unique<Mesh>(gfx, std::move(binds), initTransform);
 }
 
 std::unique_ptr<Node> Model::ParseNode(const aiNode& node)

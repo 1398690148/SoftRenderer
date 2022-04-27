@@ -4,13 +4,14 @@
 #include <IndexBuffer.h>
 
 // Mesh
-Mesh::Mesh(Graphics& gfx, std::vector<std::shared_ptr<Bindable>> bindPtrs)
+Mesh::Mesh(Graphics& gfx, std::vector<std::shared_ptr<Bindable>> bindPtrs, glm::mat4 transform)
 {
-	transform = glm::mat4(1.0);
+	//transform = glm::mat4(1.0);
 	for (auto& pb : bindPtrs)
 	{
 		AddBind(std::move(pb));
 	}
+	initTransform = transform;
 	AddBind(std::make_unique<TransformCbuf>(gfx, *this));
 }
 void Mesh::Draw(Graphics& gfx, glm::mat4 accumulatedTransform) const
@@ -18,6 +19,16 @@ void Mesh::Draw(Graphics& gfx, glm::mat4 accumulatedTransform) const
 	transform = accumulatedTransform;
 	Drawable::Draw(gfx);
 }
+void Mesh::SetInitTransform(glm::mat4 transform)
+{
+	initTransform = transform;
+}
+
+glm::mat4 Mesh::GetInitTransform() const
+{
+	return initTransform;
+}
+
 glm::mat4 Mesh::GetTransformXM() const
 {
 	return transform;
@@ -33,7 +44,7 @@ Node::Node(const std::string& name, std::vector<Mesh*> meshPtrs, const glm::mat4
 
 void Node::Draw(Graphics& gfx, glm::mat4 accumulatedTransform) const
 {
-	const auto built = appliedTransform  * transform * accumulatedTransform;
+	const auto built = transform * accumulatedTransform;
 	for (const auto pm : meshPtrs)
 	{
 		pm->Draw(gfx, built);

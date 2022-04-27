@@ -1,8 +1,9 @@
 ﻿#include <algorithm>
 #include "SRDeviceContext.h"
 #include "tbb/tbb.h"
-#include <tbb/tick_count.h>
 #include <iostream>
+#include <tbb/enumerable_thread_specific.h>
+
 SRDeviceContext::SRDeviceContext(void *gFbo, int sampleNum)
 	: msaaSampleNum(sampleNum)
 {
@@ -24,10 +25,11 @@ SRDeviceContext::~SRDeviceContext()
 {
 }
 
-void SRDeviceContext::ClearRenderTargetView(SRRenderTargetView *RenderTargetView, const glm::vec4 &ColorRGBA)
+void SRDeviceContext::ClearRenderTargetView(SRRenderTargetView *RenderTargetView, unsigned char *ColorRGBA)
 {
-	frameTime = 0;
-	pBackBuffer->ClearBuffer(ColorRGBA);
+	t0 = tbb::tick_count().now();
+	glm::u8vec4 clearColor = glm::u8vec4(ColorRGBA[0], ColorRGBA[1], ColorRGBA[2], ColorRGBA[3]);
+	pBackBuffer->ClearBuffer(clearColor);
 }
 
 void SRDeviceContext::ClearDepthStencilView(SRDepthStencilView *DepthStencilView)
@@ -151,8 +153,8 @@ std::vector<std::vector<glm::vec4>> SRDeviceContext::ClipSutherlandHodgemanAux(c
 	{
 		const auto &begVert = polygon[(i - 1 + numVerts) % numVerts];
 		const auto &endVert = polygon[i];
-		char begIsInside = ((side * (begVert[posIdx][axis]) <= begVert[posIdx].w) ? 1 : -1);
-		char endIsInside = ((side * (endVert[posIdx][axis]) <= endVert[posIdx].w) ? 1 : -1);
+		char begIsInside = ((side * begVert[posIdx][axis] <= begVert[posIdx].w) ? 1 : -1);
+		char endIsInside = ((side * endVert[posIdx][axis] <= endVert[posIdx].w) ? 1 : -1);
 		//One of them is outside
 		if (begIsInside * endIsInside < 0)
 		{
@@ -174,7 +176,6 @@ std::vector<std::vector<glm::vec4>> SRDeviceContext::ClipSutherlandHodgemanAux(c
 	}
 	return std::move(insidePolygon);
 }
-
 
 std::vector<std::vector<glm::vec4>> SRDeviceContext::ClipSutherlandHodgeman(
 	const std::vector<glm::vec4> &vertex0,
@@ -237,7 +238,7 @@ std::vector<std::vector<glm::vec4>> SRDeviceContext::ClipSutherlandHodgeman(
 	insideVertices = ClipSutherlandHodgemanAux(tmp, Axis::Z, -1);
 	tmp = insideVertices;
 
-	//w=1e-5 plane
+	//w=1e-5 plane 避免除0错误
 	insideVertices = {};
 	int numVerts = tmp.size();
 	constexpr float wClippingPlane = 1e-5;
@@ -283,6 +284,7 @@ void SRDeviceContext::DrawIndex()
 		fc.stop();
 		return {};
 	});
+	tbb::enumerable_thread_specific<TriangleData> vertex;
 	tbb::flow::function_node<int, std::vector<TriangleData>> vertex_node(g,
 		tbb::flow::unlimited, [&](const int i)
 	{
@@ -291,31 +293,42 @@ void SRDeviceContext::DrawIndex()
 		unsigned char *o1 = Vertex(indices[i][1], buffer);
 		unsigned char *o2 = Vertex(indices[i][2], buffer);
 
-		TriangleData vertex(3, VertexData(vertexOutMapTable.size()));
-		ParseShaderOutput(o0, vertex[0]);
-		ParseShaderOutput(o1, vertex[1]);
-		ParseShaderOutput(o2, vertex[2]);
+		vertex.local().resize(3, VertexData(vertexOutMapTable.size()));
+		ParseShaderOutput(o0, vertex.local()[0]);
+		ParseShaderOutput(o1, vertex.local()[1]);
+		ParseShaderOutput(o2, vertex.local()[2]);
 
-		TriangleData clipped_vertices = ClipSutherlandHodgeman(vertex[0], vertex[1], vertex[2], 0.1, 100);
+		TriangleData clipped_vertices = ClipSutherlandHodgeman(vertex.local()[0], vertex.local()[1], vertex.local()[2], 0.1, 100);
 		int len = (int)clipped_vertices.size() - 2;
 		std::vector<TriangleData> v;
 		for (int i = 0; i < len; i++)
 		{
-			TriangleData vertex(3);
-			vertex[0] = clipped_vertices[0];
-			vertex[1] = clipped_vertices[i + 1];
-			vertex[2] = clipped_vertices[i + 2];
-			PrePerspCorrection(vertex);
+			vertex.local().resize(3);
+			vertex.local()[0] = clipped_vertices[0];
+			vertex.local()[1] = clipped_vertices[i + 1];
+			vertex.local()[2] = clipped_vertices[i + 2];
+			PrePerspCorrection(vertex.local());
 			//视口变换
-			ViewportTransform(vertex);
-			if (shouldCulled(vertex[0][posIdx], vertex[1][posIdx], vertex[2][posIdx])) continue;
-			v.push_back(std::move(vertex));
+			ViewportTransform(vertex.local());
+			if (shouldCulled(vertex.local()[0][posIdx], vertex.local()[1][posIdx], vertex.local()[2][posIdx]))
+			{
+				if (pRenderState.m_CullFaceMode == CullFaceMode::CULL_BACK) continue;
+				std::swap(vertex.local()[1], vertex.local()[2]);
+			}
+			else
+			{
+				if (pRenderState.m_CullFaceMode == CullFaceMode::CULL_FRONT)
+				{
+					std::swap(vertex.local()[1], vertex.local()[2]);
+				}
+			}
+			v.push_back(std::move(vertex.local()));
 		}
 		delete o0;
 		delete o1;
 		delete o2;
 		delete buffer;
-		return v;
+		return std::move(v);
 	});
 	tbb::flow::function_node<std::vector<TriangleData>> pixel_node(g,
 		tbb::flow::unlimited, [&](std::vector<TriangleData> triangleData) {
@@ -334,7 +347,6 @@ void SRDeviceContext::DrawIndex()
 
 bool SRDeviceContext::shouldCulled(const glm::ivec2 &v0, const glm::ivec2 &v1, const glm::ivec2 &v2)
 {
-	if (pRenderState.m_CullFaceMode == CullFaceMode::CULL_DISABLE) return false;
 	//Back face culling in screen space
 	auto e1 = v1 - v0;
 	auto e2 = v2 - v0;
@@ -348,7 +360,6 @@ void SRDeviceContext::DrawTriangle(TriangleData &vertex)
 	points[0] = vertex[0][posIdx];
 	points[1] = vertex[1][posIdx];
 	points[2] = vertex[2][posIdx];
-
 	glm::ivec2 bboxmin(pViewports->Width - 1, pViewports->Height - 1);
 	glm::ivec2 bboxmax(0, 0);
 	glm::ivec2 clamp(pViewports->Width - 1, pViewports->Height - 1);
@@ -370,70 +381,58 @@ void SRDeviceContext::DrawTriangle(TriangleData &vertex)
 	float delta2Y = points[2].y - points[0].y;
 	float area = (points[2].x - points[0].x) * delta0Y - (points[2].y - points[0].y) * delta0X; 
 
-	auto fragment_func = [&](int x, int  y, unsigned char *buffer) -> bool 
+	auto fragment_func = [&](int x, int  y, unsigned char *buffer, MSAAData &curFrag, glm::vec3 &bcScreen) -> bool
 	{
-		if (x >= pViewports->Width || y >= pViewports->Height) return false;
-		MSAAData curFrag;
-		glm::vec2 P(x + 0.5, y + 0.5);
-		float w0 = delta0Y * (P.x - points[0].x) - delta0X * (P.y - points[0].y);
-		float w1 = delta1Y * (P.x - points[1].x) - delta1X * (P.y - points[1].y);
-		float w2 = delta2Y * (P.x - points[2].x) - delta2X * (P.y - points[2].y);
-		auto IsInsideTriangle = [&](float w0, float w1, float w2, glm::vec2 &pos, int idx) -> bool
+		//Early-Z
+		auto &fragDepth = pDepthStencilView->GetDepth(x, y);
+		if (!alphaFlag)
 		{
-			w0 += (pos.x * delta0Y - pos.y * delta0X);
-			w1 += (pos.x * delta1Y - pos.y * delta1X);
-			w2 += (pos.x * delta2Y - pos.y * delta2X);
-
-			if (w0 < 0 || w1 < 0 || w2 < 0)
+			bool isVisible = false;
+			for (int i = 0; i < msaaSampleNum; i++)
 			{
-				curFrag.coverage[idx] = 0;
-				return false;
+				if (curFrag.depth[i] >= fragDepth[i]) continue;
+				isVisible = true;
+				break;
 			}
-			curFrag.coverage[idx] = 1;
-			curFrag.depth[idx] = Utils::BarycentricLerp(points[0], points[1], points[2], glm::vec3(w1, w2, w0) / area).z;
-			return true;
-		};
-		if (msaaSampleNum > 1)
-		{
-			bool isInside0 = IsInsideTriangle(w0, w1, w2, glm::vec2(-0.25, -0.25), 0);
-			bool isInside1 = IsInsideTriangle(w0, w1, w2, glm::vec2(-0.25, 0.25), 1);
-			bool isInside2 = IsInsideTriangle(w0, w1, w2, glm::vec2(0.25, -0.25), 2);
-			bool isInside3 = IsInsideTriangle(w0, w1, w2, glm::vec2(0.25, 0.25), 3);
-			if (!isInside0 && !isInside1 && !isInside2 && !isInside3) return false;
+			if (!isVisible) return false;
 		}
-		else
-		{
-			if (!IsInsideTriangle(w0, w1, w2, glm::vec2(0, 0), 0)) return false;
-		}
-
-		glm::vec3 bcScreen = glm::vec3(w1, w2, w0) / area;
 		for (int i = 0; i < pPixelShader->inDesc.size(); i++)
 		{
 			glm::vec4 attribute = Utils::BarycentricLerp(vertex[0][i], vertex[1][i], vertex[2][i], bcScreen);
 			attribute /= attribute.w;
 			memcpy(buffer + pPixelShader->inDesc[i].Offset, &attribute, pPixelShader->inDesc[i].Size);
 		}
-		glm::vec4 color(0, 0, 0, 255);
+		glm::vec4 color(0, 0, 0, 255.0);
 		bool discard = pPixelShader->fragment(buffer, color);
 		//Alpha Test
-		if (alphaFlag && discard) return true;
-		color = glm::vec4(min(255.0f, color[0]), min(255.0f, color[1]), min(255.0f, color[2]), min(255.0f, color[3]));
+		if (alphaFlag && msaaSampleNum > 1)
+		{
+			int num_cancel = msaaSampleNum - (int)(msaaSampleNum * color.a / 255.f);
+			if (num_cancel == msaaSampleNum) return true;
+			for (int i = 0; i < num_cancel; i++)
+			{
+				curFrag.coverage[i] = 0;
+			}
+		}
 		auto &fragColor = pBackBuffer->GetPixel(x, y);
-		auto &fragDepth = pDepthStencilView->GetDepth(x, y);
 		for (int i = 0; i < msaaSampleNum; i++)
 		{
 			if (!curFrag.coverage[i]) continue;
+			if (curFrag.depth[i] >= fragDepth[i] && !alphaFlag) continue;
 			//Alpha Blend
 			if (alphaFlag)
 			{
-				AlphaBlend(color, fragColor[i]);
-				fragColor[i] = color;
+				glm::vec4 tmpColor = glm::vec4(fragColor[i][0], fragColor[i][1], fragColor[i][2], fragColor[i][3]);
+				AlphaBlend(color, tmpColor);
 			}
-			else if (curFrag.depth[i] < fragDepth[i])
+			else
 			{
-				fragColor[i] = color;
 				fragDepth[i] = curFrag.depth[i];
 			}
+			fragColor[i][0] = color.r;
+			fragColor[i][1] = color.g;
+			fragColor[i][2] = color.b;
+			fragColor[i][3] = color.a;
 		}
 		return true;
 	};
@@ -465,32 +464,65 @@ void SRDeviceContext::DrawTriangle(TriangleData &vertex)
 		memcpy(&pPixelShader->dFdx.local(), &ddx, sizeof(glm::vec2));
 		memcpy(&pPixelShader->dFdy.local(), &ddy, sizeof(glm::vec2));
 	};
+	auto IsInsideTriangle = [&](int x, int y, MSAAData &curFrag, glm::vec3 &bcScreen)
+	{
+		if (x >= pViewports->Width || y >= pViewports->Height) return false;
+		glm::vec2 P(x + 0.5, y + 0.5);
+		float w0 = delta0Y * (P.x - points[0].x) - delta0X * (P.y - points[0].y);
+		float w1 = delta1Y * (P.x - points[1].x) - delta1X * (P.y - points[1].y);
+		float w2 = delta2Y * (P.x - points[2].x) - delta2X * (P.y - points[2].y);
+		auto IsInsideTriangle = [&](float w0, float w1, float w2, glm::vec2 &pos, int idx) -> bool
+		{
+			w0 += (pos.x * delta0Y - pos.y * delta0X);
+			w1 += (pos.x * delta1Y - pos.y * delta1X);
+			w2 += (pos.x * delta2Y - pos.y * delta2X);
+
+			if (w0 < 0 || w1 < 0 || w2 < 0)
+			{
+				curFrag.coverage[idx] = 0;
+				return false;
+			}
+			curFrag.coverage[idx] = 1;
+			curFrag.depth[idx] = Utils::BarycentricLerp(points[0], points[1], points[2], glm::vec3(w1, w2, w0) / area).z;
+			return true;
+		};
+		if (msaaSampleNum > 1)
+		{
+			bool isInside0 = IsInsideTriangle(w0, w1, w2, glm::vec2(-0.25, -0.25), 0);
+			bool isInside1 = IsInsideTriangle(w0, w1, w2, glm::vec2(-0.25, 0.25), 1);
+			bool isInside2 = IsInsideTriangle(w0, w1, w2, glm::vec2(0.25, -0.25), 2);
+			bool isInside3 = IsInsideTriangle(w0, w1, w2, glm::vec2(0.25, 0.25), 3);
+			if (!isInside0 && !isInside1 && !isInside2 && !isInside3) return false;
+		}
+		else
+		{
+			if (!IsInsideTriangle(w0, w1, w2, glm::vec2(0, 0), 0)) return false;
+		}
+		bcScreen = glm::vec3(w1, w2, w0) / area;
+		return true;
+	};
 	tbb::parallel_for(bboxmin.y, bboxmax.y + 1, 2, [&](size_t y)
 	{
 		unsigned char *buffer = new unsigned char[100];
-		bool isEnter0 = false, isEnd0 = false;
-		bool isEnter1 = false, isEnd1 = false;
+		glm::vec3 bcScreen[4];
+		MSAAData curFrag[4];
 		for (int x = bboxmin.x; x <= bboxmax.x; x += 2)
 		{
-			DDXDDY(x, y);
-			if (!isEnd0)
-			{
-				bool flag0 = fragment_func(x, y, buffer);
-				fragment_func(x + 1, y, buffer);
-				isEnter0 = flag0;
-				isEnd0 = isEnter0 && !flag0;
-			}
-			if (!isEnd1)
-			{
-				bool flag0 = fragment_func(x, y + 1, buffer);
-				fragment_func(x + 1, y + 1, buffer);
-				isEnter0 = flag0;
-				isEnd0 = isEnter0 && !flag0;
-			}
-			if (isEnd0 && isEnd1)
-			{
-				break;
-			}
+			bool isInside0 = IsInsideTriangle(x, y, curFrag[0], bcScreen[0]);
+			bool isInside1 = IsInsideTriangle(x + 1, y, curFrag[1], bcScreen[1]);
+			bool isInside2 = IsInsideTriangle(x, y + 1, curFrag[2], bcScreen[2]);
+			bool isInside3 = IsInsideTriangle(x + 1, y + 1, curFrag[3], bcScreen[3]);
+			if (!isInside0 && !isInside1 && !isInside2 && !isInside3) continue;
+			if (pRenderState.m_Mipmapping)
+				DDXDDY(x, y);
+			if (isInside0)
+				fragment_func(x, y, buffer, curFrag[0], bcScreen[0]);
+			if (isInside1)
+				fragment_func(x + 1, y, buffer, curFrag[1], bcScreen[1]);
+			if (isInside2)
+				fragment_func(x, y + 1, buffer, curFrag[2], bcScreen[2]);
+			if (isInside3)
+				fragment_func(x + 1, y + 1, buffer, curFrag[3], bcScreen[3]);
 		}
 		delete buffer;
 	});
@@ -535,17 +567,17 @@ void SRDeviceContext::ParseShaderOutput(unsigned char *buffer, VertexData &outpu
 		{
 		case 2:
 		{
-			output[i] = glm::vec4((*start), *(start + 1), 1, 1);
+			output[i] = (glm::vec4((*start), *(start + 1), 1, 1));
 		}
 		break;
 		case 3:
 		{
-			output[i] = glm::vec4(*start, *(start + 1), *(start + 2), 1);
+			output[i] = (glm::vec4(*start, *(start + 1), *(start + 2), 1));
 		}
 		break;
 		case 4:
 		{
-			output[i] = glm::vec4(*start, *(start + 1), *(start + 2), *(start + 3));
+			output[i] = (glm::vec4(*start, *(start + 1), *(start + 2), *(start + 3)));
 		}
 		break;
 		}
@@ -555,9 +587,9 @@ void SRDeviceContext::ParseShaderOutput(unsigned char *buffer, VertexData &outpu
 
 void SRDeviceContext::ViewportTransform(TriangleData &vertex)
 {
-	vertex[0][posIdx] = Viewport * vertex[0][posIdx] + glm::vec4(0.5f);
-	vertex[1][posIdx] = Viewport * vertex[1][posIdx] + glm::vec4(0.5f);
-	vertex[2][posIdx] = Viewport * vertex[2][posIdx] + glm::vec4(0.5f);
+	vertex[0][posIdx] = Viewport * vertex[0][posIdx];
+	vertex[1][posIdx] = Viewport * vertex[1][posIdx];
+	vertex[2][posIdx] = Viewport * vertex[2][posIdx];
 }
 
 unsigned char * SRDeviceContext::Vertex(int idx, unsigned char *vertexBuffer)
@@ -701,7 +733,6 @@ void SRDeviceContext::BindConstanBuffer()
 
 	if (!pPixelConstantBuffer.empty())
 	{
-		//pPixelShader->cbuffer = (unsigned char *)realloc(pPixelShader->cbuffer, pPixelConstantBuffer->GetByteWidth());
 		for (auto buffer : pPixelConstantBuffer)
 			memcpy(pPixelShader->cbuffer + buffer.first, buffer.second->GetBuffer(0), buffer.second->GetByteWidth());
 	}
@@ -711,16 +742,18 @@ void SRDeviceContext::Resolve()
 {
 	int width = pViewports->Width;
 	int height = pViewports->Height - 1;
-	tbb::parallel_for(0, pViewports->Width, 1, [&](size_t x)
+	tbb::parallel_for(0, width, 1, [&](size_t x)
 	{
 		for (int y = 0; y < height; y++)
 		{
 			int idx = x + (height - y) * width;
 			glm::vec4 color(0, 0, 0, 0);
-			auto &fragCache = pBackBuffer->GetPixel(x, y);
+			auto fragCache = pBackBuffer->GetPixel(x, y);
 			for (int i = 0; i < msaaSampleNum; i++)
 			{
-				color += fragCache[i];
+				color[0] += fragCache[i][0];
+				color[1] += fragCache[i][1];
+				color[2] += fragCache[i][2];
 			}
 			color /= msaaSampleNum;
 			colorBuffer[idx * 4] = color.b;
@@ -728,4 +761,5 @@ void SRDeviceContext::Resolve()
 			colorBuffer[idx * 4 + 2] = color.r;
 		}
 	});
+	std::cout << (tbb::tick_count::now() - t0).seconds() << std::endl;
 }

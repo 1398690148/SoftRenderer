@@ -11,7 +11,7 @@ class Graphics;
 class Light
 {
 public:
-	Light(Graphics &gfx, int offset);
+	Light(Graphics &gfx, int offset, glm::vec3 color);
 	virtual void Bind(Graphics &gfx, glm::mat4 view) = 0;
 	virtual void Draw(Graphics& gfx) const = 0;
 	void SetEyePos(glm::vec3 pos);

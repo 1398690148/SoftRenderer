@@ -18,7 +18,7 @@ typedef enum BindType
 	BPSConstantBuffer,
 	BTopology,
 	BBlendState,
-	BCullBack,
+	BRenderStates,
 };
 
 //所有绘制对象的基类
@@ -29,8 +29,8 @@ public:
 	Drawable(const Drawable&) = delete;
 	void Draw(Graphics& gfx) const;
 	virtual glm::mat4 GetTransformXM() const = 0;
+	virtual glm::mat4 GetInitTransform() const = 0;
 	void AddBind(std::shared_ptr<Bindable> bind);
 protected:
-	const IndexBuffer* pIndexBuffer = nullptr;
 	std::vector<std::shared_ptr<Bindable>> binds;
 };

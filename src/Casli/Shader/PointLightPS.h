@@ -49,7 +49,12 @@ struct PointLightPS : public SRIPixelShader
 		attenuation = 1.0 / (point[1].Constant + point[1].Linear * distance + (distance * distance) * point[1].Exp);
 		color += glm::vec4(point[1].color, 1.0) * attenuation;
 
-		color = textures[0]->Sampler(input->uv, samplers[0], dFdx.local(), dFdy.local()) * color;
+		color = textures[0]->Sampler(input->uv, samplers[0]) * color;
+		//HDR -> LDR
+		glm::vec3 hdrColor = glm::vec3(color);
+		glm::vec3 mapped = glm::vec3(1.0f) - exp(-hdrColor / 255.0f * 2.0f);
+		color = glm::vec4(mapped, 1.0) * 255.0f;
+
 		return false;
 	}
 };

@@ -1,4 +1,5 @@
 #include "Sampler.h"
+#include <iostream>
 
 Sampler::Sampler(Graphics &gfx, int idx, FILTER filter) : index(idx)
 {
@@ -10,7 +11,8 @@ Sampler::Sampler(Graphics &gfx, int idx, FILTER filter) : index(idx)
 
 	if (!GetDevice(gfx)->CreateSamplerState(&samplerDesc, &pSampler))
 	{
-		throw;
+		std::cerr << "Sampler Create Failed" << std::endl;
+		exit(-1);
 	}
 }
 

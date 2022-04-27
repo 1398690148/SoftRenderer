@@ -4,6 +4,7 @@
 #include <Tools.h>
 #include <vector>
 #include <Mesh.h>
+#include <map>
 
 class Texture;
 class Sampler;
@@ -20,6 +21,8 @@ private:
 	std::unique_ptr<Node> pRoot;
 	std::vector<std::unique_ptr<Mesh>> meshPtrs;
 	std::vector<std::shared_ptr<Bindable>> binds;
+	std::map<std::string, std::shared_ptr<Texture>> textures;
 	std::string directory;
 	Graphics &pGfx;
+	glm::mat4 initTransform;
 };

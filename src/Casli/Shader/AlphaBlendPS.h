@@ -23,7 +23,7 @@ struct AlphaBlendPS : public SRIPixelShader
 	virtual bool fragment(unsigned char *in, glm::vec4 &color)
 	{
 		AlphaPixelInput *input = (AlphaPixelInput *)in;
-		color = glm::vec4(255, 0, 0, 127);
+		color = glm::vec4(255.0, 0, 0, 210);
 		return false;
 	}
 };

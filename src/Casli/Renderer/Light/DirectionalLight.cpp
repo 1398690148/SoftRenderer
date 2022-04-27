@@ -1,9 +1,9 @@
 #include "DirectionalLight.h"
 
 DirectionalLight::DirectionalLight(Graphics &gfx, int offset, glm::vec3 color, glm::vec3 dir)
-	: Light(gfx, offset), cbuf(gfx)
+	: Light(gfx, offset, color), cbuf(gfx)
 {
-	cbData.eye = glm::vec3(0, 0, -2.3);
+	cbData.eye = glm::vec3(0, 0, -2.5);
 	cbData.color = color;
 	cbData.dir = dir;
 

@@ -6,7 +6,7 @@
 App::App()
 	: wnd(666, 500, "The Donkey Fart Box")
 {
-	parser.parse("../src/Casli/Configure/BlinnPhong.scene", wnd.Gfx(), false);
+	parser.parse("../resource/Configure/BlinnPhong.scene", wnd.Gfx());
 	camera = Camera(parser.m_scene.m_CameraPos, parser.m_scene.m_CameraFront, parser.m_scene.m_CameraUp);
 	wnd.Gfx().SetProjection(glm::perspective(glm::radians(parser.m_scene.m_FrustumFovy), 4.0f / 3.0f, parser.m_scene.m_FrustumNear, parser.m_scene.m_FrustumFar));
 }
@@ -32,17 +32,19 @@ void App::DoFrame()
 
 	wnd.Gfx().SetCamera(camera.GetMatrix());
 	wnd.Gfx().BeginFrame(127, 127, 127);
-	auto &drawable = parser.m_scene.m_Models;
+	auto &models = parser.m_scene.m_Models;
+	auto &drawable = parser.m_scene.m_Entities;
 	auto &lights = parser.m_scene.m_Lights;
-
-	for (auto iter : drawable)
+	for (auto iter : models)
 	{
-		for (auto light : lights)
+		if (iter.second)
 		{
-			light->SetEyePos(camera.GetPosition());
-			light->Bind(wnd.Gfx(), glm::mat4(1.0));
+			for (auto light : lights)
+			{
+				light->Bind(wnd.Gfx(), glm::mat4(1.0));
+			}
 		}
-		iter->Draw(wnd.Gfx(), glm::mat4(1.0));
+		iter.first->Draw(wnd.Gfx(), glm::mat4(1.0));
 	}
 	for (auto light : lights)
 	{

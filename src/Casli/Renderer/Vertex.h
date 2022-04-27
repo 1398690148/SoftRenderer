@@ -151,6 +151,7 @@ namespace Dvtx
 		void SetAttribute(char* pAttribute, SrcType&& val)
 		{
 			using Dest = typename VertexLayout::Map<DestLayoutType>::SysType;
+			//是否可以将SrcType类型的值分配给Dest类型
 			if constexpr (std::is_assignable<Dest, SrcType>::value)
 			{
 				*reinterpret_cast<Dest*>(pAttribute) = val;
@@ -164,18 +165,18 @@ namespace Dvtx
 		char* pData = nullptr;
 		const VertexLayout& layout;
 	};
-	class ConstVertex
-	{
-	public:
-		ConstVertex(const Vertex& v);
-		template<VertexLayout::ElementType Type>
-		const auto& Attr() const
-		{
-			return const_cast<Vertex&>(vertex).Attr<Type>();
-		}
-	private:
-		Vertex vertex;
-	};
+	//class ConstVertex
+	//{
+	//public:
+	//	ConstVertex(const Vertex& v);
+	//	template<VertexLayout::ElementType Type>
+	//	const auto& Attr() const
+	//	{
+	//		return const_cast<Vertex&>(vertex).Attr<Type>();
+	//	}
+	//private:
+	//	Vertex vertex;
+	//};
 	class VertexBuffer
 	{
 	public:
@@ -194,9 +195,9 @@ namespace Dvtx
 		Vertex Back();
 		Vertex Front();
 		Vertex operator[](size_t i);
-		ConstVertex Back() const;
-		ConstVertex Front() const;
-		ConstVertex operator[](size_t i) const;
+		//ConstVertex Back() const;
+		//ConstVertex Front() const;
+		//ConstVertex operator[](size_t i) const;
 	private:
 		std::vector<char> buffer;
 		VertexLayout layout;

@@ -13,7 +13,7 @@ bool SRDevice::CreateBuffer(BUFFER_DESC *bd, SUBRESOURCE_DATA *sd, SRIBuffer **b
 	if (sd)
 		*buffer = new SRIBuffer(bd->ByteWidth, bd->StructureByteStride, sd->pSysMem);
 	else
-		*buffer = new SRIBuffer(bd->ByteWidth, bd->StructureByteStride);
+		*buffer = new SRIBuffer(bd->ByteWidth, bd->StructureByteStride, true);
 	return (*buffer != nullptr);
 }
 

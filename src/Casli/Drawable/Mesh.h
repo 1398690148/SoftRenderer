@@ -7,17 +7,19 @@ class Graphics;
 class Mesh : public Drawable
 {
 public:
-	Mesh(Graphics& gfx, std::vector<std::shared_ptr<Bindable>> bindPtrs);
+	Mesh(Graphics& gfx, std::vector<std::shared_ptr<Bindable>> bindPtrs, glm::mat4 transform);
 	void Draw(Graphics& gfx, glm::mat4 accumulatedTransform) const;
+	void SetInitTransform(glm::mat4 transform);
+	glm::mat4 GetInitTransform() const;
 	glm::mat4 GetTransformXM() const override;
 private:
 	mutable glm::mat4 transform;
+	glm::mat4 initTransform;
 };
 
 class Node
 {
 	friend class Model;
-	friend class ModelWindow;
 public:
 	Node(const std::string& name, std::vector<Mesh*> meshPtrs, const glm::mat4& transform);
 	void Draw(Graphics& gfx, glm::mat4 accumulatedTransform) const;

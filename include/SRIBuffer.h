@@ -5,6 +5,7 @@ class CORE_API SRIBuffer
 {
 public:
 	SRIBuffer(unsigned int byteWidth, unsigned int structureByteStride);
+	SRIBuffer(unsigned int byteWidth, unsigned int structureByteStride, bool flag);
 	SRIBuffer(unsigned int byteWidth, unsigned int structureByteStride, const void *buffer);
 	virtual ~SRIBuffer();
 	unsigned char *GetBuffer(unsigned int offset);

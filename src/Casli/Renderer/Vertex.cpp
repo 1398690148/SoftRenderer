@@ -104,10 +104,10 @@ namespace Dvtx
 	{
 		assert(pData != nullptr);
 	}
-	ConstVertex::ConstVertex(const Vertex& v)
-		:
-	vertex(v)
-	{}
+	//ConstVertex::ConstVertex(const Vertex& v)
+	//	:
+	//vertex(v)
+	//{}
 
 
 	// VertexBuffer
@@ -146,16 +146,16 @@ namespace Dvtx
 		assert(i < Size());
 		return Vertex{ buffer.data() + layout.Size() * i,layout };
 	}
-	ConstVertex VertexBuffer::Back() const
-	{
-		return const_cast<VertexBuffer*>(this)->Back();
-	}
-	ConstVertex VertexBuffer::Front() const
-	{
-		return const_cast<VertexBuffer*>(this)->Front();
-	}
-	ConstVertex VertexBuffer::operator[](size_t i) const
-	{
-		return const_cast<VertexBuffer&>(*this)[i];
-	}
+	//ConstVertex VertexBuffer::Back() const
+	//{
+	//	return const_cast<VertexBuffer*>(this)->Back();
+	//}
+	//ConstVertex VertexBuffer::Front() const
+	//{
+	//	return const_cast<VertexBuffer*>(this)->Front();
+	//}
+	//ConstVertex VertexBuffer::operator[](size_t i) const
+	//{
+	//	return const_cast<VertexBuffer&>(*this)[i];
+	//}
 }

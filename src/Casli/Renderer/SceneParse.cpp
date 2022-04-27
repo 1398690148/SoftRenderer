@@ -11,7 +11,7 @@
 #include <Tools.h>
 #include <glm/gtx/transform.hpp>
 
-void SceneParse::parse(const std::string &path, Graphics &gfx, bool generatedMipmap)
+void SceneParse::parse(const std::string &path, Graphics &gfx)
 {
 	std::ifstream sceneFile;
 	sceneFile.open(path, std::ios::in);
@@ -183,13 +183,19 @@ void SceneParse::parse(const std::string &path, Graphics &gfx, bool generatedMip
 			std::getline(sceneFile, line);
 
 			binds.push_back(BindableFactory::CreateBindable(gfx, BTopology, { line }));
+			//RenderState
+			std::vector<std::string> content;
 			std::getline(sceneFile, line);
-			binds.push_back(BindableFactory::CreateBindable(gfx, BCullBack, { line }));
-
+			content.push_back(line);
+			std::getline(sceneFile, line);
+			content.push_back(line);
+			binds.push_back(BindableFactory::CreateBindable(gfx, BRenderStates, content));
 
 			std::getline(sceneFile, line);
 			binds.push_back(BindableFactory::CreateBindable(gfx, BBlendState, { line }));
-			m_scene.m_Models.push_back(std::make_shared<Model>(gfx, binds, path.c_str(), transform));
+			std::getline(sceneFile, line);
+			bool hasLight = Tools::parseBool(line);
+			m_scene.m_Models.push_back({ std::make_shared<Model>(gfx, binds, path.c_str(), transform), hasLight });
 		}
 		else if (header == "Plane:")
 		{
@@ -231,12 +237,19 @@ void SceneParse::parse(const std::string &path, Graphics &gfx, bool generatedMip
 			transform = glm::rotate(transform, glm::radians(rotate.x), glm::vec3(rotate.y, rotate.z, rotate.w));
 			transform = glm::translate(transform, translate);
 
+			//RenderState
+			content.clear();
 			std::getline(sceneFile, line);
+			content.push_back(line);
+			std::getline(sceneFile, line);
+			content.push_back(line);
+			binds.push_back(BindableFactory::CreateBindable(gfx, BRenderStates, content));
 
 			std::getline(sceneFile, line);
 			binds.push_back(BindableFactory::CreateBindable(gfx, BBlendState, { line }));
-
-			m_scene.m_Entities.push_back(std::make_shared<Plane>(gfx, binds, transform));
+			std::getline(sceneFile, line);
+			bool hasLight = Tools::parseBool(line);
+			m_scene.m_Entities.push_back({ std::make_shared<Plane>(gfx, binds, transform), hasLight });
 		}
 	}
 }

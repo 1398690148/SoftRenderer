@@ -20,8 +20,6 @@ public:
 	void SetProjection(glm::mat4x4 proj);
 	const glm::mat4 &GetProjection() const;
 
-	void SetVertexShader(SRIVertexShader *pVertexShader);
-	void SetPixelShader(SRIPixelShader *pPixelShader);
 private:
 	void ClearBuffer(float red, float green, float blue);
 
@@ -38,5 +36,4 @@ private:
 
 	HWND hWnd;
 	HDC ghdcMainWnd;
-	SRInputLayout *pInputLayout;
 };

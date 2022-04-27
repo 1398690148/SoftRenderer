@@ -3,7 +3,7 @@
 #include "Sphere.h"
 
 Sphere::Sphere() {
-	init(48);
+	init(6);
 }
 Sphere::Sphere(int prec) { // prec is precision, or number of slices
 	init(prec);
@@ -20,11 +20,11 @@ void Sphere::init(int prec) {
 	for (int i = 0; i <= prec; i++) {
 		for (int j = 0; j <= prec; j++) {
 			float y = (float)cos(toRadians(180.0f - i * 180.0f / prec));
-			float x = -(float)cos(toRadians(j*360.0f / prec)) * (float)abs(cos(asin(y)));
-			float z = (float)sin(toRadians(j*360.0f / prec)) * (float)abs(cos(asin(y)));
-			vertices[i*(prec + 1) + j] = glm::vec3(x, y, z);
-			texCoords[i*(prec + 1) + j] = glm::vec2(((float)j / prec), ((float)i / prec));
-			normals[i*(prec + 1) + j] = glm::vec3(x, y, z);
+			float x = -(float)cos(toRadians(j * 360.0f / prec)) * (float)abs(cos(asin(y)));
+			float z = (float)sin(toRadians(j * 360.0f / prec)) * (float)abs(cos(asin(y)));
+			vertices[i * (prec + 1) + j] = glm::vec3(x, y, z) / 2.f;
+			texCoords[i * (prec + 1) + j] = glm::vec2(((float)j / prec), ((float)i / prec));
+			normals[i * (prec + 1) + j] = glm::vec3(x, y, z);
 		}
 	}
 	// calculate triangle indices

@@ -20,8 +20,8 @@ public:
 		float m_FrustumFar;
 
 		std::vector<std::shared_ptr<Light>> m_Lights;
-		std::vector<std::shared_ptr<Drawable>> m_Entities;
-		std::vector<std::shared_ptr<Model>> m_Models;
+		std::vector<std::pair<std::shared_ptr<Drawable>, bool>> m_Entities;
+		std::vector< std::pair<std::shared_ptr<Model>, bool>> m_Models;
 	} m_scene;
-	void parse(const std::string &path, Graphics &gfx, bool generatedMipmap);
+	void parse(const std::string &path, Graphics &gfx);
 };

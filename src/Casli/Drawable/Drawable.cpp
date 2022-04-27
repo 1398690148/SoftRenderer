@@ -12,11 +12,5 @@ void Drawable::Draw(Graphics& gfx) const
 
 void Drawable::AddBind(std::shared_ptr<Bindable> bind)
 {
-	// special case for index buffer
-	if (typeid(*bind) == typeid(IndexBuffer))
-	{
-		assert("Binding multiple index buffers not allowed" && pIndexBuffer == nullptr);
-		pIndexBuffer = &static_cast<IndexBuffer&>(*bind);
-	}
 	binds.push_back(std::move(bind));
 }

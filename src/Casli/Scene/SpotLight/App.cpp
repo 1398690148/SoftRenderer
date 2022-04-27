@@ -6,7 +6,7 @@
 App::App()
 	: wnd(666, 500, "The Donkey Fart Box")
 {
-	parser.parse("../src/Casli/Configure/SpotLight.scene", wnd.Gfx(), false);
+	parser.parse("../resource/Configure/SpotLight.scene", wnd.Gfx());
 	camera = Camera(parser.m_scene.m_CameraPos, parser.m_scene.m_CameraFront, parser.m_scene.m_CameraUp);
 	wnd.Gfx().SetProjection(glm::perspective(glm::radians(parser.m_scene.m_FrustumFovy), 4.0f / 3.0f, parser.m_scene.m_FrustumNear, parser.m_scene.m_FrustumFar));
 }
@@ -36,14 +36,16 @@ void App::DoFrame()
 	auto &lights = parser.m_scene.m_Lights;
 	glm::mat4 rotate = glm::mat4(1.0);
 	rotate = glm::rotate(rotate, glm::radians(3.f), glm::vec3(0, 1, 0));
-
 	for (auto iter : drawable)
 	{
-		for (auto light : lights)
+		if (iter.second)
 		{
-			light->Bind(wnd.Gfx(), rotate);
+			for (auto light : lights)
+			{
+				light->Bind(wnd.Gfx(), rotate);
+			}
 		}
-		iter->Draw(wnd.Gfx(), glm::mat4(1.0));
+		iter.first->Draw(wnd.Gfx(), glm::mat4(1.0));
 	}
 	for (auto light : lights)
 	{

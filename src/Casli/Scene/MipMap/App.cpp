@@ -10,7 +10,7 @@ glm::vec3 eye(0, 0, -2);
 App::App()
 	: wnd(666, 500, "The Donkey Fart Box")
 {
-	parser.parse("../src/Casli/Configure/MipMap.scene", wnd.Gfx(), false);
+	parser.parse("../resource/Configure/MipMap.scene", wnd.Gfx());
 	camera = Camera(parser.m_scene.m_CameraPos, parser.m_scene.m_CameraFront, parser.m_scene.m_CameraUp);
 	wnd.Gfx().SetProjection(glm::perspective(glm::radians(parser.m_scene.m_FrustumFovy), 4.0f / 3.0f, parser.m_scene.m_FrustumNear, parser.m_scene.m_FrustumFar));
 
@@ -39,7 +39,7 @@ void App::DoFrame()
 	auto &drawable = parser.m_scene.m_Entities;
 	for (auto iter : drawable)
 	{
-		iter->Draw(wnd.Gfx());
+		iter.first->Draw(wnd.Gfx());
 	}
 	while (const auto e = wnd.kbd.ReadKey())
 	{

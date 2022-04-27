@@ -41,7 +41,7 @@ struct BlinnPhongPS : public SRIPixelShader
 		glm::vec3 diffuseColor = textures[0]->Sampler(input->uv, samplers[0]);
 		glm::vec3 ambient = diffuseColor * 0.3f;
 
-		float diff = std::max(dot(normal, directional->dir), 0.0f);
+		float diff = std::max(dot(normal, glm::normalize(directional->dir)), 0.0f);
 		diffuseColor *= diff;
 		diffuseColor *= directional->color;
 
@@ -51,6 +51,7 @@ struct BlinnPhongPS : public SRIPixelShader
 		glm::vec3 specular = directional->color * spec * glm::vec3(textures[1]->Sampler(input->uv, samplers[0]));
 
 		color = glm::vec4(ambient + diffuseColor + specular, 255);
+		color = glm::vec4(min(255.0f, color.r), min(255.0f, color.g), min(255.0f, color.b), color.a);
 		return false;
 	}
 };

@@ -12,6 +12,9 @@ class Plane : public Drawable
 public:
 	Plane(Graphics &gfx, std::vector<std::shared_ptr<Bindable>> binds, glm::mat4 transform);
 	glm::mat4 GetTransformXM() const;
+	glm::mat4 GetInitTransform() const;
 private:
-	glm::mat4 m_Transform;
+	glm::mat4 transform;
+	glm::mat4 initTransform;
+
 };

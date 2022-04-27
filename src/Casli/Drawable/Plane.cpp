@@ -4,7 +4,7 @@
 #include <TransformCbuf.h>
 #include <glm/gtx/transform.hpp>
 
-Plane::Plane(Graphics &gfx, std::vector<std::shared_ptr<Bindable>> binds, glm::mat4 transform) : m_Transform(transform)
+Plane::Plane(Graphics &gfx, std::vector<std::shared_ptr<Bindable>> binds, glm::mat4 transform) : transform(transform)
 {
 	for (auto b : binds)
 	{
@@ -51,10 +51,16 @@ Plane::Plane(Graphics &gfx, std::vector<std::shared_ptr<Bindable>> binds, glm::m
 	};
 	AddBind(std::make_unique<InputLayout>(gfx, ied));
 	AddBind(std::make_unique<Topology>(gfx, PRIMITIVE_TOPOLOGY::PRIMITIVE_TOPOLOGY_TRIANGLELIST));
+	initTransform = glm::mat4(1.0);
 	AddBind(std::make_unique<TransformCbuf>(gfx, *this));
 }
 
 glm::mat4 Plane::GetTransformXM() const
 {
-	return m_Transform;
+	return transform;
+}
+
+glm::mat4 Plane::GetInitTransform() const
+{
+	return initTransform;
 }

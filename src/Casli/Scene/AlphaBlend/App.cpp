@@ -2,11 +2,12 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <tbb/tick_count.h>
 #include <Model.h>
+#include <DirectionalLight.h>
 
 App::App()
-	: wnd(666, 500, "The Donkey Fart Box")
+	: wnd(666, 500, "FPS:")
 {
-	parser.parse("../src/Casli/Configure/AlphaBlend.scene", wnd.Gfx(), false);
+	parser.parse("../resource/Configure/AlphaBlend.scene", wnd.Gfx());
 	camera = Camera(parser.m_scene.m_CameraPos, parser.m_scene.m_CameraFront, parser.m_scene.m_CameraUp);
 	wnd.Gfx().SetProjection(glm::perspective(glm::radians(parser.m_scene.m_FrustumFovy), 4.0f / 3.0f, parser.m_scene.m_FrustumNear, parser.m_scene.m_FrustumFar));
 }
@@ -33,14 +34,32 @@ void App::DoFrame()
 	wnd.Gfx().BeginFrame(127, 127, 127);
 	auto &models = parser.m_scene.m_Models;
 	auto &drawable = parser.m_scene.m_Entities;
-
+	auto &lights = parser.m_scene.m_Lights;
 	for (auto iter : models)
 	{
-		iter->Draw(wnd.Gfx(), glm::mat4(1.0));
+		if (iter.second)
+		{
+			for (auto light : lights)
+			{
+				light->Bind(wnd.Gfx(), glm::mat4(1.0));
+			}
+		}
+		iter.first->Draw(wnd.Gfx(), glm::mat4(1.0));
 	}
 	for (auto iter : drawable)
 	{
-		iter->Draw(wnd.Gfx());
+		if (iter.second)
+		{
+			for (auto light : lights)
+			{
+				light->Bind(wnd.Gfx(), glm::mat4(1.0));
+			}
+		}
+		iter.first->Draw(wnd.Gfx());
+	}	
+	for (auto light : lights)
+	{
+		light->Draw(wnd.Gfx());
 	}
 	while (const auto e = wnd.kbd.ReadKey())
 	{

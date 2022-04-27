@@ -1,6 +1,6 @@
 #include <BRenderState.h>
 
-BRenderState::BRenderState(Graphics& gfx, CullFaceMode mode)
+BRenderState::BRenderState(Graphics& gfx, CullFaceMode mode, bool mipmapping)
 {
 	if (mode == 1)
 	{
@@ -14,6 +14,7 @@ BRenderState::BRenderState(Graphics& gfx, CullFaceMode mode)
 	{
 		pRenderState.m_CullFaceMode = CullFaceMode::CULL_DISABLE;
 	}
+	pRenderState.m_Mipmapping = mipmapping;
 }
 
 void BRenderState::Bind(Graphics & gfx)

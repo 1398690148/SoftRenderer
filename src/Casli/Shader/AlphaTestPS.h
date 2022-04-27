@@ -27,7 +27,7 @@ struct AlphaTestPS : public SRIPixelShader
 	{
 		AlphaTestPixelInput *input = (AlphaTestPixelInput *)in;
 		color = textures[0]->Sampler(input->uv, samplers[0], dFdx.local(), dFdy.local());
-		if (color.w == 0) return true;
+		//if (color.w == 0) return true;
 		return false;
 	}
 };

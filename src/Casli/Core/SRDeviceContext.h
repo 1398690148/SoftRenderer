@@ -11,6 +11,7 @@
 #include "SRBlendState.h"
 #include "Utils.h"
 #include <unordered_map>
+#include <tbb/tick_count.h>
 
 typedef struct MSAAData
 {
@@ -25,7 +26,7 @@ class CORE_API SRDeviceContext
 public:
 	SRDeviceContext(void *gFbo, int sampleNum);
 	~SRDeviceContext();
-	void ClearRenderTargetView(SRRenderTargetView *RenderTargetView, const glm::vec4 &ColorRGBA);
+	void ClearRenderTargetView(SRRenderTargetView *RenderTargetView, unsigned char *ColorRGBA);
 	void ClearDepthStencilView(SRDepthStencilView *DepthStencilView);
 	void IASetVertexBuffers(SRIBuffer *buf, const unsigned int *pStrides, const unsigned int *pOffsets);
 	void IASetIndexBuffer(SRIBuffer *buf, unsigned int Offset);
@@ -88,10 +89,9 @@ private:
 	//»ìºÏ×´Ì¬
 	SRBlendState *pBlendState{};
 	float pBlendFactor[4];
-	//unsigned int pSampleMask = 0;
 	glm::mat4 Viewport;
 	std::unordered_map<std::string, int> vertexOutMapTable;
 	unsigned int msaaSampleNum = 4;
 	int posIdx = -1;
-	float frameTime = 0;
+	tbb::tick_count t0;
 };

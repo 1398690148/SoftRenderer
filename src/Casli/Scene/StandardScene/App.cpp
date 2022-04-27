@@ -6,7 +6,7 @@
 App::App()
 	: wnd(666, 500, "FPS:")
 {
-	parser.parse("../src/Casli/Configure/PointLight.scene", wnd.Gfx(), false);
+	parser.parse("../src/Casli/Configure/StandardScene.scene", wnd.Gfx());
 	camera = Camera(parser.m_scene.m_CameraPos, parser.m_scene.m_CameraFront, parser.m_scene.m_CameraUp);
 	wnd.Gfx().SetProjection(glm::perspective(glm::radians(parser.m_scene.m_FrustumFovy), 4.0f / 3.0f, parser.m_scene.m_FrustumNear, parser.m_scene.m_FrustumFar));
 }
@@ -14,7 +14,7 @@ App::App()
 App::App(const char * path) 
 	: wnd(666, 500, "FPS:")
 {
-	parser.parse(path, wnd.Gfx(), false);
+	parser.parse(path, wnd.Gfx());
 	camera = Camera(parser.m_scene.m_CameraPos, parser.m_scene.m_CameraFront, parser.m_scene.m_CameraUp);
 	wnd.Gfx().SetProjection(glm::perspective(glm::radians(parser.m_scene.m_FrustumFovy), 4.0f / 3.0f, parser.m_scene.m_FrustumNear, parser.m_scene.m_FrustumFar));
 }
@@ -39,24 +39,33 @@ void App::DoFrame()
 	const auto dt = timer.Mark() * speed_factor;
 
 	wnd.Gfx().SetCamera(camera.GetMatrix());
-	wnd.Gfx().BeginFrame(127, 127, 127);
-	auto &drawable = parser.m_scene.m_Models;
-	auto &lights = parser.m_scene.m_Lights;
+	wnd.Gfx().BeginFrame(0, 0, 0);
 	glm::mat4 rotate = glm::mat4(1.0);
 	rotate = glm::rotate(rotate, glm::radians(3.f), glm::vec3(0, 1, 0));
-
+	auto &models = parser.m_scene.m_Models;
+	auto &drawable = parser.m_scene.m_Entities;
+	auto &lights = parser.m_scene.m_Lights;
+	for (auto iter : models)
+	{
+		if (iter.second)
+		{
+			for (auto light : lights)
+			{
+				light->Bind(wnd.Gfx(), rotate);
+			}
+		}
+		iter.first->Draw(wnd.Gfx(), glm::mat4(1.0));
+	}
 	for (auto iter : drawable)
 	{
-		for (auto light : lights)
+		if (iter.second)
 		{
-			light->Bind(wnd.Gfx(), rotate);
+			for (auto light : lights)
+			{
+				light->Bind(wnd.Gfx(), glm::mat4(1.0));
+			}
 		}
-		iter->Draw(wnd.Gfx(), glm::mat4(1.0));
-	}
-	auto &entities = parser.m_scene.m_Entities;
-	for (auto iter : entities)
-	{
-		iter->Draw(wnd.Gfx());
+		iter.first->Draw(wnd.Gfx());
 	}
 	for (auto light : lights)
 	{

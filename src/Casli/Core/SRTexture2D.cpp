@@ -149,19 +149,8 @@ glm::vec4 SRTexture2D::Sampler(glm::vec2 uv, SRSamplerState *sampler, float lod)
 	{
 	case FILTER_POINT_MIP_POINT:
 	{
-		return glm::vec4(m_Buffer[index0], m_Buffer[channels > 1 ? index0 + 1 : index0], 
+		return glm::vec4(m_Buffer[index0], m_Buffer[channels > 1 ? index0 + 1 : index0],
 			m_Buffer[channels > 2 ? index0 + 2 : index0], channels > 3 ? m_Buffer[index0 + 3] : 255);
-	}
-	case FILTER_POINT_MIP_LINEAR:
-	{
-		glm::vec4 lcolor = glm::vec4(m_Buffer[index0], m_Buffer[channels > 1 ? index0 + 1 : index0],
-			m_Buffer[channels > 2 ? index0 + 2 : index0], channels > 3 ? m_Buffer[index0 + 3] : 255);
-
-		index0 += ByteWidth / std::pow(4, floor(lod + 1));
-		glm::vec4 hcolor = glm::vec4(m_Buffer[index0], m_Buffer[channels > 1 ? index0 + 1 : index0],
-			m_Buffer[channels > 2 ? index0 + 2 : index0], channels > 3 ? m_Buffer[index0 + 3] : 255);
-
-		return (floor(lod + 1) - lod) * lcolor + (lod - floor(lod)) * hcolor;
 	}
 	case FILTER_LINEAR_MIP_POINT:
 	{

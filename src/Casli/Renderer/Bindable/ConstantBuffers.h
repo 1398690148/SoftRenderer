@@ -28,6 +28,8 @@ public:
 		cbd.BindFlags = BIND_CONSTANT_BUFFER;
 		cbd.ByteWidth = sizeof(C);
 		cbd.StructureByteStride = 0u;
+
+
 		GetDevice(gfx)->CreateBuffer(&cbd, nullptr, &pConstantBuffer);
 	}
 

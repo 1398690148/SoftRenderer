@@ -8,7 +8,6 @@ int main(int argc, char **argv)
 	else
 	{
 		std::cerr << "Can't Found Input File, start Defaut Scene" << std::endl;
-		return App{}.Go();
 		return 0;
 	}
 }

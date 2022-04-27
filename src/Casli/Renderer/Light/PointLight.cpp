@@ -1,7 +1,7 @@
 #include "PointLight.h"
 
 PointLight::PointLight(Graphics &gfx, int offset, glm::vec3 color, glm::vec3 position, float constant, float linear, float exp)
-	: Light(gfx, offset), cbuf(gfx)
+	: Light(gfx, offset, color), cbuf(gfx)
 {
 	cbData.color = color;
 	cbData.pos = position;

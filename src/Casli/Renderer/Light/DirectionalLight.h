@@ -11,13 +11,13 @@ public:
 	void Bind(Graphics& gfx, glm::mat4 view);
 
 private:
-	struct DirectionalLightCbuf
+	struct DirectionalLightCBuf
 	{
 		glm::vec3 eye;
 		glm::vec3 color;
 		glm::vec3 dir;
 	};
 protected:
-	DirectionalLightCbuf cbData;
-	mutable PixelConstantBuffer<DirectionalLightCbuf> cbuf;
+	DirectionalLightCBuf cbData;
+	mutable PixelConstantBuffer<DirectionalLightCBuf> cbuf;
 };

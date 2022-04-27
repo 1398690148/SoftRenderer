@@ -6,13 +6,11 @@
 #include <SampleTexturePS.h>
 #include <LambertVS.h>
 #include <LambertPS.h>
-#include <AlphaTestVS.h>
-#include <AlphaTestPS.h>
-#include <AlphaBlendVS.h>
 #include <AlphaBlendPS.h>
 #include <PointLightPS.h>
 #include <SpotLightPS.h>
 #include <BlinnPhongPS.h>
+#include <BoardPS.h>
 #include <Texture.h>
 #include <Sampler.h>
 #include <InputLayout.h>
@@ -36,14 +34,6 @@ std::shared_ptr<Bindable> BindableFactory::CreateBindable(Graphics &gfx, BindTyp
 		{
 			return std::make_shared<VertexShader>(gfx, new LambertVS());
 		}
-		else if (content[0] == "AlphaTestVS")
-		{
-			return std::make_shared<VertexShader>(gfx, new AlphaTestVS());
-		}
-		else if (content[0] == "AlphaBlendVS")
-		{
-			return std::make_shared<VertexShader>(gfx, new AlphaBlendVS());
-		}
 	}
 	break;
 	case BPixelShader:
@@ -65,10 +55,6 @@ std::shared_ptr<Bindable> BindableFactory::CreateBindable(Graphics &gfx, BindTyp
 		{
 			return std::make_shared<PixelShader>(gfx, new SpotLightPS());
 		}
-		else if (content[0] == "AlphaTestPS")
-		{
-			return std::make_shared<PixelShader>(gfx, new AlphaTestPS());
-		}
 		else if (content[0] == "AlphaBlendPS")
 		{
 			return std::make_shared<PixelShader>(gfx, new AlphaBlendPS());
@@ -76,6 +62,10 @@ std::shared_ptr<Bindable> BindableFactory::CreateBindable(Graphics &gfx, BindTyp
 		else if (content[0] == "BlinnPhongPS")
 		{
 			return std::make_shared<PixelShader>(gfx, new BlinnPhongPS());
+		}
+		else if (content[0] == "BoardPS")
+		{
+			return std::make_shared<PixelShader>(gfx, new BoardPS());
 		}
 	}
 	break;
@@ -119,20 +109,21 @@ std::shared_ptr<Bindable> BindableFactory::CreateBindable(Graphics &gfx, BindTyp
 		return std::make_shared<Blender>(gfx, blending, std::nullopt);
 	}
 	break;
-	case BCullBack:
+	case BRenderStates:
 	{
 		std::string cullface = Tools::parseStr(content[0]);
+		bool mipmmapping = Tools::parseBool(content[1]);
 		if (cullface == "back")
 		{
-			return std::make_shared<BRenderState>(gfx, CULL_BACK);
+			return std::make_shared<BRenderState>(gfx, CULL_BACK, mipmmapping);
 		}
 		else if (cullface == "front")
 		{
-			return std::make_shared<BRenderState>(gfx, CULL_FRONT);
+			return std::make_shared<BRenderState>(gfx, CULL_FRONT, mipmmapping);
 		}
 		else
 		{
-			return std::make_shared<BRenderState>(gfx, CULL_DISABLE);
+			return std::make_shared<BRenderState>(gfx, CULL_DISABLE, mipmmapping);
 		}
 	}
 	break;

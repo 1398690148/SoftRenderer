@@ -49,17 +49,13 @@ struct SpotLightPS : public SRIPixelShader
 		SpotLightPixelInput *input = (SpotLightPixelInput *)in;
 		SpotCBuf *spot = (SpotCBuf *)(cbuffer);
 
-		vec3 ambient = vec3(textures[0]->Sampler(input->uv, samplers[0]));
-		
+		vec3 ambient = vec3(textures[0]->Sampler(input->uv, samplers[0])) * 0.3f;
 		vec3 lightDir = (vec3(input->WorldPos) - spot->pos);
 		float theta = dot(normalize(spot->dir), normalize(lightDir));
 		float epsilon = spot->cutOff - spot->outerCutOff;
 		float intensity = clamp((theta - spot->outerCutOff) / epsilon, 0.0, 1.0);
 
-		//vec3 normal = glm::normalize(textures[2]->Sampler(input->uv, samplers[0]));
-
-		//float diff = std::max(dot(normal, lightDir), 0.0f);
-		vec3 diffuse = spot->color/* * diff*/ * vec3(textures[0]->Sampler(input->uv, samplers[0]));
+		vec3 diffuse = spot->color * vec3(textures[0]->Sampler(input->uv, samplers[0]));
 		// attenuation
 		float distance = length(spot->pos - vec3(input->WorldPos));
 		float attenuation = 1.0 / (spot->constant + spot->linear * distance + spot->quadratic * (distance * distance));
@@ -67,6 +63,8 @@ struct SpotLightPS : public SRIPixelShader
 		diffuse *= attenuation;
 		color = vec4(diffuse, 255);
 		color += vec4(ambient, 0.0);
+		color = glm::vec4(min(255.0f, color.r), min(255.0f, color.g), min(255.0f, color.b), color.a);
+
 		return false;
 	}
 };

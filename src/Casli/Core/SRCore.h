@@ -84,7 +84,6 @@ struct DEPTH_STENCIL_VIEW_DESC
 enum FILTER
 {
 	FILTER_POINT_MIP_POINT,
-	FILTER_POINT_MIP_LINEAR,
 	FILTER_LINEAR_MIP_POINT,
 	FILTER_LINEAR_MIP_LINEAR,
 };
@@ -158,4 +157,5 @@ enum CullFaceMode
 struct RenderState
 {
 	CullFaceMode m_CullFaceMode = CullFaceMode::CULL_BACK;
+	bool m_Mipmapping = false;
 };

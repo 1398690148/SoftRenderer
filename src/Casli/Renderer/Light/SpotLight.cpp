@@ -1,7 +1,7 @@
 #include "SpotLight.h"
 
 SpotLight::SpotLight(Graphics &gfx, int offset, glm::vec3 color, glm::vec3 position, glm::vec3 dir, glm::vec2 angleCoe, glm::vec3 attenuation)
-	: Light(gfx, offset), cbuf(gfx)
+	: Light(gfx, offset, color), cbuf(gfx)
 {
 	cbData.color = color;
 	cbData.pos = position;
