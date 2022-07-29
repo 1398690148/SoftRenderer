@@ -6,7 +6,7 @@
 App::App()
 	: wnd(666, 500, "FPS:")
 {
-	parser.parse("../src/Casli/Configure/StandardScene.scene", wnd.Gfx());
+	parser.parse("../resource/Configure/StandardScene.scene", wnd.Gfx());
 	camera = Camera(parser.m_scene.m_CameraPos, parser.m_scene.m_CameraFront, parser.m_scene.m_CameraUp);
 	wnd.Gfx().SetProjection(glm::perspective(glm::radians(parser.m_scene.m_FrustumFovy), 4.0f / 3.0f, parser.m_scene.m_FrustumNear, parser.m_scene.m_FrustumFar));
 }
@@ -39,23 +39,11 @@ void App::DoFrame()
 	const auto dt = timer.Mark() * speed_factor;
 
 	wnd.Gfx().SetCamera(camera.GetMatrix());
-	wnd.Gfx().BeginFrame(0, 0, 0);
-	glm::mat4 rotate = glm::mat4(1.0);
-	rotate = glm::rotate(rotate, glm::radians(3.f), glm::vec3(0, 1, 0));
-	auto &models = parser.m_scene.m_Models;
-	auto &drawable = parser.m_scene.m_Entities;
-	auto &lights = parser.m_scene.m_Lights;
-	for (auto iter : models)
-	{
-		if (iter.second)
-		{
-			for (auto light : lights)
-			{
-				light->Bind(wnd.Gfx(), rotate);
-			}
-		}
-		iter.first->Draw(wnd.Gfx(), glm::mat4(1.0));
-	}
+	wnd.Gfx().BeginFrame(127, 127, 127);
+
+	auto& drawable = parser.m_scene.m_Entities;
+	auto& lights = parser.m_scene.m_Lights;
+
 	for (auto iter : drawable)
 	{
 		if (iter.second)
@@ -71,6 +59,7 @@ void App::DoFrame()
 	{
 		light->Draw(wnd.Gfx());
 	}
+
 	while (const auto e = wnd.kbd.ReadKey())
 	{
 		if (!e->IsPress())
@@ -97,27 +86,27 @@ void App::DoFrame()
 	{
 		if (wnd.kbd.KeyIsPressed('W'))
 		{
-			camera.Translate({ 0.0f, 0.0f, dt });
+			camera.Translate({ 0.0f,0.0f,dt });
 		}
 		if (wnd.kbd.KeyIsPressed('A'))
 		{
-			camera.Translate({ dt, 0.0f, 0.0f });
+			camera.Translate({ dt,0.0f,0.0f });
 		}
 		if (wnd.kbd.KeyIsPressed('S'))
 		{
-			camera.Translate({ 0.0f, 0.0f, -dt });
+			camera.Translate({ 0.0f,0.0f,-dt });
 		}
 		if (wnd.kbd.KeyIsPressed('D'))
 		{
-			camera.Translate({ -dt, 0.0f, 0.0f });
+			camera.Translate({ -dt,0.0f,0.0f });
 		}
 		if (wnd.kbd.KeyIsPressed('R'))
 		{
-			camera.Translate({ 0.0f, dt, 0.0f });
+			camera.Translate({ 0.0f,dt,0.0f });
 		}
 		if (wnd.kbd.KeyIsPressed('F'))
 		{
-			camera.Translate({ 0.0f, -dt, 0.0f });
+			camera.Translate({ 0.0f,-dt,0.0f });
 		}
 	}
 	while (const auto delta = wnd.mouse.ReadRawDelta())

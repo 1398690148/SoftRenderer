@@ -763,3 +763,18 @@ void SRDeviceContext::Resolve()
 	});
 	std::cout << (tbb::tick_count::now() - t0).seconds() << std::endl;
 }
+
+void SRDeviceContext::GetDepthBuffer(SRTexture2D* depthBuffer)
+{
+	int width = pViewports->Width;
+	int height = pViewports->Height - 1;
+	tbb::parallel_for(0, width, 1, [&](size_t x)
+	{
+		for (int y = 0; y < height; y++)
+		{
+			auto depthCache = pDepthStencilView->GetDepth(x, y);
+			float depth = ((depthCache[0] + depthCache[1] + depthCache[2] + depthCache[3]) / 4);
+			*(float*)depthBuffer->GetBuffer(4 * (x + y * width)) = depth;
+		}
+	});
+}

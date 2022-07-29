@@ -17,8 +17,16 @@ public:
 	void GenerateMips();
 	unsigned int GetWidth() const { return width; }
 	unsigned int GetHeight() const { return height; }
+
+	unsigned char GetDepth(int u, int v) 
+	{ 
+		unsigned int offset = 4 * (u * width + v);
+		return *GetBuffer(offset); 
+	}
+
 	glm::vec4 Sampler(glm::vec2 uv, SRSamplerState *sampler);
 	glm::vec4 Sampler(glm::vec2 uv, SRSamplerState *sampler, glm::vec2 ddx, glm::vec2 ddy);
+
 private:
 	glm::vec4 Bilinear(const float &tx, const float  &ty, const glm::vec4 &c00, const glm::vec4 &c10, const glm::vec4 &c01, const glm::vec4 &c11);
 	void RemapUV(float &texCoord, TEXTURE_ADDRESS_MODE address);

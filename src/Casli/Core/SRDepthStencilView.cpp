@@ -14,7 +14,6 @@ void SRDepthStencilView::ClearBuffer(const float depth)
 	tbb::parallel_for(0, (int)(width * height), [&](size_t i) {
 		m_Buffer[i] = clearDepth;
 	});
-
 }
 
 std::array<float, 4> &SRDepthStencilView::GetDepth(int i, int j)

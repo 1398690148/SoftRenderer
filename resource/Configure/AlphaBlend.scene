@@ -1,0 +1,43 @@
+Camera:
+	Eye 0 0 -2.3
+	Focus 0.0 0.0 0.0
+	Up 0.0 1.0 0.0
+
+Frustum:
+	Fovy 45.0
+	Near 0.1
+	Nar 100.0
+	
+DirectionalLight:
+	offset 0
+	LightDir -1.0 0 -1
+	Lightcolor 1.0 1.0 1.0
+	
+Plane:
+	VertexShader SampleTextureVS
+	PixelShader AlphaBlendPS
+	TexturePath ""
+	MipMap 1
+	Index 0
+	Sampler 0 0
+	translate 0.0 0.0 0.0 
+	rotate 0.0 1.0 0.0 0.0
+	scale 1.0 1.0 1.0
+	Cullface back
+	Mipmap: false
+	AlphaBlend true
+	Light false
+	
+Entity:
+	Path ../resource/Model/diablo3_pose/diablo3_pose.obj
+	VertexShader LambertVS
+	PixelShader BlinnPhongPS
+	Sampler 0 0
+	translate 0.0 0.0 0.0
+	rotate 0.0 1.0 0.0 0.0
+	scale 1.0 1.0 1.0
+	Topology 1
+	Cullface back
+	Mipmap: false
+	AlphaBlend false
+	Light true

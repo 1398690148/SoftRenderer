@@ -4,6 +4,7 @@
 #include <iostream>
 #include <Model.h>
 #include <Plane.h>
+#include <Box.h>
 #include <DirectionalLight.h>
 #include <PointLight.h>
 #include <SpotLight.h>
@@ -11,7 +12,7 @@
 #include <Tools.h>
 #include <glm/gtx/transform.hpp>
 
-void SceneParse::parse(const std::string &path, Graphics &gfx)
+void SceneParse::parse(const std::string& path, Graphics& gfx)
 {
 	std::ifstream sceneFile;
 	sceneFile.open(path, std::ios::in);
@@ -197,11 +198,63 @@ void SceneParse::parse(const std::string &path, Graphics &gfx)
 			bool hasLight = Tools::parseBool(line);
 			m_scene.m_Models.push_back({ std::make_shared<Model>(gfx, binds, path.c_str(), transform), hasLight });
 		}
+		else if (header == "Box:")
+		{
+			std::vector<std::shared_ptr<Bindable>> binds;
+			std::cout << header << "=========================================\n";
+
+			//VertexShader
+			std::getline(sceneFile, line);
+			binds.push_back(BindableFactory::CreateBindable(gfx, BVertexShader, { line }));
+
+			//PixelShader
+			std::getline(sceneFile, line);
+			binds.push_back(BindableFactory::CreateBindable(gfx, BPixelShader, { line }));
+
+			//Texture
+			std::vector<std::string> content;
+			std::getline(sceneFile, line);
+			content.push_back(line);
+			std::getline(sceneFile, line);
+			content.push_back(line);
+			std::getline(sceneFile, line);
+			content.push_back(line);
+			binds.push_back(BindableFactory::CreateBindable(gfx, BTexture2D, content));
+
+			//Sampler
+			std::getline(sceneFile, line);
+			binds.push_back(BindableFactory::CreateBindable(gfx, BSampler, { line }));
+
+			//VSConstantBuffer
+			glm::mat4 transform = glm::mat4(1.0);
+			std::getline(sceneFile, line);
+			glm::vec3 translate = Tools::parseVec3(line);
+			std::getline(sceneFile, line);
+			glm::vec4 rotate = Tools::parseVec4(line);
+			std::getline(sceneFile, line);
+			glm::vec3 scale = Tools::parseVec3(line);
+			transform = glm::scale(transform, scale);
+			transform = glm::rotate(transform, glm::radians(rotate.x), glm::vec3(rotate.y, rotate.z, rotate.w));
+			transform = glm::translate(transform, translate);
+
+			//RenderState
+			content.clear();
+			std::getline(sceneFile, line);
+			content.push_back(line);
+			std::getline(sceneFile, line);
+			content.push_back(line);
+			binds.push_back(BindableFactory::CreateBindable(gfx, BRenderStates, content));
+
+			std::getline(sceneFile, line);
+			binds.push_back(BindableFactory::CreateBindable(gfx, BBlendState, { line }));
+			std::getline(sceneFile, line);
+			bool hasLight = Tools::parseBool(line);
+			m_scene.m_Entities.push_back({ std::make_shared<Box>(gfx, binds, transform), hasLight });
+		}
 		else if (header == "Plane:")
 		{
 			std::vector<std::shared_ptr<Bindable>> binds;
-			std::cout << "Plane:=========================================\n";
-
+			std::cout << header << "=========================================\n";
 
 			//VertexShader
 			std::getline(sceneFile, line);

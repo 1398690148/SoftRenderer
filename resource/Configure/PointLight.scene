@@ -1,0 +1,49 @@
+Camera:
+	Eye 0 0 -2.3
+	Focus 0.0 0.0 0.0
+	Up 0.0 1.0 0.0
+
+Frustum:
+	Fovy 45.0
+	Near 0.1
+	Nar 100.0
+	
+PointLight:
+	offset 0
+	Lightpos 0.6 0 0
+	Lightcolor 1 0 0
+	Attenuation 1 0.0014 0.000007
+	
+PointLight:
+	offset 36
+	Lightpos -0.6 0 0
+	Lightcolor 0 1 0
+	Attenuation 1 0.0014 0.000007
+		
+Entity:
+	Path ../resource/Model/diablo3_pose/diablo3_pose.obj
+	VertexShader LambertVS
+	PixelShader PointLightPS
+	Sampler 0 1
+	translate 0.0 0.0 0.0
+	rotate 0.0 1.0 0.0 0.0
+	scale 1.0 1.0 1.0
+	Topology 1
+	Cullface: back
+	Mipmap: false
+	AlphaBlend false
+	Light true	
+	
+Entity:
+	Path ../resource/Model/wall/wall.obj
+	VertexShader LambertVS
+	PixelShader PointLightPS
+	Sampler 0 1
+	translate 0.0 0.0 0.0
+	rotate 0.0 1.0 0.0 0.0
+	scale 1.0 1.0 1.0
+	Topology 1
+	Cullface: back
+	Mipmap: true
+	AlphaBlend false
+	Light true	

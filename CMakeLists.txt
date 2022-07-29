@@ -94,6 +94,8 @@ src/Casli/Drawable/Mesh.h
 src/Casli/Drawable/Mesh.cpp
 src/Casli/Drawable/Model.h
 src/Casli/Drawable/Model.cpp
+src/Casli/Drawable/Box.h
+src/Casli/Drawable/Box.cpp
 )
 
 set(PLATFORM

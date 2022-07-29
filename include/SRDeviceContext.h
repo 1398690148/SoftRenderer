@@ -47,6 +47,9 @@ public:
 	void DrawIndex();
 	//MSAA
 	void Resolve();
+	//Get Depth
+	void GetDepthBuffer(SRTexture2D* depthBuffer);
+
 private:
 	void DrawTriangle(TriangleData &vertex);
 	//±³ÃæÌÞ³ý
@@ -84,6 +87,7 @@ private:
 	SRRenderTargetView * pBackBuffer{};
 	unsigned char *colorBuffer;
 	SRDepthStencilView *pDepthStencilView{};
+	SRTexture2D* depthBuffer{};
 	VIEWPORT *pViewports{};
 	RenderState pRenderState;
 	//»ìºÏ×´Ì¬
